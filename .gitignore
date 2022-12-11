@@ -1,5 +1,4 @@
 node_modules
 .idea
 dist
-client/dist
-client\dist
+**/dist/

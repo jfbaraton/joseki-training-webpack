@@ -48,4 +48,10 @@ module.exports = {
             filename: "./index.html"
         })
     ],
+    devServer: {
+        proxy: [{
+            context: ['/'],
+            target: 'http://localhost:7000',
+          }]
+    }
 }

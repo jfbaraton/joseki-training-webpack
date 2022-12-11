@@ -1,6 +1,6 @@
 var helpers = require("./helpers.js");
 var expect = require("chai").expect;
-var tenuki = require("../index.js");
+var tenuki = require("../tenuki.js");
 var Game = tenuki.Game;
 var utils = tenuki.utils;
 

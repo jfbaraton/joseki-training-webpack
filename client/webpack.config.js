@@ -39,6 +39,11 @@ module.exports = {
                         }
                     },
                 ]
+            },
+            {
+                test: /test\.js$/,
+                use: 'mocha-loader',
+                exclude: /node_modules/,
             }
         ],
     },

@@ -1,5 +1,5 @@
 var expect = require("chai").expect;
-var tenuki = require("../index.js");
+var tenuki = require("../tenuki.js");
 var Game = tenuki.Game;
 
 describe("ko restriction", function() {

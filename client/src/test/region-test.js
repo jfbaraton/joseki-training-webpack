@@ -1,7 +1,7 @@
 var expect = require("chai").expect;
-var tenuki = require("../index.js");
+var tenuki = require("../tenuki.js");
 var Game = tenuki.Game;
-var Region = require("../lib/region.js").default;
+var Region = require("../region.js").default;
 var helpers = require("./helpers");
 
 describe("Region", function() {

@@ -2,3 +2,5 @@ node_modules
 .idea
 dist
 **/dist/
+dbconfig.js
+/dboperations.js

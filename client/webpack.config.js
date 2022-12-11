@@ -51,7 +51,7 @@ module.exports = {
     devServer: {
         proxy: [{
             context: ['/'],
-            target: 'http://localhost:7000',
+            target: 'http://localhost:8090',
           }]
     }
 }

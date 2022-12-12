@@ -1,8 +1,11 @@
 import axios from "axios";
 import React, { useState, useEffect } from 'react';
+import "./assets/scss/dom-renderer.scss";
+import "./assets/scss/renderer-cancel-button.scss";
+import "./assets/scss/svg-renderer.scss";
+import "./assets/css/App.css";
 import logo from './assets/images/logo2.svg';
-import './App.css';
-import Game from './game';
+var tenuki = require("./tenuki.js");
 
 function App() {
     React.isValidElement(null);
@@ -13,7 +16,7 @@ function App() {
 
     //localStorage.setItem("startPath", JSON.stringify([{y:3,x:15}, {pass:true}, {y:2,x:13}]));
 
-    var game = new Game({ element: boardElement }, localStorage);
+    var game = new tenuki.Game({ element: boardElement }, localStorage);
 
     const update = () => {
         axios
@@ -29,7 +32,7 @@ function App() {
         game.undo();
     };
     const reset = () => {
-        var startPath = JSON.parse(localStorage.getItem("startPath"));
+        var startPath = JSON.parse(localStorage.getItem("startPath") || "[]");
         while (game.currentState().moveNumber /*&& controls.game.currentState().moveNumber != startPath.length*/) {
             game.undo();
         }
@@ -48,8 +51,8 @@ function App() {
 
     };
     const playAs = (e) => {
-        console.log('playAsWhite clickedz ', playAsWhite, e);
-        if(e.srcElement.checked) {
+        console.log('playAsWhite clickedz ', e);
+        if(e.target.checked) {
             game.setAutoplay("white");
         } else {
             game.setAutoplay("black");
@@ -66,6 +69,9 @@ function App() {
     };
 
     const updateStats = function() {
+        var element = document.querySelector(".controls");
+        var gameInfo = element.querySelector(".game-info p");
+        var branchInfo = element.querySelector(".branch-info p");
         var newGameInfo = "";
         //newGameInfo += "Black stones captured: " + game.currentState().blackStonesCaptured;
         //newGameInfo += "\n\n";
@@ -88,14 +94,15 @@ function App() {
         }
         let nextMoveOptions = game._getNextMoveOptions();
         if(nextMoveOptions && nextMoveOptions.length) {
-            this.element.classList.remove("notInSequence");
-            this.element.classList.remove("win");
+            element.classList.remove("notInSequence");
+            element.classList.remove("win");
         } else {
             if(nextMoveOptions === null) {
-                this.element.classList.add("notInSequence");
+                element.classList.add("notInSequence");
             } else {
-                this.element.classList.add("win");
+                element.classList.add("win");
             }
+            nextMoveOptions = [];
         }
         console.log('current options:',nextMoveOptions);
         newGameInfo += "\n current options: "+nextMoveOptions.map(oneMove => oneMove.pass ? "Tenuki" : game.coordinatesFor(oneMove.y,oneMove.x)).join(" or ");
@@ -114,9 +121,9 @@ function App() {
                 str += "White's score is " + game.score().white;
             }
 
-            this.setText(str)
+            setText(str)
         } else {
-            this.setText("");
+            setText("");
         }
     };
 
@@ -134,7 +141,7 @@ function App() {
                 </div>
 
 
-                <div className="controls">
+                <div className="controls" width="300px">
                       <div className="buttons">
                         <button className="btn btn-secondary pass" onClick={pass}>Pass</button>
                         <button className="btn btn-secondary undo" onClick={undo}>Undo</button>

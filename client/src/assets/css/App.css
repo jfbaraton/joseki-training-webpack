@@ -1,0 +1,9 @@
+.tenuki-board {
+    float: left;
+    width: 600px;
+}
+
+.controls {
+    float: right;
+    width: 600px;
+}

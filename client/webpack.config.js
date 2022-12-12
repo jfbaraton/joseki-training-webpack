@@ -1,6 +1,8 @@
 // webpack.config.js //
 const HtmlWebPackPlugin = require("html-webpack-plugin")
 const path = require('path')
+const FaviconsWebpackPlugin = require('favicons-webpack-plugin')
+
 
 module.exports = {
     entry: './src/index.js',
@@ -62,7 +64,8 @@ module.exports = {
         new HtmlWebPackPlugin({
             template: "./public/index.html",
             filename: "./index.html"
-        })
+        }),
+        new FaviconsWebpackPlugin('./public/favicon.ico') // svg works too!
     ],
     devServer: {
         proxy: [{

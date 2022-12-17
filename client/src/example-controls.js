@@ -119,7 +119,7 @@ const _isInSequence = function(game, oneMove, nodeIdx, gameTreeSequenceNode, ava
                 availableTransforms));
 
         //console.log('_isInSequence NODES '+nodeIdx,oneChildMoves);
-        if(oneChildMoves && oneChildMoves.length) {
+        if(oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
             if(!oneMove.pass) {
                 let childNode = oneChildMoves[0];
                 let newAvailableTransforms = utils.getPossibleTransforms(
@@ -153,7 +153,7 @@ const _isInSequence = function(game, oneMove, nodeIdx, gameTreeSequenceNode, ava
 
         //console.log('_isInSequence '+i,oneChild);
         //console.log('_isInSequence '+i,oneChildMoves);
-        if(oneChildMoves && oneChildMoves.length) {
+        if(oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
             if(!oneMove.pass) {
                 let childNode = oneChildMoves [0];
                 let newAvailableTransforms = utils.getPossibleTransforms(
@@ -185,7 +185,7 @@ const _childrenOptionsAsString = function(game, gameTreeSequenceNode, nodeIdx, m
             filter( (childNode, sequenceIdx) => sequenceIdx === nodeIdx). // we only consider the first move of the sequence
             filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W)!== "undefined");
 
-        if (oneChildMoves && oneChildMoves.length) {
+        if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
             if (typeof oneChildMoves[0].B !== "undefined" || typeof oneChildMoves[0].W !== "undefined") {
                 childAsPoint = utils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
                 resultString += String(game.coordinatesFor(childAsPoint.y, childAsPoint.x));
@@ -198,7 +198,7 @@ const _childrenOptionsAsString = function(game, gameTreeSequenceNode, nodeIdx, m
         oneChildMoves = gameTreeSequenceNode.sequences && gameTreeSequenceNode.sequences[0].nodes.
                 filter( (childNode, sequenceIdx) => sequenceIdx === 0). // we only consider the first move of the sequence
                 filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W) !== "undefined");
-        if (oneChildMoves && oneChildMoves.length) {
+        if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
             childAsPoint = utils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
             resultString += String(game.coordinatesFor(childAsPoint.y, childAsPoint.x));
         }
@@ -210,7 +210,7 @@ const _childrenOptionsAsString = function(game, gameTreeSequenceNode, nodeIdx, m
                 filter( (childNode, sequenceIdx) => sequenceIdx === 0). // we only consider the first move of the sequence
                 filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W)!== "undefined");
 
-            if (oneChildMoves && oneChildMoves.length) {
+            if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
                 childAsPoint = utils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
                 resultString += " or "+game.coordinatesFor(childAsPoint.y, childAsPoint.x);
             }
@@ -232,7 +232,7 @@ const _childrenOptions = function(game, gameTreeSequenceNode, nodeIdx, moveColor
             filter( (childNode, sequenceIdx) => sequenceIdx === nodeIdx). // we only consider the first move of the sequence
             filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W)!== "undefined");
 
-        if (oneChildMoves && oneChildMoves.length) {
+        if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
             if (moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W) {
                 childAsPoint = utils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
                 availableTransforms.forEach(oneTransform => {
@@ -259,7 +259,7 @@ const _childrenOptions = function(game, gameTreeSequenceNode, nodeIdx, moveColor
                 filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W)!== "undefined");
 
             //console.log('DEBUG oneChildMoves && oneChildMoves.length ',oneChildMoves && oneChildMoves.length);
-            if (oneChildMoves && oneChildMoves.length) {
+            if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
                 //console.log('typeof oneChildMoves[0] defined ',typeof oneChildMoves[0].B !== "undefined" || typeof oneChildMoves[0].W !== "undefined");
                 if (moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W) {
                     childAsPoint = utils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
@@ -287,8 +287,8 @@ const ExampleGameControls = function(element, game) {
     this.element = element;
     this.game = game;
     this.isKnownVersionLoaded = false;
-    this.isAllowDifferentCorners = localStorage.getItem("isAllowDifferentCorners") || false;
-    this.isAllowSymmetry = localStorage.getItem("isAllowSymmetry") || true;
+    this.isAllowDifferentCorners = !localStorage.getItem("isAllowDifferentCorners") || localStorage.getItem("isAllowDifferentCorners") === "true";
+    this.isAllowSymmetry = localStorage.getItem("isAllowSymmetry") === "true";
     this.textInfo = element.querySelector(".text-info p");
     this.gameInfo = element.querySelector(".game-info p");
     this.branchInfo = element.querySelector(".branch-info p");
@@ -367,16 +367,18 @@ const ExampleGameControls = function(element, game) {
         var playAsWhite = document.querySelector("#isPlayAsWhite");
         var allowDifferentCorners = document.querySelector("#isAllowDifferentCorners");
         var allowSymmetry = document.querySelector("#isAllowSymmetry");
-        var allowSymmetryLabel = document.querySelector("#isAllowSymmetryLabel");
+        var allowDifferentCornersLabel = document.querySelector("#isAllowDifferentCornersLabel");
         var allowSymmetryContainer = document.querySelector("#isAllowSymmetryContainer");
 
         this.updateGUIFromState = function(e) {
             if(controls.isAllowDifferentCorners) {
                 allowDifferentCorners.checked = true;
                 allowSymmetryContainer.style.display = "none";
+                allowDifferentCornersLabel.innerText = "I want to play in any corner";
             } else {
                 allowDifferentCorners.checked = false;
                 allowSymmetryContainer.style.display = "block";
+                allowDifferentCornersLabel.innerText = "I want to play in other corners than Top-right";
             }
             if(controls.isAllowSymmetry) {
                 allowSymmetry.checked = true;
@@ -613,6 +615,10 @@ const ExampleGameControls = function(element, game) {
                             //console.log('merged ', collection);
                         }
                     }
+                    /*console.log('-----------------------------------------------------');
+                    const bm_variation = sgf.parse('(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-17];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])').gameTrees[0];
+                    sgfutils.merge(collection.gameTrees[0], bm_variation, 1, 1);
+                    console.log('merged ', collection, bm_variation);*/
                 }
                 if(res.data && res.data.length) {
                     for(var SGFrevIdx = 0 ; SGFrevIdx < res.data.length; SGFrevIdx++) {

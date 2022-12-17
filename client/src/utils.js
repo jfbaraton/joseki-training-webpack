@@ -231,14 +231,26 @@ export default {
         return target;
     },
 
+    isAcceptableMove: function(node, minimumWinrate) {
+        if(!node || node.BM) return false;
+        //if(node.B || node.BM) return false;
+        return true;
+    },
+
+    copyMetadata: function(target, source) {
+        //console.log("copyMetadata ", target, source);
+        if(!source || !target) return;
+        if(typeof source.BM !== "undefined") {target.BM = source.BM;}
+    },
+
     isSameMove: function(node1, node2) {
         //console.log('isSameMove ? ', node1, node2);
         if (node1 === node2) return true;
         if (!node1 || !node2) return false;
         if (node1.pass && node2.pass) return true;
         if (node1.pass || node2.pass) return false;
-        if (node1.B && node1.B === node2.B) return true;
-        if (node1.W && node1.W === node2.W) return true;
+        if (typeof node1.B !== "undefined" && node1.B === node2.B) return true;
+        if (typeof node1.W !== "undefined"  && node1.W === node2.W) return true;
 
         return false;
     },
@@ -277,10 +289,11 @@ export default {
                 //console.log('debug merge 100'); // OK
                 //console.log('look for this addedTree node in the masterTree next node');
                 if(this.isSameMove(masterTree.nodes[masterTreeNodeNextMoveIdx], addedTree.nodes[addedTreeNodeNextMoveIdx])) {
-                    //console.log('debug merge 1000'); // OK
+                    //console.log('debug merge 1000 ',addedTree); // OK
                     // SGF1
                     // if master has this addedTree node as the next node
                     //console.log('isSameMove(masterTree.nodes[masterTreeNodeNextMoveIdx], addedTree.nodes[addedTreeNodeNextMoveIdx]', masterTree.nodes[masterTreeNodeNextMoveIdx], addedTree.nodes[addedTreeNodeNextMoveIdx]);
+                    this.copyMetadata(masterTree.nodes[masterTreeNodeNextMoveIdx], addedTree.nodes[addedTreeNodeNextMoveIdx]);
                     this.merge(masterTree, addedTree, masterTreeNodeNextMoveIdx+1, addedTreeNodeNextMoveIdx+1);
                     return;
                 } else {
@@ -324,6 +337,7 @@ export default {
                     //console.log('debug merge 1010'); // OK
                     // SGF6
                     // if one corresponds, merge from index 0 if this master.sequences[matchingMoveIdx]
+                    this.copyMetadata(matchingMasterSeq.nodes[0], addedTree.nodes[addedTreeNodeNextMoveIdx]);
                     this.merge(matchingMasterSeq, addedTree, 1, addedTreeNodeNextMoveIdx+1);
                     return;
                 } else {
@@ -356,7 +370,7 @@ export default {
             if(isMasterNextMoveInMasterNodes) {
                 //console.log('debug merge 110'); //OK
                 // SGF3
-                const matchingMasterSeqIdx = addedTree.sequences.findIndex(
+                const matchingAddedTreeSeqIdx = addedTree.sequences.findIndex(
                     oneAddedTreeSeq => this.isSameMove(masterTree.nodes[masterTreeNodeNextMoveIdx], oneAddedTreeSeq.nodes[0]));
                 let seqTMP = masterTree.sequences;
                 addedTree.sequences.push({
@@ -368,13 +382,14 @@ export default {
                 masterTree.sequences = addedTree.sequences;
                 masterTree.nodes = masterTree.nodes.slice(0,masterTreeNodeNextMoveIdx);
 
-                if (matchingMasterSeqIdx>=0) {
-                    //console.log('debug merge 1100'); // OK
+                if (matchingAddedTreeSeqIdx>=0) {
+                    // console.log('debug merge 1100'); // OK
                     // SGF4
                     // if addedTree.sequences contains next master move
-                    masterTree.sequences.splice(matchingMasterSeqIdx,1);
+                    masterTree.sequences.splice(matchingAddedTreeSeqIdx,1);
                     // -> call recursively merge on those identical sequence nodes
-                    this.merge(addedTree.sequences[addedTree.sequences.length-1],addedTree.sequences[matchingMasterSeqIdx], 1, 1);
+                    this.copyMetadata(masterTree.sequences[addedTree.sequences.length-1].nodes[0],masterTree.sequences[matchingMasterSeqIdx].nodes[0]);
+                    this.merge(masterTree.sequences[addedTree.sequences.length-1],masterTree.sequences[matchingMasterSeqIdx], 1, 1);
                 }
                 // TODO check all parents
                 // and that's it, no need to merge the rest of this addedTree !!
@@ -391,6 +406,7 @@ export default {
                     // -> call recursively merge on those identical sequence nodes
                     //console.log('debug merge 1110 ',matchingMasterSeq); //OK
                     // SGF7
+                    this.copyMetadata(matchingMasterSeq.nodes[0],oneAddedTreeSeq.nodes[0]);
                     this.merge(matchingMasterSeq, oneAddedTreeSeq, 1, 1);
                 } else {
                     //console.log('debug merge 1111'); // OK

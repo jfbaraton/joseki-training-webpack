@@ -16,17 +16,21 @@ const _getNextMoveOptions = function(game) {
     for (let moveIdx = 0 ; moveIdx < game._moves.length ; moveIdx++) {
         oneMove =  game._moves[moveIdx];
         if (isInSequence) {
-            //console.log('_getNextMoveOptions mv',moveIdx, ' transforms ', availableTransforms);
+            console.log('_getNextMoveOptions mv',moveIdx, ' transforms ', availableTransforms);
             let newsgfPosition = _isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms);
-            //console.log('AAAA                mv',newsgfPosition, ' transforms ', availableTransforms);
+            console.log('AAAA                mv',newsgfPosition, ' transforms ', availableTransforms);
             if (newsgfPosition) {
+                console.log('BBB  in seq              mv',newsgfPosition, ' transforms ', availableTransforms);
                 if(newsgfPosition === sgfPosition) {
+                    console.log('CCC  in seq              mv',newsgfPosition, ' transforms ', availableTransforms);
                     nodeIdx ++; // sgfPosition.nodes[] is the one way street that we have to follow before reaching the sequences
                 } else {
+                    console.log('EEE  in seq              mv',newsgfPosition, ' transforms ', availableTransforms);
                     nodeIdx = 0; // sgfPosition.nodes[] was completed, so we continue with the sgfPosition.sequences (that iss newsgfPosition)
                     sgfPosition = newsgfPosition;
                 }
             } else {
+                console.log('EEE NOT in seq              mv',newsgfPosition, ' transforms ', availableTransforms);
                 isInSequence = false;
             }
         }
@@ -97,24 +101,29 @@ const _getPathComment = function(game) {
     // is oneMove one of the allowed children of gameTreeSequenceNode
     // if so, returns the matching sequences.X object
 const _isInSequence = function(game, oneMove, nodeIdx, gameTreeSequenceNode, availableTransforms) {
-    //console.log('_isInSequence ? '+availableTransforms.length+' move '+nodeIdx+':',oneMove);
+    console.log('_isInSequence ? '+availableTransforms.length+' move '+nodeIdx+':',oneMove);
     if(nodeIdx< gameTreeSequenceNode.nodes.length) {
-        //console.log('_isInSequence NODES '+nodeIdx,gameTreeSequenceNode.nodes[nodeIdx]);
+        console.log('_isInSequence NODES '+nodeIdx,gameTreeSequenceNode.nodes[nodeIdx]);
+        console.log('2_isInSequence NODES '+nodeIdx,'#'+(oneMove.color === "black" ? gameTreeSequenceNode.nodes[nodeIdx].B : gameTreeSequenceNode.nodes[nodeIdx].W)+'#');
+        console.log('2_isInSequence NODES '+nodeIdx,'#'+typeof(oneMove.color === "black" ? gameTreeSequenceNode.nodes[nodeIdx].B : gameTreeSequenceNode.nodes[nodeIdx].W)+'#');
+        console.log('2_isInSequence NODES '+nodeIdx,'#'+(typeof(oneMove.color === "black" ? gameTreeSequenceNode.nodes[nodeIdx].B : gameTreeSequenceNode.nodes[nodeIdx].W)!== "undefined")+'#');
+        console.log('3_isInSequence NODES '+nodeIdx,'#'+(gameTreeSequenceNode.nodes[nodeIdx].B + gameTreeSequenceNode.nodes[nodeIdx].W)+'#');
+        console.log('3_isInSequence NODES '+nodeIdx,(!oneMove.pass || (gameTreeSequenceNode.nodes[nodeIdx].B + gameTreeSequenceNode.nodes[nodeIdx].W) === ""));
         const oneChildMoves = gameTreeSequenceNode.nodes.
             filter( (childNode, sequenceIdx) => sequenceIdx === nodeIdx). // we only consider the "nodeIdx" move of the nodes
             filter(childNode => typeof (oneMove.color === "black" ? childNode.B : childNode.W) !== "undefined").
-            filter(childNode => !oneMove.pass || (childNode.B || childNode.W) === "").
+            filter(childNode => !oneMove.pass || (oneMove.color === "black" ? childNode.B : childNode.W) === "").
             filter(childNode => oneMove.pass || utils.getPossibleTransforms(
-                utils.sgfCoordToPoint(childNode.B || childNode.W) ,
+                utils.sgfCoordToPoint(oneMove.color === "black" ? childNode.B : childNode.W) ,
                 {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
                 availableTransforms));
 
-        //console.log('_isInSequence NODES '+nodeIdx,oneChildMoves);
+        console.log('_isInSequence NODES '+nodeIdx,oneChildMoves);
         if(oneChildMoves && oneChildMoves.length) {
             if(!oneMove.pass) {
                 let childNode = oneChildMoves[0];
                 let newAvailableTransforms = utils.getPossibleTransforms(
-                     utils.sgfCoordToPoint(childNode.B || childNode.W) ,
+                     utils.sgfCoordToPoint(oneMove.color === "black" ? childNode.B : childNode.W) ,
                      {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
                      availableTransforms);
                 let idx = availableTransforms.length;
@@ -136,9 +145,9 @@ const _isInSequence = function(game, oneMove, nodeIdx, gameTreeSequenceNode, ava
         const oneChildMoves = oneChild.nodes && oneChild.nodes.
             filter( (childNode, sequenceIdx) => sequenceIdx === 0). // we only consider the first move of the sequence
             filter(childNode => typeof (oneMove.color === "black" ? childNode.B : childNode.W) !== "undefined").
-            filter(childNode => !oneMove.pass || (childNode.B || childNode.W) === "").
+            filter(childNode => !oneMove.pass || (oneMove.color === "black" ? childNode.B : childNode.W) === "").
             filter(childNode => oneMove.pass || utils.getPossibleTransforms(
-                 utils.sgfCoordToPoint(childNode.B || childNode.W) ,
+                 utils.sgfCoordToPoint(oneMove.color === "black" ? childNode.B : childNode.W) ,
                  {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
                  availableTransforms));
 
@@ -148,7 +157,7 @@ const _isInSequence = function(game, oneMove, nodeIdx, gameTreeSequenceNode, ava
             if(!oneMove.pass) {
                 let childNode = oneChildMoves [0];
                 let newAvailableTransforms = utils.getPossibleTransforms(
-                     utils.sgfCoordToPoint(childNode.B || childNode.W) ,
+                     utils.sgfCoordToPoint(oneMove.color === "black" ? childNode.B : childNode.W) ,
                      {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
                      availableTransforms);
                 let idx = availableTransforms.length;
@@ -178,7 +187,7 @@ const _childrenOptionsAsString = function(game, gameTreeSequenceNode, nodeIdx, m
 
         if (oneChildMoves && oneChildMoves.length) {
             if (typeof oneChildMoves[0].B !== "undefined" || typeof oneChildMoves[0].W !== "undefined") {
-                childAsPoint = utils.sgfCoordToPoint(oneChildMoves[0].B || oneChildMoves[0].W);
+                childAsPoint = utils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
                 resultString += String(game.coordinatesFor(childAsPoint.y, childAsPoint.x));
             } else {
                 resultString += "Tenuki (play away)";
@@ -190,7 +199,7 @@ const _childrenOptionsAsString = function(game, gameTreeSequenceNode, nodeIdx, m
                 filter( (childNode, sequenceIdx) => sequenceIdx === 0). // we only consider the first move of the sequence
                 filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W) !== "undefined");
         if (oneChildMoves && oneChildMoves.length) {
-            childAsPoint = utils.sgfCoordToPoint(oneChildMoves[0].B || oneChildMoves[0].W);
+            childAsPoint = utils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
             resultString += String(game.coordinatesFor(childAsPoint.y, childAsPoint.x));
         }
         for (let sequencesIdx = 1 ; gameTreeSequenceNode.sequences && sequencesIdx < gameTreeSequenceNode.sequences.length ; sequencesIdx++) {
@@ -202,7 +211,7 @@ const _childrenOptionsAsString = function(game, gameTreeSequenceNode, nodeIdx, m
                 filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W)!== "undefined");
 
             if (oneChildMoves && oneChildMoves.length) {
-                childAsPoint = utils.sgfCoordToPoint(oneChildMoves[0].B || oneChildMoves[0].W);
+                childAsPoint = utils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
                 resultString += " or "+game.coordinatesFor(childAsPoint.y, childAsPoint.x);
             }
         }
@@ -224,8 +233,8 @@ const _childrenOptions = function(game, gameTreeSequenceNode, nodeIdx, moveColor
             filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W)!== "undefined");
 
         if (oneChildMoves && oneChildMoves.length) {
-            if (oneChildMoves[0].B || oneChildMoves[0].W) {
-                childAsPoint = utils.sgfCoordToPoint(oneChildMoves[0].B || oneChildMoves[0].W);
+            if (moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W) {
+                childAsPoint = utils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
                 availableTransforms.forEach(oneTransform => {
                     const transformedMove = utils.transformMove(childAsPoint, oneTransform);
                     if (!result.some(oneOption => (oneOption.pass && transformedMove.pass) || typeof transformedMove.x !== "undefined" && oneOption.x === transformedMove.x && oneOption.y === transformedMove.y )) {
@@ -252,8 +261,8 @@ const _childrenOptions = function(game, gameTreeSequenceNode, nodeIdx, moveColor
             //console.log('DEBUG oneChildMoves && oneChildMoves.length ',oneChildMoves && oneChildMoves.length);
             if (oneChildMoves && oneChildMoves.length) {
                 //console.log('typeof oneChildMoves[0] defined ',typeof oneChildMoves[0].B !== "undefined" || typeof oneChildMoves[0].W !== "undefined");
-                if (oneChildMoves[0].B || oneChildMoves[0].W) {
-                    childAsPoint = utils.sgfCoordToPoint(oneChildMoves[0].B || oneChildMoves[0].W);
+                if (moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W) {
+                    childAsPoint = utils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
                     availableTransforms.forEach(oneTransform => {
                         //console.log('Transform seq option ',childAsPoint, ' -- ',oneTransform, transformedMove);
                         const transformedMove = utils.transformMove(childAsPoint, oneTransform);
@@ -372,7 +381,7 @@ const ExampleGameControls = function(element, game) {
 
         };
         playAsWhite.onclick = function(e) {
-            console.log('playAsWhite clicked ', playAsWhite, e);
+            //console.log('playAsWhite clicked ', playAsWhite, e);
             if(e.srcElement.checked) {
                 controls.setAutoplay("white");
             } else {
@@ -545,12 +554,13 @@ const ExampleGameControls = function(element, game) {
                         if(knownVersions[SGFrevIdx].id == 1){
                             //console.log('init with ', knownVersions[SGFrevIdx]);
                             collection = sgf.parse(knownVersions[SGFrevIdx].SGF);
-                            //console.log('init created ', collection);
+                            console.log('init created ', collection);
                             controls.isKnownVersionLoaded = true;
                         } else {
-                            //console.log('merge with ', knownVersions[SGFrevIdx]);
-                            sgfutils.merge(collection.gameTrees[0], sgf.parse(knownVersions[SGFrevIdx].SGF), 1, 1);
-                            //console.log('merged ', collection);
+                            console.log('merge with ', knownVersions[SGFrevIdx]);
+                            console.log('2merge with ', sgf.parse(knownVersions[SGFrevIdx].SGF));
+                            sgfutils.merge(collection.gameTrees[0], sgf.parse(knownVersions[SGFrevIdx].SGF).gameTrees[0], 1, 1);
+                            console.log('merged ', collection);
                         }
                     }
                 }
@@ -565,7 +575,7 @@ const ExampleGameControls = function(element, game) {
                             //console.log('init created ', collection);
                         } else {
                             //console.log('merge with ', res.data[SGFrevIdx]);
-                            sgfutils.merge(collection.gameTrees[0], sgf.parse(res.data[SGFrevIdx].SGF), 1, 1);
+                            sgfutils.merge(collection.gameTrees[0], sgf.parse(res.data[SGFrevIdx].SGF).gameTrees[0], 1, 1);
                             //console.log('merged ', collection);
                         }
                     }

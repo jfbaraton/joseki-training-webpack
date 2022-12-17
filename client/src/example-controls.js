@@ -88,7 +88,7 @@ const _getPathComment = function(game) {
             }
         }
     }
-    let result = pathComment+ "\n\n" +pathCommentExtra+ "\n\n" +isInSequence ? sgfPosition.nodes[nodeIdx].C : "WROOOOOONG";
+    let result = pathComment+ "\n\n" +pathCommentExtra+ "\n\n" +(isInSequence ? (sgfPosition.nodes[nodeIdx].C || 'no comment') : "WROOOOOONG");
     //console.log('final pathComment ',result);
     return result;
 };
@@ -273,6 +273,7 @@ const _childrenOptions = function(game, gameTreeSequenceNode, nodeIdx, moveColor
 
 // An example setup showing how buttons could be set to board/game functionality.
 const ExampleGameControls = function(element, game) {
+  var controls = this;
   this.element = element;
   this.game = game;
   this.textInfo = element.querySelector(".text-info p");
@@ -315,12 +316,14 @@ const ExampleGameControls = function(element, game) {
             this.element.classList.add("win");
         }
     }
-    console.log('current options:',nextMoveOptions);
+    //console.log('current options:',nextMoveOptions);
     newGameInfo += "\n current options: "+nextMoveOptions.map(oneMove => oneMove.pass ? "Tenuki" : this.game.coordinatesFor(oneMove.y,oneMove.x)).join(" or ");
-    newGameInfo += "\n"+_getPathComment(this.game);
+    newGameInfo += "\n_getPathComment:\n"+_getPathComment(this.game);
+    //newGameInfo += "\nEND of getPathComment \n";
 
     this.gameInfo.innerText = newGameInfo;
 
+    this.setText("");
     if (currentState.pass) {
       var str = "";
 
@@ -339,71 +342,73 @@ const ExampleGameControls = function(element, game) {
     setTimeout(this.autoPlay,500, game);
   };
 
-  this.reset = function(e) {
-    e.preventDefault();
-    var startPath = JSON.parse(localStorage.getItem("startPath"));
-    while (controls.game.currentState().moveNumber /*&& controls.game.currentState().moveNumber != startPath.length*/) {
-      controls.game.undo();
-    }
-    startPath.forEach(oneMove => {
-      if (oneMove.pass) {
+
+    this.setup = function() {
+
+        var passButton = document.querySelector(".pass");
+        var undoButton = document.querySelector(".undo");
+        var resetButton = document.querySelector(".reset");
+        var setPathButton = document.querySelector(".setPath");
+        var playAsWhite = document.querySelector("#isPlayAsWhite");
+
+        this.reset = function(e) {
+            e.preventDefault();
+            var startPath = JSON.parse(localStorage.getItem("startPath")) || [];
+            while (controls.game.currentState().moveNumber /*&& controls.game.currentState().moveNumber != startPath.length*/) {
+                controls.game.undo();
+            }
+            startPath.forEach(oneMove => {
+              if (oneMove.pass) {
+                  controls.game.pass();
+              } else {
+                  controls.game.playAt(oneMove.y, oneMove.x);
+              }
+
+            });
+
+        };
+        playAsWhite.onclick = function(e) {
+          console.log('playAsWhite clickedz ', playAsWhite, e);
+          if(e.srcElement.checked) {
+            controls.setAutoplay("white");
+          } else {
+            controls.setAutoplay("black");
+          }
+          //controls.game.pass();
+        };
+
+        passButton.addEventListener("click", function(e) {
+          e.preventDefault();
+
           controls.game.pass();
-      } else {
-          controls.game.playAt(oneMove.y, oneMove.x);
-      }
+        });
 
-    });
+        undoButton.addEventListener("click", function(e) {
+          e.preventDefault();
 
-  };
+          controls.game.undo();
+        });
 
-  this.setup = function() {
-    var controls = this;
+        setPathButton.addEventListener("click", function(e) {
+            localStorage.setItem("startPath", JSON.stringify(getPath(controls.game)));
+            controls.setText("Position saved! From now on, you can click on RESET to come back to the same variation");
+        });
 
-    var passButton = document.querySelector(".pass");
-    var undoButton = document.querySelector(".undo");
-    var resetButton = document.querySelector(".reset");
-    var setPathButton = document.querySelector(".setPath");
-    var playAsWhite = document.querySelector("#isPlayAsWhite");
-
-    playAsWhite.onclick = function(e) {
-      console.log('playAsWhite clickedz ', playAsWhite, e);
-      if(e.srcElement.checked) {
-        controls.game.setAutoplay("white");
-      } else {
-        controls.game.setAutoplay("black");
-      }
-      //controls.game.pass();
-    };
-
-    passButton.addEventListener("click", function(e) {
-      e.preventDefault();
-
-      controls.game.pass();
-    });
-
-    undoButton.addEventListener("click", function(e) {
-      e.preventDefault();
-
-      controls.game.undo();
-    });
-
-    setPathButton.addEventListener("click", function(e) {
-        localStorage.setItem("startPath", JSON.stringify(controls.game.getPath()));
-        controls.setText("Position saved! From now on, you can click on RESET to come back to the same variation");
-    });
-
-    resetButton.addEventListener("click", this.reset);
+        resetButton.addEventListener("click", this.reset);
   }
 
   this.setAutoplay = function(newIsAutoplay) {
-    this.isAutoplay =newIsAutoplay;
+    controls.isAutoplay =newIsAutoplay;
   }
 
 
   this.autoPlay = function(game) {
-    console.log('autoPlay ?');
     let startPath = JSON.parse(localStorage && localStorage.getItem("startPath") || "[]");
-    if(this.isAutoplay && game.currentState().moveNumber >= startPath.length && game.currentState().color === this.isAutoplay) {
+    //console.log('autoPlay startPath:', startPath);
+    //console.log('autoPlay ? this.isAutoplay:', controls.isAutoplay);
+    //console.log('autoPlay ? game.currentState().moveNumber:', game.currentState().moveNumber);
+    //console.log('autoPlay ? game.currentState().color:', game.currentState().color);
+    if(controls.isAutoplay && game.currentState().moveNumber >= startPath.length && game.currentState().color === controls.isAutoplay) {
         let nextMoveOptions = _getNextMoveOptions(game);
         // check if the next move should be played automatically
         if(nextMoveOptions && nextMoveOptions.length) {

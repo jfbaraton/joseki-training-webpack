@@ -14,6 +14,7 @@ var game = new tenuki.Game({ element: boardElement }, localStorage);
 var controlElement = document.querySelector(".controls");
 var controls = new ExampleGameControls(controlElement, game);
 controls.setup();
+controls.setAutoplay("black"); // AI is white
 
 game.callbacks.postRender = function(game) {
   controls.updateStats();

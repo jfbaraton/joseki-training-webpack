@@ -1,6 +1,6 @@
 import utils from "./utils";
 import exampleSGF from "./baseSGF";
-
+import sgfutils from "./utils";
 
 var sgf = require('smartgame');
 
@@ -273,74 +273,75 @@ const _childrenOptions = function(game, gameTreeSequenceNode, nodeIdx, moveColor
 
 // An example setup showing how buttons could be set to board/game functionality.
 const ExampleGameControls = function(element, game) {
-  var controls = this;
-  this.element = element;
-  this.game = game;
-  this.textInfo = element.querySelector(".text-info p");
-  this.gameInfo = element.querySelector(".game-info p");
-  this.branchInfo = element.querySelector(".branch-info p");
+    var controls = this;
+    this.element = element;
+    this.game = game;
+    this.textInfo = element.querySelector(".text-info p");
+    this.gameInfo = element.querySelector(".game-info p");
+    this.branchInfo = element.querySelector(".branch-info p");
 
-  this.setText = function(str) {
-    this.textInfo.innerText = str;
-  };
+    this.setText = function(str) {
+        this.textInfo.innerText = str;
+    };
 
-  this.updateStats = function() {
-    var newGameInfo = "";
-    //newGameInfo += "Black stones captured: " + this.game.currentState().blackStonesCaptured;
-    //newGameInfo += "\n\n";
-    //newGameInfo +=  "White stones captured: " + this.game.currentState().whiteStonesCaptured;
-    //newGameInfo += "\n\n";
+    this.updateStats = function() {
+        var newGameInfo = "";
+        //newGameInfo += "Black stones captured: " + this.game.currentState().blackStonesCaptured;
+        //newGameInfo += "\n\n";
+        //newGameInfo +=  "White stones captured: " + this.game.currentState().whiteStonesCaptured;
+        //newGameInfo += "\n\n";
 
-    newGameInfo += "Move " + this.game.currentState().moveNumber;
+        newGameInfo += "Move " + this.game.currentState().moveNumber;
 
-    if (this.game.currentState().playedPoint) {
-      newGameInfo += " (" + this.game.coordinatesFor(this.game.currentState().playedPoint.y, this.game.currentState().playedPoint.x) + ")";
-    }
-
-    newGameInfo += "\n";
-
-    var currentState = this.game.currentState();
-
-    if (currentState.pass) {
-      var player = currentState.color[0].toUpperCase() + currentState.color.substr(1);
-      newGameInfo += player + " passed."
-    }
-    let nextMoveOptions = _getNextMoveOptions(game);
-    if(nextMoveOptions && nextMoveOptions.length) {
-        this.element.classList.remove("notInSequence");
-        this.element.classList.remove("win");
-    } else {
-        if(nextMoveOptions === null) {
-            this.element.classList.add("notInSequence");
-        } else {
-            this.element.classList.add("win");
+        if (this.game.currentState().playedPoint) {
+          newGameInfo += " (" + this.game.coordinatesFor(this.game.currentState().playedPoint.y, this.game.currentState().playedPoint.x) + ")";
         }
-    }
-    //console.log('current options:',nextMoveOptions);
-    newGameInfo += "\n current options: "+nextMoveOptions.map(oneMove => oneMove.pass ? "Tenuki" : this.game.coordinatesFor(oneMove.y,oneMove.x)).join(" or ");
-    newGameInfo += "\n_getPathComment:\n"+_getPathComment(this.game);
-    //newGameInfo += "\nEND of getPathComment \n";
 
-    this.gameInfo.innerText = newGameInfo;
+        newGameInfo += "\n";
 
-    this.setText("");
-    if (currentState.pass) {
-      var str = "";
+        var currentState = this.game.currentState();
 
-      if (this.game.isOver()) {
-        str += "Game over.";
-        str += "\n"
-        str += "Black's score is " + this.game.score().black;
-        str += "\n";
-        str += "White's score is " + this.game.score().white;
-      }
+        if (currentState.pass) {
+          var player = currentState.color[0].toUpperCase() + currentState.color.substr(1);
+          newGameInfo += player + " passed."
+        }
+        let nextMoveOptions = _getNextMoveOptions(game);
+        // TODO add "protest" buttons to allow to add/remove variations
+        if(nextMoveOptions && nextMoveOptions.length) {
+            this.element.classList.remove("notInSequence");
+            this.element.classList.remove("win");
+        } else {
+            if(nextMoveOptions === null) {
+                this.element.classList.add("notInSequence");
+            } else {
+                this.element.classList.add("win");
+            }
+        }
+        //console.log('current options:',nextMoveOptions);
+        newGameInfo += "\n current options: "+nextMoveOptions.map(oneMove => oneMove.pass ? "Tenuki" : this.game.coordinatesFor(oneMove.y,oneMove.x)).join(" or ");
+        newGameInfo += "\n_getPathComment:\n"+_getPathComment(this.game);
+        //newGameInfo += "\nEND of getPathComment \n";
 
-      this.setText(str)
-    } else {
-      this.setText("");
-    }
-    setTimeout(this.autoPlay,500, game);
-  };
+        this.gameInfo.innerText = newGameInfo;
+
+        this.setText("");
+        if (currentState.pass) {
+          var str = "";
+
+          if (this.game.isOver()) {
+            str += "Game over.";
+            str += "\n"
+            str += "Black's score is " + this.game.score().black;
+            str += "\n";
+            str += "White's score is " + this.game.score().white;
+          }
+
+          this.setText(str)
+        } else {
+          this.setText("");
+        }
+        setTimeout(this.autoPlay,500, game);
+    };
 
 
     this.setup = function() {
@@ -349,6 +350,7 @@ const ExampleGameControls = function(element, game) {
         var undoButton = document.querySelector(".undo");
         var resetButton = document.querySelector(".reset");
         var setPathButton = document.querySelector(".setPath");
+        var testButton = document.querySelector(".test");
         var playAsWhite = document.querySelector("#isPlayAsWhite");
 
         this.reset = function(e) {
@@ -393,35 +395,57 @@ const ExampleGameControls = function(element, game) {
             localStorage.setItem("startPath", JSON.stringify(getPath(controls.game)));
             controls.setText("Position saved! From now on, you can click on RESET to come back to the same variation");
         });
+        testButton.addEventListener("click", function(e) {
+            controls.testMerge();
+        });
 
         resetButton.addEventListener("click", this.reset);
-  }
+    }
 
-  this.setAutoplay = function(newIsAutoplay) {
-    controls.isAutoplay =newIsAutoplay;
-  }
+    this.setAutoplay = function(newIsAutoplay) {
+        controls.isAutoplay =newIsAutoplay;
+    }
 
 
-  this.autoPlay = function(game) {
-    let startPath = JSON.parse(localStorage && localStorage.getItem("startPath") || "[]");
-    //console.log('autoPlay startPath:', startPath);
-    //console.log('autoPlay ? this.isAutoplay:', controls.isAutoplay);
-    //console.log('autoPlay ? game.currentState().moveNumber:', game.currentState().moveNumber);
-    //console.log('autoPlay ? game.currentState().color:', game.currentState().color);
-    if(controls.isAutoplay && game.currentState().moveNumber >= startPath.length && game.currentState().color === controls.isAutoplay) {
-        let nextMoveOptions = _getNextMoveOptions(game);
-        // check if the next move should be played automatically
-        if(nextMoveOptions && nextMoveOptions.length) {
-            let nextMoveIdx = Math.floor(nextMoveOptions.length * Math.random());
-            //if(nextMoveOptions[nextMoveIdx].pass || typeof nextMoveOptions[nextMoveIdx].x === "undefined" || nextMoveOptions[nextMoveIdx].x === null) {
-            if(nextMoveOptions[nextMoveIdx].pass) {
-                game.pass();
-            } else {
-                game.playAt(nextMoveOptions[nextMoveIdx].y, nextMoveOptions[nextMoveIdx].x);
+    this.autoPlay = function(game) {
+        let startPath = JSON.parse(localStorage && localStorage.getItem("startPath") || "[]");
+        //console.log('autoPlay startPath:', startPath);
+        //console.log('autoPlay ? this.isAutoplay:', controls.isAutoplay);
+        //console.log('autoPlay ? game.currentState().moveNumber:', game.currentState().moveNumber);
+        //console.log('autoPlay ? game.currentState().color:', game.currentState().color);
+        if(controls.isAutoplay && game.currentState().moveNumber >= startPath.length && game.currentState().color === controls.isAutoplay) {
+            let nextMoveOptions = _getNextMoveOptions(game);
+            // check if the next move should be played automatically
+            if(nextMoveOptions && nextMoveOptions.length) {
+                let nextMoveIdx = Math.floor(nextMoveOptions.length * Math.random());
+                //if(nextMoveOptions[nextMoveIdx].pass || typeof nextMoveOptions[nextMoveIdx].x === "undefined" || nextMoveOptions[nextMoveIdx].x === null) {
+                if(nextMoveOptions[nextMoveIdx].pass) {
+                    game.pass();
+                } else {
+                    game.playAt(nextMoveOptions[nextMoveIdx].y, nextMoveOptions[nextMoveIdx].x);
+                }
             }
         }
     }
-  }
+
+    this.testMerge = function() {
+
+        var sansan_simple_haneSGF = String.raw`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-08];B[pd];W[qc];B[qd];W[pc];B[oc];W[ob];B[nc])`;
+        var sansan_double_haneSGF = String.raw`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-08];B[pd];W[qc];B[qd];W[pc];B[oc];W[ob];B[nb])`;
+
+        var sansan_simple_hane = sgf.parse(sansan_simple_haneSGF);
+        console.log('parsed sansan_simple_hane SGF: ', sansan_simple_hane);
+
+        var sansan_double_hane = sgf.parse(sansan_double_haneSGF);
+        console.log('parsed sansan_double_hane SGF: ', sansan_double_hane);
+
+
+        //var mergedSGF = sgf.generate(sansan_simple_hane);
+        sgfutils.merge(sansan_simple_hane.gameTrees[0], sansan_double_hane.gameTrees[0], 0, 0);
+        //fs.writeFileSync('sansan_merged.sgf', mergedSGF, { encoding: 'utf8' });
+
+        console.log('merged SGF: ', sansan_simple_hane);
+    }
 
 };
 

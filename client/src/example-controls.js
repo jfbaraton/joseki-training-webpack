@@ -401,27 +401,24 @@ const ExampleGameControls = function(element, game) {
             axios
                 .get("/api/joseki")
                 .then((res) => {
-                    function bin2String(array) {
-                      return String.fromCharCode.apply(String, array);
-                    }
                     //setRandomQuote(res.data);
                     var decoder = new TextDecoder("utf-8")
                     console.log('server responded',res.data[1].SGF);
                     //console.log('server responded',decoder.decode(res.data[1].SGF));
-                    console.log('server responded',sgfutils.bin2String2(res.data[1].SGF.data));
+                    console.log('server responded',sgfutils.bin2String(res.data[1].SGF.data));
 
-                    var mocked = '(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-17];B[pd];W[qc];B[qd];W[pc];B[od];W[nb];B[];W[mc])';
+                    //var mocked = '(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-17];B[pd];W[qc];B[qd];W[pc];B[od];W[nb];B[];W[mc])';
 
-                    var mockedcollection = sgf.parse(mocked);
-                    console.log('mockedcollection ',mockedcollection);
+                    //var mockedcollection = sgf.parse(mocked);
+                    //console.log('mockedcollection ',mockedcollection);
 
-                    var editSGF = sgfutils.bin2String2(res.data[1].SGF.data);
+                    var editSGF = sgfutils.bin2String(res.data[1].SGF.data);
 
-                    console.log('compare ',mocked);
-                    console.log('compare ',editSGF);
-                    console.log('compare ',mocked === editSGF);
+                    //console.log('compare ',mocked);
+                    //console.log('compare ',editSGF);
+                    //console.log('compare ',mocked === editSGF);
 
-                    collection = sgf.parse(sgfutils.bin2String2(res.data[0].SGF.data));
+                    collection = sgf.parse(sgfutils.bin2String(res.data[0].SGF.data));
                     console.log('collection ',collection);
                     var collection1 = sgf.parse(editSGF);
                     console.log('collection1 ',collection1);

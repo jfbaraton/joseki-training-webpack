@@ -228,24 +228,10 @@ export default {
     },
 
     bin2String: function(array) {
-      return String.fromCharCode.apply(String, array);
-    },
-
-
-    bin2String2: function(array) {
         var result = "";
         for (var arrayIdx = 0; arrayIdx < array.length; arrayIdx++) {
             result += String.fromCharCode(array[arrayIdx]);
         }
-        return result;
-    },
-
-
-    bin2String3: function(array) {
-        var result = "";
-        array.forEach(oneByte => {
-            result += String.fromCharCode(oneByte);
-        });
         return result;
     },
 

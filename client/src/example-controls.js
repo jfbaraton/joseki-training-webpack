@@ -16,21 +16,21 @@ const _getNextMoveOptions = function(game) {
     for (let moveIdx = 0 ; moveIdx < game._moves.length ; moveIdx++) {
         oneMove =  game._moves[moveIdx];
         if (isInSequence) {
-            console.log('_getNextMoveOptions mv',moveIdx, ' transforms ', availableTransforms);
+            //console.log('_getNextMoveOptions mv',moveIdx, ' transforms ', availableTransforms);
             let newsgfPosition = _isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms);
-            console.log('AAAA                mv',newsgfPosition, ' transforms ', availableTransforms);
+            //console.log('AAAA                mv',newsgfPosition, ' transforms ', availableTransforms);
             if (newsgfPosition) {
-                console.log('BBB  in seq              mv',newsgfPosition, ' transforms ', availableTransforms);
+                //console.log('BBB  in seq              mv',newsgfPosition, ' transforms ', availableTransforms);
                 if(newsgfPosition === sgfPosition) {
-                    console.log('CCC  in seq              mv',newsgfPosition, ' transforms ', availableTransforms);
+                    //console.log('CCC  in seq              mv',newsgfPosition, ' transforms ', availableTransforms);
                     nodeIdx ++; // sgfPosition.nodes[] is the one way street that we have to follow before reaching the sequences
                 } else {
-                    console.log('EEE  in seq              mv',newsgfPosition, ' transforms ', availableTransforms);
+                    //console.log('EEE  in seq              mv',newsgfPosition, ' transforms ', availableTransforms);
                     nodeIdx = 0; // sgfPosition.nodes[] was completed, so we continue with the sgfPosition.sequences (that iss newsgfPosition)
                     sgfPosition = newsgfPosition;
                 }
             } else {
-                console.log('EEE NOT in seq              mv',newsgfPosition, ' transforms ', availableTransforms);
+                //console.log('EEE NOT in seq              mv',newsgfPosition, ' transforms ', availableTransforms);
                 isInSequence = false;
             }
         }
@@ -101,14 +101,14 @@ const _getPathComment = function(game) {
     // is oneMove one of the allowed children of gameTreeSequenceNode
     // if so, returns the matching sequences.X object
 const _isInSequence = function(game, oneMove, nodeIdx, gameTreeSequenceNode, availableTransforms) {
-    console.log('_isInSequence ? '+availableTransforms.length+' move '+nodeIdx+':',oneMove);
+    //console.log('_isInSequence ? '+availableTransforms.length+' move '+nodeIdx+':',oneMove);
     if(nodeIdx< gameTreeSequenceNode.nodes.length) {
-        console.log('_isInSequence NODES '+nodeIdx,gameTreeSequenceNode.nodes[nodeIdx]);
-        console.log('2_isInSequence NODES '+nodeIdx,'#'+(oneMove.color === "black" ? gameTreeSequenceNode.nodes[nodeIdx].B : gameTreeSequenceNode.nodes[nodeIdx].W)+'#');
-        console.log('2_isInSequence NODES '+nodeIdx,'#'+typeof(oneMove.color === "black" ? gameTreeSequenceNode.nodes[nodeIdx].B : gameTreeSequenceNode.nodes[nodeIdx].W)+'#');
-        console.log('2_isInSequence NODES '+nodeIdx,'#'+(typeof(oneMove.color === "black" ? gameTreeSequenceNode.nodes[nodeIdx].B : gameTreeSequenceNode.nodes[nodeIdx].W)!== "undefined")+'#');
-        console.log('3_isInSequence NODES '+nodeIdx,'#'+(gameTreeSequenceNode.nodes[nodeIdx].B + gameTreeSequenceNode.nodes[nodeIdx].W)+'#');
-        console.log('3_isInSequence NODES '+nodeIdx,(!oneMove.pass || (gameTreeSequenceNode.nodes[nodeIdx].B + gameTreeSequenceNode.nodes[nodeIdx].W) === ""));
+        //console.log('_isInSequence NODES '+nodeIdx,gameTreeSequenceNode.nodes[nodeIdx]);
+        //console.log('2_isInSequence NODES '+nodeIdx,'#'+(oneMove.color === "black" ? gameTreeSequenceNode.nodes[nodeIdx].B : gameTreeSequenceNode.nodes[nodeIdx].W)+'#');
+        //console.log('2_isInSequence NODES '+nodeIdx,'#'+typeof(oneMove.color === "black" ? gameTreeSequenceNode.nodes[nodeIdx].B : gameTreeSequenceNode.nodes[nodeIdx].W)+'#');
+        //console.log('2_isInSequence NODES '+nodeIdx,'#'+(typeof(oneMove.color === "black" ? gameTreeSequenceNode.nodes[nodeIdx].B : gameTreeSequenceNode.nodes[nodeIdx].W)!== "undefined")+'#');
+        //console.log('3_isInSequence NODES '+nodeIdx,'#'+(gameTreeSequenceNode.nodes[nodeIdx].B + gameTreeSequenceNode.nodes[nodeIdx].W)+'#');
+        //console.log('3_isInSequence NODES '+nodeIdx,(!oneMove.pass || (gameTreeSequenceNode.nodes[nodeIdx].B + gameTreeSequenceNode.nodes[nodeIdx].W) === ""));
         const oneChildMoves = gameTreeSequenceNode.nodes.
             filter( (childNode, sequenceIdx) => sequenceIdx === nodeIdx). // we only consider the "nodeIdx" move of the nodes
             filter(childNode => typeof (oneMove.color === "black" ? childNode.B : childNode.W) !== "undefined").
@@ -118,7 +118,7 @@ const _isInSequence = function(game, oneMove, nodeIdx, gameTreeSequenceNode, ava
                 {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
                 availableTransforms));
 
-        console.log('_isInSequence NODES '+nodeIdx,oneChildMoves);
+        //console.log('_isInSequence NODES '+nodeIdx,oneChildMoves);
         if(oneChildMoves && oneChildMoves.length) {
             if(!oneMove.pass) {
                 let childNode = oneChildMoves[0];
@@ -287,6 +287,8 @@ const ExampleGameControls = function(element, game) {
     this.element = element;
     this.game = game;
     this.isKnownVersionLoaded = false;
+    this.isAllowDifferentCorners = localStorage.getItem("isAllowDifferentCorners") || false;
+    this.isAllowSymmetry = localStorage.getItem("isAllowSymmetry") || true;
     this.textInfo = element.querySelector(".text-info p");
     this.gameInfo = element.querySelector(".game-info p");
     this.branchInfo = element.querySelector(".branch-info p");
@@ -363,19 +365,51 @@ const ExampleGameControls = function(element, game) {
         var setPathButton = document.querySelector(".setPath");
         var testButton = document.querySelector(".test");
         var playAsWhite = document.querySelector("#isPlayAsWhite");
+        var allowDifferentCorners = document.querySelector("#isAllowDifferentCorners");
+        var allowSymmetry = document.querySelector("#isAllowSymmetry");
+        var allowSymmetryLabel = document.querySelector("#isAllowSymmetryLabel");
+        var allowSymmetryContainer = document.querySelector("#isAllowSymmetryContainer");
 
+        this.updateGUIFromState = function(e) {
+            if(controls.isAllowDifferentCorners) {
+                allowDifferentCorners.checked = true;
+                allowSymmetryContainer.style.display = "none";
+            } else {
+                allowDifferentCorners.checked = false;
+                allowSymmetryContainer.style.display = "block";
+            }
+            if(controls.isAllowSymmetry) {
+                allowSymmetry.checked = true;
+            } else {
+                allowSymmetry.checked = false;
+            }
+            if(controls.isAutoplay === "white") {
+                playAsWhite.checked = true;
+            } else {
+                playAsWhite.checked = false;
+            }
+        }
         this.reset = function(e) {
             e.preventDefault();
             var startPath = JSON.parse(localStorage.getItem("startPath")) || [];
             while (controls.game.currentState().moveNumber /*&& controls.game.currentState().moveNumber != startPath.length*/) {
                 controls.game.undo();
             }
+
+            const availableTransforms =
+                controls.isAllowDifferentCorners ? utils.getAllPossibleTransform() :
+                controls.isAllowSymmetry? utils.getTopRightTransform() :
+                utils.getIdentityTransform();
+            let oneTransformIdx = Math.floor(availableTransforms.length * Math.random());
+
+            const oneTransform = availableTransforms[oneTransformIdx];
             startPath.forEach(oneMove => {
-              if (oneMove.pass) {
-                  controls.game.pass();
-              } else {
-                  controls.game.playAt(oneMove.y, oneMove.x);
-              }
+                if (oneMove.pass) {
+                    controls.game.pass();
+                } else {
+                    const transformed = utils.transformMove(oneMove, oneTransform);
+                    controls.game.playAt(transformed.y, transformed.x);
+                }
 
             });
 
@@ -387,6 +421,20 @@ const ExampleGameControls = function(element, game) {
             } else {
                 controls.setAutoplay("black");
             }
+        };
+
+        allowDifferentCorners.onclick = function(e) {
+            //console.log('allowDifferentCorners clicked ', e);
+            controls.isAllowDifferentCorners = e.srcElement.checked;
+            localStorage.setItem("isAllowDifferentCorners", JSON.stringify(e.srcElement.checked));
+            controls.updateGUIFromState();
+        };
+
+        allowSymmetry.onclick = function(e) {
+            //console.log('allowSymmetry clicked ', e);
+            controls.isAllowSymmetry = e.srcElement.checked;
+            localStorage.setItem("isAllowSymmetry", JSON.stringify(e.srcElement.checked));
+            controls.updateGUIFromState();
         };
 
         passButton.addEventListener("click", function(e) {
@@ -415,11 +463,13 @@ const ExampleGameControls = function(element, game) {
         //localStorage.setItem("knownVersions", JSON.stringify([]));
         // LAST getLatestSGF
         setTimeout(this.getLatestSGF,200);
+        setTimeout(this.updateGUIFromState,200);
 
     }
 
     this.setAutoplay = function(newIsAutoplay) {
         controls.isAutoplay =newIsAutoplay;
+        localStorage.setItem("autoplay", newIsAutoplay);
     }
 
 
@@ -554,13 +604,13 @@ const ExampleGameControls = function(element, game) {
                         if(knownVersions[SGFrevIdx].id == 1){
                             //console.log('init with ', knownVersions[SGFrevIdx]);
                             collection = sgf.parse(knownVersions[SGFrevIdx].SGF);
-                            console.log('init created ', collection);
+                            //console.log('init created ', collection);
                             controls.isKnownVersionLoaded = true;
                         } else {
-                            console.log('merge with ', knownVersions[SGFrevIdx]);
-                            console.log('2merge with ', sgf.parse(knownVersions[SGFrevIdx].SGF));
+                            //console.log('merge with ', knownVersions[SGFrevIdx]);
+                            //console.log('2merge with ', sgf.parse(knownVersions[SGFrevIdx].SGF));
                             sgfutils.merge(collection.gameTrees[0], sgf.parse(knownVersions[SGFrevIdx].SGF).gameTrees[0], 1, 1);
-                            console.log('merged ', collection);
+                            //console.log('merged ', collection);
                         }
                     }
                 }

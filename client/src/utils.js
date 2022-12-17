@@ -172,6 +172,30 @@ export default {
         return ALL_POSSIBLE_TRANSFORMS;
     },
 
+    getTopRightTransform:function(){
+        // diagonal means symmetry along bot-left to top-right diagonal
+        // horizontal means symmetry that transforms left to right
+        // vertical means symmetry that transforms top to bottom
+        const ALL_POSSIBLE_TRANSFORMS = [
+            {diagonal:false, horizontal:false, vertical: false }, // identity, does not change anything
+            {diagonal:true , horizontal:false, vertical: false } // R16 -> Q17
+        ];
+
+        return ALL_POSSIBLE_TRANSFORMS;
+    },
+
+
+    getIdentityTransform:function(){
+        // diagonal means symmetry along bot-left to top-right diagonal
+        // horizontal means symmetry that transforms left to right
+        // vertical means symmetry that transforms top to bottom
+        const ALL_POSSIBLE_TRANSFORMS = [
+            {diagonal:false, horizontal:false, vertical: false }
+        ];
+
+        return ALL_POSSIBLE_TRANSFORMS;
+    },
+
     // if any availableTransform transforms sourcePoint into targetPoint, return them. otherwise return null
     getPossibleTransforms:function(sourcePoint, targetPoint, availableTransform){
         if(sourcePoint.pass && targetPoint.pass) {return availableTransform;}

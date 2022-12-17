@@ -18,10 +18,23 @@ router.use((request, response, next) => {
 });
  
 
-router.route('/orders').get((req, res) => {
+router.route('/players').get((req, res) => {
   const title = req.query.title;
 
   Db.getAll(title, (err, data) => {
+    if (err)
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving players."
+      });
+    else res.send(data);
+  });
+})
+
+router.route('/joseki').get((req, res) => {
+  const title = req.query.title;
+
+  Db.getJoseki(title, (err, data) => {
     if (err)
       res.status(500).send({
         message:

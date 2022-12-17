@@ -1,6 +1,7 @@
 import utils from "./utils";
 import exampleSGF from "./baseSGF";
 import sgfutils from "./utils";
+import axios from "axios";
 
 var sgf = require('smartgame');
 
@@ -318,7 +319,7 @@ const ExampleGameControls = function(element, game) {
             }
         }
         //console.log('current options:',nextMoveOptions);
-        newGameInfo += "\n current options: "+nextMoveOptions.map(oneMove => oneMove.pass ? "Tenuki" : this.game.coordinatesFor(oneMove.y,oneMove.x)).join(" or ");
+        newGameInfo += "\n current options: "+ (nextMoveOptions && nextMoveOptions.map(oneMove => oneMove.pass ? "Tenuki" : this.game.coordinatesFor(oneMove.y,oneMove.x)).join(" or "));
         newGameInfo += "\n_getPathComment:\n"+_getPathComment(this.game);
         //newGameInfo += "\nEND of getPathComment \n";
 
@@ -396,7 +397,37 @@ const ExampleGameControls = function(element, game) {
             controls.setText("Position saved! From now on, you can click on RESET to come back to the same variation");
         });
         testButton.addEventListener("click", function(e) {
-            controls.testMerge();
+            //controls.testMerge();
+            axios
+                .get("/api/joseki")
+                .then((res) => {
+                    function bin2String(array) {
+                      return String.fromCharCode.apply(String, array);
+                    }
+                    //setRandomQuote(res.data);
+                    var decoder = new TextDecoder("utf-8")
+                    console.log('server responded',res.data[1].SGF);
+                    //console.log('server responded',decoder.decode(res.data[1].SGF));
+                    console.log('server responded',sgfutils.bin2String2(res.data[1].SGF.data));
+
+                    var mocked = '(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-17];B[pd];W[qc];B[qd];W[pc];B[od];W[nb];B[];W[mc])';
+
+                    var mockedcollection = sgf.parse(mocked);
+                    console.log('mockedcollection ',mockedcollection);
+
+                    var editSGF = sgfutils.bin2String2(res.data[1].SGF.data);
+
+                    console.log('compare ',mocked);
+                    console.log('compare ',editSGF);
+                    console.log('compare ',mocked === editSGF);
+
+                    collection = sgf.parse(sgfutils.bin2String2(res.data[0].SGF.data));
+                    console.log('collection ',collection);
+                    var collection1 = sgf.parse(editSGF);
+                    console.log('collection1 ',collection1);
+
+                    sgfutils.merge(collection.gameTrees[0], collection1.gameTrees[0], 1, 1);
+                });
         });
 
         resetButton.addEventListener("click", this.reset);
@@ -430,8 +461,12 @@ const ExampleGameControls = function(element, game) {
 
     this.testMerge = function() {
 
-        var sansan_simple_haneSGF = String.raw`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-08];B[pd];W[qc];B[qd];W[pc];B[oc];W[ob];B[nc])`;
-        var sansan_double_haneSGF = String.raw`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-08];B[pd];W[qc];B[qd];W[pc];B[oc];W[ob];B[nb])`;
+        var sansan_simple_haneSGF           = String.raw`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-08];B[pd];W[qc];B[qd];W[pc];B[oc];W[ob];B[nc])`;
+        var sansan_double_haneSGF           = String.raw`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-08];B[pd];W[qc];B[qd];W[pc];B[oc];W[ob];B[nb])`;
+        var double_hane_continuationSGF     = String.raw`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-08];B[pd];W[qc];B[qd];W[pc];B[oc];W[ob];B[nb];W[nc])`;
+        var sansan_hane_trickcutSGF         = String.raw`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-08];B[pd];W[qc];B[qd];W[pc];B[oc];W[ob];B[pb];W[nb])`;
+        var sansan_hane_trickcut2SGF        = String.raw`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-08];B[pd];W[qc];B[qd];W[pc];B[oc];W[ob];B[pb];W[nb];B[bb])`;
+        var sansan_hane_mistakeSGF          = String.raw`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-08];B[pd];W[qc];B[qd];W[pc];B[oc];W[ob];B[rc];W[nb];B[bb])`;
 
         var sansan_simple_hane = sgf.parse(sansan_simple_haneSGF);
         console.log('parsed sansan_simple_hane SGF: ', sansan_simple_hane);
@@ -439,12 +474,86 @@ const ExampleGameControls = function(element, game) {
         var sansan_double_hane = sgf.parse(sansan_double_haneSGF);
         console.log('parsed sansan_double_hane SGF: ', sansan_double_hane);
 
+        var double_hane_continuation = sgf.parse(double_hane_continuationSGF);
+        console.log('parsed double_hane_continuation SGF: ', double_hane_continuation);
 
-        //var mergedSGF = sgf.generate(sansan_simple_hane);
-        sgfutils.merge(sansan_simple_hane.gameTrees[0], sansan_double_hane.gameTrees[0], 0, 0);
+        var sansan_hane_trickcut = sgf.parse(sansan_hane_trickcutSGF);
+        console.log('parsed sansan_hane_trickcut SGF: ', sansan_hane_trickcut);
+
+        var sansan_hane_trickcut2 = sgf.parse(sansan_hane_trickcut2SGF);
+        console.log('parsed sansan_hane_trickcut2 SGF: ', sansan_hane_trickcut2);
+
+
+        console.log('SGF-------------------- merge double hane into simple hane----------------------');
+        sgfutils.merge(sansan_simple_hane.gameTrees[0], sansan_double_hane.gameTrees[0], 1, 1);
+        var mergedSGF = sgf.generate(sansan_simple_hane);
         //fs.writeFileSync('sansan_merged.sgf', mergedSGF, { encoding: 'utf8' });
 
-        console.log('merged SGF: ', sansan_simple_hane);
+        console.log('merged SGF: ', sansan_simple_hane, sgf.parse(mergedSGF));
+        console.log('merged SGF: ', mergedSGF);
+
+        console.log('SGF2-------------------- merge trick into simple+double------------------------------------------');
+        sgfutils.merge(sansan_simple_hane.gameTrees[0], sansan_hane_trickcut.gameTrees[0], 1, 1);
+        var mergedSGF2 = sgf.generate(sansan_simple_hane);
+        //fs.writeFileSync('sansan_merged2.sgf', mergedSGF2, { encoding: 'utf8' });
+
+        console.log('merged SGF2: ', sansan_simple_hane, sgf.parse(mergedSGF2));
+        console.log('merged SGF2: ', mergedSGF2);
+
+        var simple_plus_double = sgf.parse(mergedSGF);
+        console.log('parsed simple_plus_double SGF: ', simple_plus_double);
+
+        console.log('SGF3--------------------- merge simple+double into trick (same result)-----------------------------------------');
+        sgfutils.merge(sansan_hane_trickcut.gameTrees[0], simple_plus_double.gameTrees[0], 1, 1);
+        var mergedSGF3 = sgf.generate(sansan_hane_trickcut);
+        //fs.writeFileSync('sansan_merged3.sgf', mergedSGF3, { encoding: 'utf8' });
+
+        console.log('merged SGF3: ', sansan_hane_trickcut, sgf.parse(mergedSGF3));
+        console.log('merged SGF3: ', mergedSGF3);
+        console.log('merged SGF2 =?= SGF3: ', mergedSGF2 === mergedSGF3);
+
+        console.log('SGF4--------------------- merge trick cut into trickcut continuation-----------------------------------------');
+        sgfutils.merge(sansan_hane_trickcut2.gameTrees[0], sansan_hane_trickcut.gameTrees[0], 1, 1);
+        var mergedSGF4 = sgf.generate(sansan_hane_trickcut2);
+        //fs.writeFileSync('sansan_merged3.sgf', mergedSGF3, { encoding: 'utf8' });
+
+        console.log('merged SGF4: ', sansan_hane_trickcut2, sgf.parse(mergedSGF4));
+        console.log('merged SGF4: ', mergedSGF4);
+
+        sansan_double_hane = sgf.parse(sansan_double_haneSGF);
+        console.log('SGF5-------------------- merge double hane continuation into double------------------------------------------');
+        console.log('double_hane_continuation: ', sgf.generate(double_hane_continuation));
+        sgfutils.merge(sansan_double_hane.gameTrees[0], double_hane_continuation.gameTrees[0], 1, 1);
+        var mergedSGF5 = sgf.generate(sansan_double_hane);
+        //fs.writeFileSync('sansan_merged3.sgf', mergedSGF3, { encoding: 'utf8' });
+
+        console.log('merged SGF5: ', sansan_double_hane, sgf.parse(mergedSGF5));
+        console.log('merged SGF5: ', mergedSGF5);
+
+
+        simple_plus_double = sgf.parse(mergedSGF);
+        console.log('SGF6-------------------- merge double hane continuation into simple + double------------------------------------------');
+        console.log('double_hane_continuation: ', sgf.generate(double_hane_continuation));
+        console.log('simple_plus_double: ', sgf.generate(simple_plus_double));
+        sgfutils.merge(simple_plus_double.gameTrees[0], double_hane_continuation.gameTrees[0], 1, 1);
+        var mergedSGF6 = sgf.generate(simple_plus_double);
+        //fs.writeFileSync('sansan_merged3.sgf', mergedSGF3, { encoding: 'utf8' });
+
+        console.log('merged SGF6: ', simple_plus_double, sgf.parse(mergedSGF6));
+        console.log('merged SGF6: ', mergedSGF6);
+        //console.log('double_hane_continuation: ', sgf.generate(double_hane_continuation));
+
+        var trick_plus_double = sgf.parse(sansan_hane_trickcut2SGF);
+        sansan_double_hane = sgf.parse(sansan_double_haneSGF);
+        sgfutils.merge(trick_plus_double.gameTrees[0], sansan_double_hane.gameTrees[0], 1, 1);
+
+        console.log('SGF7-------------------- merge double hane continuation+ simple into trick + double------------------------------------------');
+        sgfutils.merge(trick_plus_double.gameTrees[0], simple_plus_double.gameTrees[0], 1, 1);
+        var mergedSGF7 = sgf.generate(trick_plus_double);
+        console.log('merged SGF7: ', trick_plus_double, sgf.parse(mergedSGF7));
+        console.log('merged SGF7: ', mergedSGF7);
+        console.log('--------------------------------------------------------------');
+
     }
 
 };

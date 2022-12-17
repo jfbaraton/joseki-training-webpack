@@ -8,12 +8,7 @@ import logo from './assets/images/logo2.svg';
 
 function App() {
     const update = () => {
-        axios
-            .get("/api/orders")
-            .then((res) => {
-                //setRandomQuote(res.data);
-                console.log('server responded',res.data);
-            });
+        console.log('update');
     };
 }
 

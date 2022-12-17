@@ -208,6 +208,7 @@ export default {
     },
 
     isSameMove: function(node1, node2) {
+        //console.log('isSameMove ? ', node1, node2);
         if (node1 === node2) return true;
         if (!node1 || !node2) return false;
         if (node1.pass && node2.pass) return true;
@@ -218,30 +219,66 @@ export default {
         return false;
     },
 
+    string2Bin: function(str) {
+      var result = [];
+      for (var i = 0; i < str.length; i++) {
+        result.push(str.charCodeAt(i));
+      }
+      return result;
+    },
+
+    bin2String: function(array) {
+      return String.fromCharCode.apply(String, array);
+    },
+
+
+    bin2String2: function(array) {
+        var result = "";
+        for (var arrayIdx = 0; arrayIdx < array.length; arrayIdx++) {
+            result += String.fromCharCode(array[arrayIdx]);
+        }
+        return result;
+    },
+
+
+    bin2String3: function(array) {
+        var result = "";
+        array.forEach(oneByte => {
+            result += String.fromCharCode(oneByte);
+        });
+        return result;
+    },
+
     // everything from addedTree that is not already defined in masterTree will be added to masterTree
     merge: function(masterTree, addedTree, masterTreeNodeNextMoveIdx, addedTreeNodeNextMoveIdx) {
-        console.log('START merge ',masterTree, addedTree, masterTreeNodeNextMoveIdx, addedTreeNodeNextMoveIdx);
+        //console.log('START merge ',masterTree, addedTree, masterTreeNodeNextMoveIdx, addedTreeNodeNextMoveIdx);
 
         const isMasterNextMoveInMasterNodes = masterTree && masterTree.nodes && masterTree.nodes.length && masterTree.nodes.length > masterTreeNodeNextMoveIdx;
 
         if(!addedTree || !addedTree.nodes || !addedTree.nodes.length) return;
-        console.log('the the next node from addedTree is in nodes?  ', (addedTree && addedTree.nodes),')');
+        //console.log('the the next node from addedTree is in nodes?  ', (addedTree && addedTree.nodes),')');
 
         // if the next node from addedTree is in nodes
         if(addedTree.nodes.length> addedTreeNodeNextMoveIdx) {
-            console.log('the next node from addedTree is in nodes (',addedTreeNodeNextMoveIdx,'/',addedTree.nodes.length,')');
+            //console.log('debug merge 10'); //OK
+            //console.log('the next node from addedTree is in nodes (',addedTreeNodeNextMoveIdx,'/',addedTree.nodes.length-1,')');
             // look for this addedTree node in the masterTree next node
             if(isMasterNextMoveInMasterNodes) {
-                console.log('look for this addedTree node in the masterTree next node');
+                //console.log('debug merge 100'); // OK
+                //console.log('look for this addedTree node in the masterTree next node');
                 if(this.isSameMove(masterTree.nodes[masterTreeNodeNextMoveIdx], addedTree.nodes[addedTreeNodeNextMoveIdx])) {
-                    // if master has this addTree node as the next node
-                    console.log('isSameMove(masterTree.nodes[masterTreeNodeNextMoveIdx], addedTree.nodes[addedTreeNodeNextMoveIdx]');
-                    merge(masterTree, addedTree, masterTreeNodeNextMoveIdx+1, addedTreeNodeNextMoveIdx+1);
+                    //console.log('debug merge 1000'); // OK
+                    // SGF1
+                    // if master has this addedTree node as the next node
+                    //console.log('isSameMove(masterTree.nodes[masterTreeNodeNextMoveIdx], addedTree.nodes[addedTreeNodeNextMoveIdx]', masterTree.nodes[masterTreeNodeNextMoveIdx], addedTree.nodes[addedTreeNodeNextMoveIdx]);
+                    this.merge(masterTree, addedTree, masterTreeNodeNextMoveIdx+1, addedTreeNodeNextMoveIdx+1);
                     return;
                 } else {
-                    console.log('nodes moves differ');
+                    //console.log('debug merge 1001'); // OK
+                    // SGF1
+                    //console.log('nodes moves differ ', masterTree.nodes[masterTreeNodeNextMoveIdx], addedTree.nodes[addedTreeNodeNextMoveIdx]);
                     // nodes moves differ
-                    // both addTree node and master node become master sequences two options
+                    // both addedTree node and master node become master sequences two options
                     // save master.sequences to tmp
                     let seqTMP = masterTree.sequences;
                     masterTree.sequences = [];
@@ -249,55 +286,68 @@ export default {
                     // seqTMP -> master.sequences[0].sequences
                     masterTree.sequences.push({
                         nodes:masterTree.nodes.slice(masterTreeNodeNextMoveIdx),
-                        parent:masterTree.nodes[masterTreeNodeNextMoveIdx].parent,
+                        parent:masterTree,
                         sequences:seqTMP
                     });
 
-                    // addTree remaining nodes -> master.sequences[1]
-                    // addTree.sequences -> master.sequences[1].sequences
+                    // addedTree remaining nodes -> master.sequences[1]
+                    // addedTree.sequences -> master.sequences[1].sequences
                     masterTree.sequences.push({
                         nodes:addedTree.nodes.slice(addedTreeNodeNextMoveIdx),
-                        parent:masterTree.nodes[masterTreeNodeNextMoveIdx].parent,
+                        parent:masterTree,
                         sequences:addedTree.sequences
                     });
+
+                    masterTree.nodes = masterTree.nodes.slice(0,masterTreeNodeNextMoveIdx);
                     // TODO check all parents
                     return;
                 }
             } else if (masterTree.sequences && masterTree.sequences.length) {
+                //console.log('debug merge 101 ', masterTree.sequences, addedTree.nodes[addedTreeNodeNextMoveIdx]); // OK
                 // next master move is in master.sequences
 
                 // look in master.sequences if one corresponds
                 const matchingMasterSeq =  masterTree.sequences.find( masterSeq => this.isSameMove(masterSeq.nodes[0], addedTree.nodes[addedTreeNodeNextMoveIdx]));
+                //console.log('debug merge 101 found? ', matchingMasterSeq);
 
-                if(matchingMasterSeq && matchingMasterSeq.length) {
+                if(matchingMasterSeq) {
+                    //console.log('debug merge 1010'); // OK
+                    // SGF6
                     // if one corresponds, merge from index 0 if this master.sequences[matchingMoveIdx]
-                    merge(matchingMasterSeq[0], addTree, 1, addedTreeNodeNextMoveIdx+1);
+                    this.merge(matchingMasterSeq, addedTree, 1, addedTreeNodeNextMoveIdx+1);
                     return;
                 } else {
-                    // if no move corresponds, this addTree.nodes[addedTreeNodeNextMoveIdx] is a new sequence for master.sequences
+                    //console.log('debug merge 1011'); // OK
+                    // SGF2
+                    // if no move corresponds, this addedTree.nodes[addedTreeNodeNextMoveIdx] is a new sequence for master.sequences
                     masterTree.sequences.push({
                         nodes:addedTree.nodes.slice(addedTreeNodeNextMoveIdx ),
-                        parent:masterTree.nodes[masterTreeNodeNextMoveIdx].parent,
+                        parent:masterTree.sequences[0].parent,
                         sequences:addedTree.sequences
                     });
                     // TODO check all parents
                 }
                 return;
             } else {
+                //console.log('debug merge 102'); // OK
+                // SGF5
                 // no move in master
-                // add all remaining addTree.nodes at the end of master.nodes
+                // add all remaining addedTree.nodes at the end of master.nodes
                  masterTree.nodes.push(...addedTree.nodes.slice(addedTreeNodeNextMoveIdx ));
-                // addTree.sequences -> master.sequences
+                // addedTree.sequences -> master.sequences
                  masterTree.sequences = addedTree.sequences;
                 // TODO check all parents
+                return;
             }
 
         } else if(addedTree.sequences && addedTree.sequences.length){
+            //console.log('debug merge 11'); // OK
             // if the next node from addedTree is in sequences
             if(isMasterNextMoveInMasterNodes) {
-
+                //console.log('debug merge 110'); //OK
+                // SGF3
                 const matchingMasterSeqIdx = addedTree.sequences.findIndex(
-                    oneAddedTreeSeq => this.isSameMove(masterTree.nodes[masterTreeNodeNextMoveIdx], oneAddTreeSeq.nodes[0]));
+                    oneAddedTreeSeq => this.isSameMove(masterTree.nodes[masterTreeNodeNextMoveIdx], oneAddedTreeSeq.nodes[0]));
                 let seqTMP = masterTree.sequences;
                 addedTree.sequences.push({
                     nodes:masterTree.nodes.slice(masterTreeNodeNextMoveIdx),
@@ -309,29 +359,38 @@ export default {
                 masterTree.nodes = masterTree.nodes.slice(0,masterTreeNodeNextMoveIdx);
 
                 if (matchingMasterSeqIdx>=0) {
+                    //console.log('debug merge 1100'); // OK
+                    // SGF4
                     // if addedTree.sequences contains next master move
                     masterTree.sequences.splice(matchingMasterSeqIdx,1);
                     // -> call recursively merge on those identical sequence nodes
-                    merge(addedTree.sequences[addedTree.sequences.length-1],addedTree.sequences[matchingMasterSeqIdx], 1, 1);
+                    this.merge(addedTree.sequences[addedTree.sequences.length-1],addedTree.sequences[matchingMasterSeqIdx], 1, 1);
                 }
                 // TODO check all parents
-                // and that's it, no need to merge the rest of this addTree !!
+                // and that's it, no need to merge the rest of this addedTree !!
                 return;
             }
+            //console.log('debug merge 111'); // Ok
+            // both master and addedTree have their next move in .sequences
             for(let addedTreeSeqIdx = 0; addedTreeSeqIdx < addedTree.sequences.length ; addedTreeSeqIdx ++ ) {
-                const oneAddTreeSeq = addedTree.sequences[addedTreeSeqIdx];
-                if (masterTree.sequences && masterTree.sequences.length && masterTree.sequences.some(
-                    oneMasterSeq => this.isSameMove(oneMasterSeq.nodes[0], oneAddTreeSeq.nodes[0]))) {
+                const oneAddedTreeSeq = addedTree.sequences[addedTreeSeqIdx];
+                const matchingMasterSeq = masterTree.sequences && masterTree.sequences.length && masterTree.sequences.find(
+                        oneMasterSeq => this.isSameMove(oneMasterSeq.nodes[0], oneAddedTreeSeq.nodes[0]));
+                if (matchingMasterSeq) {
                     // if master has this sequence in its sequences
                     // -> call recursively merge on those identical sequence nodes
-                    const matchingMasterSeq = masterTree.sequences.find(
-                        oneMasterSeq => this.isSameMove(oneMasterSeq.nodes[0], oneAddTreeSeq.nodes[0]))[0];
-                    merge(matchingMasterSeq[0], oneAddTreeSeq, 1, 1);
+                    //console.log('debug merge 1110 ',matchingMasterSeq); //OK
+                    // SGF7
+                    this.merge(matchingMasterSeq, oneAddedTreeSeq, 1, 1);
                 } else {
+                    //console.log('debug merge 1111'); // OK
+                    // SGF7
                     if( !masterTree.sequences || !masterTree.sequences.length) {
                         masterTree.sequences = [];
                     }
-                    masterTree.sequences.push(oneAddTreeSeq);
+                    masterTree.sequences.push(oneAddedTreeSeq);
+                    // TODO check all parents
+                    oneAddedTreeSeq.parent = masterTree;
                 }
             }
         }

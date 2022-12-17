@@ -277,6 +277,7 @@ const ExampleGameControls = function(element, game) {
     var controls = this;
     this.element = element;
     this.game = game;
+    this.isKnownVersionLoaded = false;
     this.textInfo = element.querySelector(".text-info p");
     this.gameInfo = element.querySelector(".game-info p");
     this.branchInfo = element.querySelector(".branch-info p");
@@ -371,13 +372,12 @@ const ExampleGameControls = function(element, game) {
 
         };
         playAsWhite.onclick = function(e) {
-          console.log('playAsWhite clickedz ', playAsWhite, e);
-          if(e.srcElement.checked) {
-            controls.setAutoplay("white");
-          } else {
-            controls.setAutoplay("black");
-          }
-          //controls.game.pass();
+            console.log('playAsWhite clicked ', playAsWhite, e);
+            if(e.srcElement.checked) {
+                controls.setAutoplay("white");
+            } else {
+                controls.setAutoplay("black");
+            }
         };
 
         passButton.addEventListener("click", function(e) {
@@ -398,36 +398,15 @@ const ExampleGameControls = function(element, game) {
         });
         testButton.addEventListener("click", function(e) {
             //controls.testMerge();
-            axios
-                .get("/api/joseki")
-                .then((res) => {
-                    //setRandomQuote(res.data);
-                    var decoder = new TextDecoder("utf-8")
-                    console.log('server responded',res.data[1].SGF);
-                    //console.log('server responded',decoder.decode(res.data[1].SGF));
-                    console.log('server responded',sgfutils.bin2String(res.data[1].SGF.data));
-
-                    //var mocked = '(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-17];B[pd];W[qc];B[qd];W[pc];B[od];W[nb];B[];W[mc])';
-
-                    //var mockedcollection = sgf.parse(mocked);
-                    //console.log('mockedcollection ',mockedcollection);
-
-                    var editSGF = sgfutils.bin2String(res.data[1].SGF.data);
-
-                    //console.log('compare ',mocked);
-                    //console.log('compare ',editSGF);
-                    //console.log('compare ',mocked === editSGF);
-
-                    collection = sgf.parse(sgfutils.bin2String(res.data[0].SGF.data));
-                    console.log('collection ',collection);
-                    var collection1 = sgf.parse(editSGF);
-                    console.log('collection1 ',collection1);
-
-                    sgfutils.merge(collection.gameTrees[0], collection1.gameTrees[0], 1, 1);
-                });
+            controls.getLatestSGF();
         });
 
         resetButton.addEventListener("click", this.reset);
+
+        //localStorage.setItem("knownVersions", JSON.stringify([]));
+        // LAST getLatestSGF
+        setTimeout(this.getLatestSGF,200);
+
     }
 
     this.setAutoplay = function(newIsAutoplay) {
@@ -553,6 +532,48 @@ const ExampleGameControls = function(element, game) {
 
     }
 
+    this.getLatestSGF = function() {
+        let knownVersions = JSON.parse(localStorage && localStorage.getItem("knownVersions") || "[]");
+        //console.log('getLatestSGF ', knownVersions);
+        const lastKnownVersion = knownVersions.length && knownVersions[knownVersions.length-1].id || 0;
+        axios
+            .get("/api/joseki/"+lastKnownVersion)
+            .then((res) => {
+                if(!controls.isKnownVersionLoaded) {
+                    for(var SGFrevIdx = 0 ; SGFrevIdx < knownVersions.length; SGFrevIdx++) {
+                        //console.log('loading version ', knownVersions[SGFrevIdx]);
+                        if(knownVersions[SGFrevIdx].id == 1){
+                            //console.log('init with ', knownVersions[SGFrevIdx]);
+                            collection = sgf.parse(knownVersions[SGFrevIdx].SGF);
+                            //console.log('init created ', collection);
+                            controls.isKnownVersionLoaded = true;
+                        } else {
+                            //console.log('merge with ', knownVersions[SGFrevIdx]);
+                            sgfutils.merge(collection.gameTrees[0], sgf.parse(knownVersions[SGFrevIdx].SGF), 1, 1);
+                            //console.log('merged ', collection);
+                        }
+                    }
+                }
+                if(res.data && res.data.length) {
+                    for(var SGFrevIdx = 0 ; SGFrevIdx < res.data.length; SGFrevIdx++) {
+                        //console.log('adding version ', res.data[SGFrevIdx]);
+                        res.data[SGFrevIdx].SGF = sgfutils.bin2String(res.data[SGFrevIdx].SGF.data);
+                        knownVersions.push(res.data[SGFrevIdx]);
+                        if(res.data[SGFrevIdx].id == 1){
+                            //console.log('init with ', res.data[SGFrevIdx]);
+                            collection = sgf.parse(res.data[SGFrevIdx].SGF);
+                            //console.log('init created ', collection);
+                        } else {
+                            //console.log('merge with ', res.data[SGFrevIdx]);
+                            sgfutils.merge(collection.gameTrees[0], sgf.parse(res.data[SGFrevIdx].SGF), 1, 1);
+                            //console.log('merged ', collection);
+                        }
+                    }
+
+                    localStorage.setItem("knownVersions", JSON.stringify(knownVersions));
+                }
+            });
+    }
 };
 
 export default ExampleGameControls;

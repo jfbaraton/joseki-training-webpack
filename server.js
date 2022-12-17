@@ -31,10 +31,13 @@ router.route('/players').get((req, res) => {
   });
 })
 
-router.route('/joseki').get((req, res) => {
-  const title = req.query.title;
+router.route('/joseki/:id?').get((req, res) => {
+  const title = req.query.id;
+  const id = req.params.id;
 
-  Db.getJoseki(title, (err, data) => {
+  console.log('joseki with param '+id);
+  console.log('2joseki with param '+title);
+  Db.getJoseki(title, id, (err, data) => {
     if (err)
       res.status(500).send({
         message:

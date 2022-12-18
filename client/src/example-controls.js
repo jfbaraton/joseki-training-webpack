@@ -597,35 +597,37 @@ const ExampleGameControls = function(element, game) {
         let knownVersions = JSON.parse(localStorage && localStorage.getItem("knownVersions") || "[]");
         //console.log('getLatestSGF ', knownVersions);
         const lastKnownVersion = knownVersions.length && knownVersions[knownVersions.length-1].id || 0;
+
+        if(!controls.isKnownVersionLoaded) {
+            for(var SGFrevIdx = 0 ; SGFrevIdx < knownVersions.length; SGFrevIdx++) {
+                //console.log('loading version ', knownVersions[SGFrevIdx]);
+                if(knownVersions[SGFrevIdx].milestone){
+                    // milestones are already merged, so we can throw away the previous versions
+                    //console.log('init with ', knownVersions[SGFrevIdx]);
+                    collection = sgf.parse(knownVersions[SGFrevIdx].SGF);
+                    //console.log('init created ', collection);
+                    controls.isKnownVersionLoaded = true;
+                } else {
+                    //console.log('merge with ', knownVersions[SGFrevIdx]);
+                    //console.log('2merge with ', sgf.parse(knownVersions[SGFrevIdx].SGF));
+                    sgfutils.merge(collection.gameTrees[0], sgf.parse(knownVersions[SGFrevIdx].SGF).gameTrees[0], 1, 1);
+                    //console.log('merged ', collection);
+                }
+            }
+            /*console.log('-----------------------------------------------------');
+            const bm_variation = sgf.parse('(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-17];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])').gameTrees[0];
+            sgfutils.merge(collection.gameTrees[0], bm_variation, 1, 1);
+            console.log('merged ', collection, bm_variation);*/
+        }
         axios
             .get("/api/joseki/"+lastKnownVersion)
             .then((res) => {
-                if(!controls.isKnownVersionLoaded) {
-                    for(var SGFrevIdx = 0 ; SGFrevIdx < knownVersions.length; SGFrevIdx++) {
-                        //console.log('loading version ', knownVersions[SGFrevIdx]);
-                        if(knownVersions[SGFrevIdx].id == 1){
-                            //console.log('init with ', knownVersions[SGFrevIdx]);
-                            collection = sgf.parse(knownVersions[SGFrevIdx].SGF);
-                            //console.log('init created ', collection);
-                            controls.isKnownVersionLoaded = true;
-                        } else {
-                            //console.log('merge with ', knownVersions[SGFrevIdx]);
-                            //console.log('2merge with ', sgf.parse(knownVersions[SGFrevIdx].SGF));
-                            sgfutils.merge(collection.gameTrees[0], sgf.parse(knownVersions[SGFrevIdx].SGF).gameTrees[0], 1, 1);
-                            //console.log('merged ', collection);
-                        }
-                    }
-                    /*console.log('-----------------------------------------------------');
-                    const bm_variation = sgf.parse('(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-17];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])').gameTrees[0];
-                    sgfutils.merge(collection.gameTrees[0], bm_variation, 1, 1);
-                    console.log('merged ', collection, bm_variation);*/
-                }
                 if(res.data && res.data.length) {
                     for(var SGFrevIdx = 0 ; SGFrevIdx < res.data.length; SGFrevIdx++) {
                         //console.log('adding version ', res.data[SGFrevIdx]);
                         res.data[SGFrevIdx].SGF = sgfutils.bin2String(res.data[SGFrevIdx].SGF.data);
                         knownVersions.push(res.data[SGFrevIdx]);
-                        if(res.data[SGFrevIdx].id == 1){
+                        if(res.data[SGFrevIdx].milestone){
                             //console.log('init with ', res.data[SGFrevIdx]);
                             collection = sgf.parse(res.data[SGFrevIdx].SGF);
                             //console.log('init created ', collection);
@@ -635,6 +637,8 @@ const ExampleGameControls = function(element, game) {
                             //console.log('merged ', collection);
                         }
                     }
+
+                    // TODO filter out everything that precedes a milestone
 
                     localStorage.setItem("knownVersions", JSON.stringify(knownVersions));
                 }

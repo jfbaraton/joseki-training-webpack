@@ -365,10 +365,13 @@ const ExampleGameControls = function(element, game) {
         var setPathButton = document.querySelector(".setPath");
         var testButton = document.querySelector(".test");
         var playAsWhite = document.querySelector("#isPlayAsWhite");
+        var autoPlay = document.querySelector("#isAutoPlay");
         var allowDifferentCorners = document.querySelector("#isAllowDifferentCorners");
         var allowSymmetry = document.querySelector("#isAllowSymmetry");
         var allowDifferentCornersLabel = document.querySelector("#isAllowDifferentCornersLabel");
         var allowSymmetryContainer = document.querySelector("#isAllowSymmetryContainer");
+        var autoPlayContainer = document.querySelector("#isAutoPlayContainer");
+        var playAsWhiteContainer = document.querySelector("#isPlayAsWhiteContainer");
 
         this.updateGUIFromState = function(e) {
             if(controls.isAllowDifferentCorners) {
@@ -386,9 +389,17 @@ const ExampleGameControls = function(element, game) {
                 allowSymmetry.checked = false;
             }
             if(controls.isAutoplay === "white") {
+                playAsWhiteContainer.style.display = "block";
                 playAsWhite.checked = true;
-            } else {
+                autoPlay.checked = true;
+            } else if(controls.isAutoplay === "black") {
+                playAsWhiteContainer.style.display = "block";
                 playAsWhite.checked = false;
+                autoPlay.checked = true;
+            } else {
+                playAsWhiteContainer.style.display = "none";
+                playAsWhite.checked = false;
+                autoPlay.checked = false;
             }
         }
         this.reset = function(e) {
@@ -416,12 +427,28 @@ const ExampleGameControls = function(element, game) {
             });
 
         };
+
+        this.setAutoplay = function(newIsAutoplay) {
+            controls.isAutoplay =newIsAutoplay;
+            localStorage.setItem("autoplay", newIsAutoplay);
+            controls.updateGUIFromState();
+        }
+
         playAsWhite.onclick = function(e) {
             //console.log('playAsWhite clicked ', playAsWhite, e);
             if(e.srcElement.checked) {
                 controls.setAutoplay("white");
             } else {
                 controls.setAutoplay("black");
+            }
+        };
+
+        autoPlay.onclick = function(e) {
+            //console.log('playAsWhite clicked ', playAsWhite, e);
+            if(e.srcElement.checked) {
+                controls.setAutoplay("black");
+            } else {
+                controls.setAutoplay(null);
             }
         };
 
@@ -468,12 +495,6 @@ const ExampleGameControls = function(element, game) {
         setTimeout(this.updateGUIFromState,200);
 
     }
-
-    this.setAutoplay = function(newIsAutoplay) {
-        controls.isAutoplay =newIsAutoplay;
-        localStorage.setItem("autoplay", newIsAutoplay);
-    }
-
 
     this.autoPlay = function(game) {
         let startPath = JSON.parse(localStorage && localStorage.getItem("startPath") || "[]");

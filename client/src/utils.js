@@ -1,3 +1,4 @@
+var sgf = require('smartgame');
 
 export default {
     flatten: function(ary) {
@@ -277,6 +278,109 @@ export default {
         if (typeof node1.W !== "undefined"  && node1.W === node2.W) return true;
 
         return false;
+    },
+
+    getNodeSeparatedSGF: function(currentNode) {
+        let currentSGFVariation = [];
+        this.getVariationSGF(currentNode.node, currentNode.nodeIdx, currentSGFVariation, true);
+        const emptySGF = sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])');
+        currentSGFVariation.filter(node => !!node).forEach(node => emptySGF.gameTrees[0].nodes.push(node));
+        return sgf.generate(emptySGF);
+    },
+
+    // node is an sgf node to start from
+    // stats should be an object with {leafCount}
+    getNodeStats: function(node, nodeIdx, stats) {
+        // if this node has only one leaf, increment leafCount
+        if(!node.sequences || !node.sequences.length) {
+            // no sequences, there is a leaf here, so we return
+            if(this.isAcceptableMove(node.nodes[nodeIdx])) {
+                // no mistake, we count this as a valid Leaf
+                const signature = this.getNodeSeparatedSGF({node:node, nodeIdx:nodeIdx});
+                if(signature) {
+                    // TODO more stats based on localStorage history of visits (use hashmap? to search by signature?)
+                    stats.foundLeafCount++;
+                }
+                stats.leafCount++;
+            }
+            return;
+        } else {
+            // sequences exist, check all nodes for mistakes
+            let mistakeIndex = node.nodes.findIndex( oneNode => !this.isAcceptableMove(oneNode));
+            if(mistakeIndex>=nodeIdx) { // there is a leaf here, so we return
+                if (mistakeIndex>nodeIdx) {
+                    const signature = this.getNodeSeparatedSGF({node:node, nodeIdx:nodeIdx});
+                    if(signature) {
+                        stats.foundLeafCount++;
+                    }
+                    stats.leafCount++;// no mistake, we count this as a valid Leaf
+                }
+                return;
+            }
+        }
+
+        // otherwise, call recursively
+        for (let sequencesIdx = 0 ; sequencesIdx < node.sequences.length ; sequencesIdx++) {
+            let oneChild = node.sequences[sequencesIdx];
+            this.getNodeStats(oneChild, 0, stats);
+        }
+
+    },
+
+    getVariationSGF: function(node, nodeIdx, result, isKeepOnlyMove, isRemoveComment) {
+        if(!node.parent) return;
+        if(node.parent && node.parent.gameTrees) {
+            for (let nodesIdx = 1 ; node.nodes && nodesIdx < node.nodes.length && nodesIdx <= nodeIdx ; nodesIdx++) {
+                result.push(this.copyNode(node.nodes[nodesIdx], isKeepOnlyMove, isRemoveComment));
+            }
+            return;
+        }
+        this.getVariationSGF(node.parent, 10000, result, isKeepOnlyMove, isRemoveComment);
+        for (let nodesIdx = 0 ; node.nodes && nodesIdx < node.nodes.length && nodesIdx <= nodeIdx ; nodesIdx++) {
+            result.push(this.copyNode(node.nodes[nodesIdx], isKeepOnlyMove, isRemoveComment));
+        }
+    },
+
+    copyNode: function(nodeToCopy, isKeepOnlyMove, isRemoveComment) {
+        let copiedNode;
+        if(typeof nodeToCopy.B === "undefined" && typeof nodeToCopy.W === "undefined") return null;
+        if (isKeepOnlyMove) {
+            if(typeof nodeToCopy.B !== "undefined") {
+                return {B:nodeToCopy.B};
+            } else if(typeof nodeToCopy.W !== "undefined") {
+                return {W:nodeToCopy.W};
+            }
+        } else {
+            copiedNode = JSON.parse(JSON.stringify(nodeToCopy));
+            if (isRemoveComment) {
+                delete copiedNode.C;
+            }
+        }
+        return copiedNode;
+    },
+
+    getCurrentTransform: function(collection, game) {
+        let sgfPosition = collection.gameTrees[0];
+        let availableTransforms = this.getAllPossibleTransform();
+        let currentSelectedTransform = availableTransforms[0];
+        let nodeIdx=0;
+        for (let moveIdx = 0 ; moveIdx < 4 && moveIdx < game._moves.length && availableTransforms && availableTransforms.length ; moveIdx++) {
+            let oneMove =  game._moves[moveIdx];
+            let newsgfPosition = _isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms);
+            if(newsgfPosition) {
+                if(newsgfPosition === sgfPosition) {
+                    nodeIdx ++; // sgfPosition.nodes[] is the one way street that we have to follow before reaching the sequences
+                } else {
+                    nodeIdx = 0; // sgfPosition.nodes[] was completed, so we continue with the sgfPosition.sequences (that iss newsgfPosition)
+                    sgfPosition = newsgfPosition;
+                }
+                currentSelectedTransform = availableTransforms && availableTransforms.length ? availableTransforms[0] : currentSelectedTransform;
+            }
+            //console.log('getVariationSGF currentSelectedTransform : ', currentSelectedTransform);
+            //console.log('getVariationSGF transforms : ', availableTransforms && availableTransforms.length);
+        }
+
+        return currentSelectedTransform;
     },
 
     string2Bin: function(str) {

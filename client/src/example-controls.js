@@ -7,7 +7,7 @@ var sgf = require('smartgame');
 
 var collection = sgf.parse(exampleSGF);
 
-const _getNextMoveOptions = function(game) {
+const _getNextMoveOptions = function(game, isIgnoreErrors) {
     let sgfPosition = collection.gameTrees[0];
     const availableTransforms = utils.getAllPossibleTransform();
     let isInSequence = Boolean(availableTransforms) && Boolean(availableTransforms.length);
@@ -17,7 +17,7 @@ const _getNextMoveOptions = function(game) {
         oneMove =  game._moves[moveIdx];
         if (isInSequence) {
             //console.log('_getNextMoveOptions mv',moveIdx, ' transforms ', availableTransforms);
-            let newsgfPosition = _isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms);
+            let newsgfPosition = _isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms, isIgnoreErrors);
             //console.log('AAAA                mv',newsgfPosition, ' transforms ', availableTransforms);
             if (newsgfPosition) {
                 //console.log('BBB  in seq              mv',newsgfPosition, ' transforms ', availableTransforms);
@@ -53,20 +53,22 @@ const getPath = function(game) {
     return result;
 };
 
-const _getPathComment = function(game) {
+const _getPathComment = function(game, isShowOriginalComment) {
     let pathComment = "path: ";
     let sgfPosition = collection.gameTrees[0];
     let pathCommentExtra = "extra";
     let availableTransforms = utils.getAllPossibleTransform();
     let isInSequence = Boolean(availableTransforms) && Boolean(availableTransforms.length);
     let nodeIdx = 0;
+    let lastoptions = "";
     for (let moveIdx = 0 ; moveIdx < game._moves.length ; moveIdx++) {
         let oneMove =  game._moves[moveIdx];
         if(oneMove.pass) {
             pathComment += "PASS - ";
         } else {
-            pathComment += " " + game.coordinatesFor(oneMove.playedPoint.y, oneMove.playedPoint.x) + " - ";
-            pathComment += " (" + utils.pointToSgfCoord({y:oneMove.playedPoint.y, x:oneMove.playedPoint.x}) + ") - ";
+            pathComment += game.coordinatesFor(oneMove.playedPoint.y, oneMove.playedPoint.x);
+            pathComment += " (" + utils.pointToSgfCoord({y:oneMove.playedPoint.y, x:oneMove.playedPoint.x}) + ")";
+            pathComment += " - ";
         }
         if (isInSequence) {
             let newsgfPosition = _isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms);
@@ -79,6 +81,7 @@ const _getPathComment = function(game) {
                 }
                 //console.log('CORRECT PATH '+pathComment,newsgfPosition);
                 pathCommentExtra = " correct!";
+                lastoptions = _childrenOptionsAsString(game, sgfPosition, nodeIdx+1, oneMove.color === "black" ? "white" : "black", availableTransforms);
             } else {
                 //console.log('WROOONG ',pathComment);
                 pathCommentExtra = "instead of ";
@@ -88,19 +91,19 @@ const _getPathComment = function(game) {
                     pathCommentExtra += " " + game.coordinatesFor(oneMove.playedPoint.y, oneMove.playedPoint.x) + " ";
                     pathCommentExtra += " (" + utils.pointToSgfCoord({y:oneMove.playedPoint.y, x:oneMove.playedPoint.x}) + ") ";
                 }
-                pathCommentExtra += "it was better to play one of ["+_childrenOptionsAsString(game, sgfPosition, nodeIdx+1, oneMove.color === "black" ? "white" : "black", availableTransforms)+"]";
+                pathCommentExtra += "it was better to play "+lastoptions;
                 isInSequence = false;
             }
         }
     }
-    let result = pathComment+ "\n\n" +pathCommentExtra+ "\n\n" +(isInSequence ? (sgfPosition.nodes[nodeIdx].C || 'no comment') : "WROOOOOONG");
+    let result = pathComment+ "\n\n" +pathCommentExtra+ "\n\n" +(isInSequence && isShowOriginalComment ? (sgfPosition.nodes[nodeIdx].C || 'no comment') : "WROOOOOONG");
     //console.log('final pathComment ',result);
     return result;
 };
 
     // is oneMove one of the allowed children of gameTreeSequenceNode
     // if so, returns the matching sequences.X object
-const _isInSequence = function(game, oneMove, nodeIdx, gameTreeSequenceNode, availableTransforms) {
+const _isInSequence = function(game, oneMove, nodeIdx, gameTreeSequenceNode, availableTransforms, isIgnoreErrors) {
     //console.log('_isInSequence ? '+availableTransforms.length+' move '+nodeIdx+':',oneMove);
     if(nodeIdx< gameTreeSequenceNode.nodes.length) {
         //console.log('_isInSequence NODES '+nodeIdx,gameTreeSequenceNode.nodes[nodeIdx]);
@@ -119,7 +122,7 @@ const _isInSequence = function(game, oneMove, nodeIdx, gameTreeSequenceNode, ava
                 availableTransforms));
 
         //console.log('_isInSequence NODES '+nodeIdx,oneChildMoves);
-        if(oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
+        if(oneChildMoves && oneChildMoves.length && (isIgnoreErrors || sgfutils.isAcceptableMove(oneChildMoves[0]))) {
             if(!oneMove.pass) {
                 let childNode = oneChildMoves[0];
                 let newAvailableTransforms = utils.getPossibleTransforms(
@@ -153,7 +156,7 @@ const _isInSequence = function(game, oneMove, nodeIdx, gameTreeSequenceNode, ava
 
         //console.log('_isInSequence '+i,oneChild);
         //console.log('_isInSequence '+i,oneChildMoves);
-        if(oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
+        if(oneChildMoves && oneChildMoves.length && (isIgnoreErrors || sgfutils.isAcceptableMove(oneChildMoves[0]))) {
             if(!oneMove.pass) {
                 let childNode = oneChildMoves [0];
                 let newAvailableTransforms = utils.getPossibleTransforms(
@@ -173,7 +176,15 @@ const _isInSequence = function(game, oneMove, nodeIdx, gameTreeSequenceNode, ava
     return false;
 };
 
-const _childrenOptionsAsString = function(game, gameTreeSequenceNode, nodeIdx, moveColor) {
+const _childrenOptionsAsString = function(game, gameTreeSequenceNode, nodeIdx, moveColor, availableTransforms) {
+    //console.log('DEBUG ',gameTreeSequenceNode);
+    let allOptions = _childrenOptions(game, gameTreeSequenceNode, nodeIdx, moveColor, availableTransforms)
+    return allOptions && allOptions.length ? allOptions.map(
+        oneMove => oneMove.pass ? "Tenuki" : game.coordinatesFor(oneMove.y,oneMove.x)
+    ).join(" or ") : "";
+};
+
+const _childrenOptionsAsString2 = function(game, gameTreeSequenceNode, nodeIdx, moveColor) {
     //console.log('DEBUG ',gameTreeSequenceNode);
     let childAsPoint;
     let resultString = "";
@@ -212,7 +223,7 @@ const _childrenOptionsAsString = function(game, gameTreeSequenceNode, nodeIdx, m
 
             if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
                 childAsPoint = utils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
-                resultString += " or "+game.coordinatesFor(childAsPoint.y, childAsPoint.x);
+                resultString += (resultString ? "" : " or ")+game.coordinatesFor(childAsPoint.y, childAsPoint.x);
             }
         }
     }
@@ -329,10 +340,11 @@ const ExampleGameControls = function(element, game) {
             } else {
                 this.element.classList.add("win");
             }
+            nextMoveOptions = _getNextMoveOptions(game, true);
         }
         //console.log('current options:',nextMoveOptions);
         newGameInfo += "\n current options: "+ (nextMoveOptions && nextMoveOptions.map(oneMove => oneMove.pass ? "Tenuki" : this.game.coordinatesFor(oneMove.y,oneMove.x)).join(" or "));
-        newGameInfo += "\n_getPathComment:\n"+_getPathComment(this.game);
+        newGameInfo += "\n_getPathComment:\n"+_getPathComment(this.game, true);
         //newGameInfo += "\nEND of getPathComment \n";
 
         this.gameInfo.innerText = newGameInfo;
@@ -484,7 +496,10 @@ const ExampleGameControls = function(element, game) {
         });
         testButton.addEventListener("click", function(e) {
             //controls.testMerge();
-            controls.getLatestSGF();
+            console.log('getVariationSGF:', controls.getVariationSGF({BM:'1'}));
+            console.log('getVariationSGF:', '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])');
+            //controls.postNewJosekiSGF('');
+
         });
 
         resetButton.addEventListener("click", this.reset);
@@ -517,6 +532,61 @@ const ExampleGameControls = function(element, game) {
         }
     }
 
+    // returns a one thread variation SGF of the current board state
+    // sets nodeProperties to the leaf, like BM for bad move, GW/GB for "Good for White/Black"
+    this.getVariationSGF = function(nodeProperties) {
+        const emptySGF = sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])');
+        // find polite transform based on first moves
+        let sgfPosition = collection.gameTrees[0];
+        let availableTransforms = utils.getAllPossibleTransform();
+        let currentSelectedTransform = availableTransforms[0];
+        let nodeIdx=0;
+        for (let moveIdx = 0 ; moveIdx < 4 && moveIdx < game._moves.length && availableTransforms && availableTransforms.length ; moveIdx++) {
+            let oneMove =  game._moves[moveIdx];
+            let newsgfPosition = _isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms);
+            if(newsgfPosition) {
+                if(newsgfPosition === sgfPosition) {
+                    nodeIdx ++; // sgfPosition.nodes[] is the one way street that we have to follow before reaching the sequences
+                } else {
+                    nodeIdx = 0; // sgfPosition.nodes[] was completed, so we continue with the sgfPosition.sequences (that iss newsgfPosition)
+                    sgfPosition = newsgfPosition;
+                }
+                currentSelectedTransform = availableTransforms && availableTransforms.length ? availableTransforms[0] : currentSelectedTransform;
+            }
+            //console.log('getVariationSGF currentSelectedTransform : ', currentSelectedTransform);
+            //console.log('getVariationSGF transforms : ', availableTransforms && availableTransforms.length);
+        }
+        //console.log('getVariationSGF currentSelectedTransform : ', currentSelectedTransform);
+        for (let moveIdx = 0 ; moveIdx < game._moves.length ; moveIdx++) {
+            let oneMove =  game._moves[moveIdx];
+            const node = moveIdx === game._moves.length-1 ? nodeProperties : {};
+            const sgfCoords = oneMove.pass ? "" : utils.pointToSgfCoord( utils.revertMove({y:oneMove.playedPoint.y, x:oneMove.playedPoint.x}, currentSelectedTransform));
+            //console.log('getVariationSGF original coords : ',(oneMove.pass ? "PASS" : {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x}), oneMove.pass ? "" : utils.pointToSgfCoord( {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x}));
+            //console.log('getVariationSGF sgfCoords : ', sgfCoords);
+            if(oneMove.color === "black") {
+                node.B = sgfCoords;
+            } else {
+                node.W = sgfCoords;
+            }
+            emptySGF.gameTrees[0].nodes.push(node);
+        }
+        return sgf.generate(emptySGF);
+    }
+
+    // SGF parameter has to be a string like '(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-17];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])'
+    this.postNewJosekiSGF = function(SGF) {
+        axios
+            .post("/api/joseki", {
+                SGF:SGF
+            })
+            .then(function (response) {
+                console.log('POST response',response);
+                controls.getLatestSGF();
+            })
+            .catch(function (error) {
+                console.log('POST error',error);
+            });
+    }
     this.testMerge = function() {
 
         var sansan_simple_haneSGF           = String.raw`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-08];B[pd];W[qc];B[qd];W[pc];B[oc];W[ob];B[nc])`;

@@ -41,9 +41,26 @@ router.route('/joseki/:id?').get((req, res) => {
     if (err)
       res.status(500).send({
         message:
-          err.message || "Some error occurred while retrieving players."
+          err.message || "Some error occurred while retrieving joseki."
       });
     else res.send(data);
+  });
+})
+
+router.route('/joseki').post((req, res) => {
+  //const title = req.query.id;
+  //const id = req.params.id;
+  const body = { ...req.body};
+
+  console.log('POST joseki '+JSON.stringify(body.SGF));
+  Db.setJoseki(body.SGF, (err, data) => {
+  //Db.getJoseki(null, null, (err, data) => {
+    if (err)
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while posting joseki."
+      });
+    else res.status(201).json(data);
   });
 })
 

@@ -230,6 +230,27 @@ export default {
         }
         return target;
     },
+    // if any availableTransform transforms sourcePoint into targetPoint, return them. otherwise return null
+    revertMove:function(sourcePoint, oneTransform){
+        if(sourcePoint.pass) {return sourcePoint;}
+        let target = {y:sourcePoint.y, x:sourcePoint.x};
+
+        if( oneTransform.diagonal) {
+            //console.log('swap diag ', target.y, target.x);
+             target.y = 18-sourcePoint.x;
+             target.x = 18-sourcePoint.y;
+        }
+        if( oneTransform.diagonal && oneTransform.vertical || !oneTransform.diagonal && oneTransform.horizontal) {
+            //console.log('swap x ', target.x);
+            target.x = 18 - target.x;
+        }
+        if(oneTransform.diagonal && oneTransform.horizontal || !oneTransform.diagonal && oneTransform.vertical) {
+            //console.log('swap y ',target.y);
+            target.y = 18 - target.y;
+        }
+
+        return target;
+    },
 
     isAcceptableMove: function(node, minimumWinrate) {
         if(!node || node.BM) return false;

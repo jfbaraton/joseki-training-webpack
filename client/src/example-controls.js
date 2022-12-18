@@ -374,6 +374,8 @@ const ExampleGameControls = function(element, game) {
         var passButton = document.querySelector(".pass");
         var undoButton = document.querySelector(".undo");
         var resetButton = document.querySelector(".reset");
+        var mistakeButton = document.querySelector(".mistake");
+        var josekiButton = document.querySelector(".joseki");
         var setPathButton = document.querySelector(".setPath");
         var testButton = document.querySelector(".test");
         var playAsWhite = document.querySelector("#isPlayAsWhite");
@@ -413,6 +415,14 @@ const ExampleGameControls = function(element, game) {
                 playAsWhite.checked = false;
                 autoPlay.checked = false;
             }
+        }
+        this.declareMistake = function(e) {
+            e.preventDefault();
+            controls.updateMoveWithConfirm({BM:'1', DM:''});
+        }
+        this.declareJoseki = function(e) {
+            e.preventDefault();
+            controls.updateMoveWithConfirm({BM:'', DM:'2', GW:'', GB:''});
         }
         this.reset = function(e) {
             e.preventDefault();
@@ -497,18 +507,69 @@ const ExampleGameControls = function(element, game) {
         testButton.addEventListener("click", function(e) {
             //controls.testMerge();
             console.log('getVariationSGF:', controls.getVariationSGF({BM:'1'}));
-            console.log('getVariationSGF:', '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])');
+            controls.updateMoveWithConfirm({BM:'1'});
+            //console.log('getVariationSGF:', '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])');
             //controls.postNewJosekiSGF('');
 
         });
 
         resetButton.addEventListener("click", this.reset);
+        mistakeButton.addEventListener("click", this.declareMistake);
+        josekiButton.addEventListener("click", this.declareJoseki);
 
         //localStorage.setItem("knownVersions", JSON.stringify([]));
         // LAST getLatestSGF
         setTimeout(this.getLatestSGF,200);
         setTimeout(this.updateGUIFromState,200);
 
+    }
+
+    this.renderPropertyChanges = function(nodeProperties) {
+        let changes = [];
+
+        if(typeof nodeProperties.BM !== "undefined") {
+            if(nodeProperties.BM) {
+                changes.push("should be considered a big mistake, not even a joseki for low level players or an outdated joseki");
+            } else {
+                changes.push("is not a mistake");
+            }
+        }
+        if(typeof nodeProperties.GW !== "undefined") {
+            if(nodeProperties.GW) {
+                changes.push("is good for white");
+            } else {
+                changes.push("is not (specially) good for white");
+            }
+        }
+        if(typeof nodeProperties.GB !== "undefined") {
+            if(nodeProperties.GB) {
+                changes.push("is good for black");
+            } else {
+                changes.push("is not (specially) good for black");
+            }
+        }
+        if(typeof nodeProperties.DM !== "undefined") {
+            if(nodeProperties.DM) {
+                changes.push("should be considered a joseki (this can also be for outdated joseki that dont have a clear refutation, and for joseki that are only good enough for amateur players)");
+            } else {
+                changes.push("is not (specially) even");
+            }
+        }
+        return changes.join("\n --- ");
+    }
+
+    // nodeProperties contains the updated metadata for this move
+    this.updateMoveWithConfirm = function(nodeProperties) {
+        let text = "Are you sure that you want to submit the change?\n";
+        if(nodeProperties) {
+            text += "\n - Last played move:"+ controls.renderPropertyChanges(nodeProperties);
+        } else {
+            text += "\n - All the moves of this variation (just the one line) that were NOT in the DB, are going to be added to DB and accepted as valid moves";
+        }
+        if (confirm(text) == true) {
+            let newSGF = controls.getVariationSGF({BM:'1'});
+            //controls.postNewJosekiSGF(newSGF);
+        }
     }
 
     this.autoPlay = function(game) {

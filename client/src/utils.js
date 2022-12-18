@@ -262,6 +262,9 @@ export default {
         //console.log("copyMetadata ", target, source);
         if(!source || !target) return;
         if(typeof source.BM !== "undefined") {target.BM = source.BM;}
+        if(typeof source.GW !== "undefined") {target.GW = source.GW;}
+        if(typeof source.GB !== "undefined") {target.GB = source.GB;}
+        if(typeof source.DM !== "undefined") {target.DM = source.DM;}
     },
 
     isSameMove: function(node1, node2) {

@@ -361,8 +361,9 @@ const ExampleGameControls = function(element, game) {
             console.log('current path: ',sgf.generate(emptySGF));
             if(this.game.currentState().moveNumber > 0) {
             //if(this.game.currentState().moveNumber > 1 ) {
-                let nodeStats = {leafCount: 0, failedLeafCount:0, foundLeafCount:0, successLeafCount:0};
-                sgfutils.getNodeStats( currentNode.node, currentNode.nodeIdx, nodeStats);
+                let nodeStats = sgfutils.getZeroStats();
+                let localStats = sgfutils.deepParse(localStorage.getItem("localStats")) || new Map();
+                sgfutils.getNodeStats( currentNode.node, currentNode.nodeIdx, nodeStats, localStats);
                 newGameInfo += "\n"+nodeStats.leafCount+" valid VARIATIONS to find";
             }
         }

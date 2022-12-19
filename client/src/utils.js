@@ -290,41 +290,61 @@ export default {
 
     // node is an sgf node to start from
     // stats should be an object with {leafCount}
-    getNodeStats: function(node, nodeIdx, stats) {
-        // if this node has only one leaf, increment leafCount
-        if(!node.sequences || !node.sequences.length) {
-            // no sequences, there is a leaf here, so we return
-            if(this.isAcceptableMove(node.nodes[nodeIdx])) {
-                // no mistake, we count this as a valid Leaf
-                const signature = this.getNodeSeparatedSGF({node:node, nodeIdx:nodeIdx});
-                if(signature) {
-                    // TODO more stats based on localStorage history of visits (use hashmap? to search by signature?)
-                    stats.foundLeafCount++;
+    // localStats is a Map<signature,{leafCount: 0, failedLeafCount:0, foundLeafCount:0, successLeafCount:0}>
+    getNodeStats: function(node, nodeIdx, stats, localStats) {
+
+        let mistakeIndex = node.nodes.findIndex( oneNode => !this.isAcceptableMove(oneNode));
+        if(mistakeIndex>=nodeIdx) { // there is a leaf here, so we return
+            const mistakeSignature = this.getNodeSeparatedSGF({node:node, nodeIdx:mistakeIndex});
+            let mistakeLocalStat = localStats.get(mistakeSignature);
+            let leafSignature;
+            let leafLocalStat;
+            if (mistakeIndex>nodeIdx) { // mistake at mistakeIndex AND leaf at mistakeIndex-1
+                leafSignature = this.getNodeSeparatedSGF({node:node, nodeIdx:mistakeIndex-1});
+                leafLocalStat = localStats.get(leafSignature);
+                if(!leafLocalStat) {
+                    leafLocalStat = this.getZeroStats();
                 }
-                stats.leafCount++;
+                leafLocalStat.mistakeCount ++;
+
+                stats.leafCount++;// no mistake, we count this as a valid Leaf
+            } else if(node.parent && node.parent.nodes && node.parent.nodes.length) {
+                // mistake at mistakeIndex AND leaf at the parent's last of nodes[]
+                leafSignature = this.getNodeSeparatedSGF({node:node.parent, nodeIdx:node.parent.nodes.length-1});
+                leafLocalStat = localStats.get(leafSignature);
             }
+
             return;
-        } else {
-            // sequences exist, check all nodes for mistakes
-            let mistakeIndex = node.nodes.findIndex( oneNode => !this.isAcceptableMove(oneNode));
-            if(mistakeIndex>=nodeIdx) { // there is a leaf here, so we return
-                if (mistakeIndex>nodeIdx) {
-                    const signature = this.getNodeSeparatedSGF({node:node, nodeIdx:nodeIdx});
-                    if(signature) {
-                        stats.foundLeafCount++;
-                    }
-                    stats.leafCount++;// no mistake, we count this as a valid Leaf
-                }
-                return;
-            }
         }
+        if(!node.sequences || !node.sequences.length) return;
 
         // otherwise, call recursively
         for (let sequencesIdx = 0 ; sequencesIdx < node.sequences.length ; sequencesIdx++) {
             let oneChild = node.sequences[sequencesIdx];
-            this.getNodeStats(oneChild, 0, stats);
+            const signature = this.getNodeSeparatedSGF({node:oneChild, nodeIdx:0});
+            let childStats =  this.getZeroStats();
+            this.getNodeStats(oneChild, 0, childStats, localStats);
+            localStats.set(signature, childStats);
+            this.addStats(stats, childStats);
         }
 
+    },
+
+    addStats: function(target, source) {
+        if(!target.leafCount) target.leafCount = 0;
+        if(!target.failedLeafCount) target.failedLeafCount = 0;
+        if(!target.foundLeafCount) target.foundLeafCount = 0;
+        if(!target.successLeafCount) target.successLeafCount = 0;
+        if(!target.mistakeCount) target.mistakeCount = 0;
+        target.leafCount +=source.leafCount;
+        target.failedLeafCount +=source.failedLeafCount;
+        target.foundLeafCount +=source.foundLeafCount;
+        target.successLeafCount +=source.successLeafCount;
+        target.mistakeCount +=source.mistakeCount;
+    },
+
+    getZeroStats: function() {
+        return {leafCount: 0, failedLeafCount:0, mistakeCount:0, foundLeafCount:0, successLeafCount:0};
     },
 
     getVariationSGF: function(node, nodeIdx, result, isKeepOnlyMove, isRemoveComment) {
@@ -398,6 +418,35 @@ export default {
         }
         return result;
     },
+
+    replacer: function(key, value) {
+        if(value instanceof Map) {
+            return {
+                dataType: 'Map',
+                value: Array.from(value.entries()), // or with spread: value: [...value]
+            };
+        } else {
+            return value;
+        }
+    },
+
+    reviver: function(key, value) {
+        if(typeof value === 'object' && value !== null) {
+            if (value.dataType === 'Map') {
+                return new Map(value.value);
+            }
+        }
+        return value;
+    },
+
+    deepStringify: function(object) {
+        return JSON.stringify(object, this.replacer);
+    },
+
+    deepParse: function(str) {
+        return JSON.parse(str, this.reviver);
+    },
+
 
     // everything from addedTree that is not already defined in masterTree will be added to masterTree
     merge: function(masterTree, addedTree, masterTreeNodeNextMoveIdx, addedTreeNodeNextMoveIdx) {

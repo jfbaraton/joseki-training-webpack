@@ -359,13 +359,16 @@ const ExampleGameControls = function(element, game) {
             const emptySGF = sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])');
             currentSGFVariation.forEach(node => emptySGF.gameTrees[0].nodes.push(node));
             console.log('current path: ',sgf.generate(emptySGF));
-            if(this.game.currentState().moveNumber > 0) {
+            const moveSignature = sgfutils.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
+            let localStats = sgfutils.deepParse(localStorage.getItem("localStats")) || new Map();
+            let nodeStats = localStats.get(moveSignature);
+            if(/*!nodeStats && */this.game.currentState().moveNumber > 0) {
             //if(this.game.currentState().moveNumber > 1 ) {
-                let nodeStats = sgfutils.getZeroStats();
-                let localStats = sgfutils.deepParse(localStorage.getItem("localStats")) || new Map();
+                nodeStats = sgfutils.getZeroStats();
                 sgfutils.getNodeStats( currentNode.node, currentNode.nodeIdx, nodeStats, localStats);
-                newGameInfo += "\n"+nodeStats.leafCount+" valid VARIATIONS to find";
+                localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
             }
+            newGameInfo += "\n"+nodeStats.leafCount+" valid VARIATIONS to find "+JSON.stringify(nodeStats);
         }
 
         if (currentState.pass) {

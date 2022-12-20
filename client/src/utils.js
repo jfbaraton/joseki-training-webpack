@@ -297,23 +297,30 @@ export default {
         if(mistakeIndex>=nodeIdx) { // there is a leaf here, so we return
             const mistakeSignature = this.getNodeSeparatedSGF({node:node, nodeIdx:mistakeIndex});
             let mistakeLocalStat = localStats.get(mistakeSignature);
+            if(!mistakeLocalStat) {
+                mistakeLocalStat = this.getZeroStats();
+                localStats.set(mistakeSignature, mistakeLocalStat);
+            }
+            mistakeLocalStat.mistakeCount ++;
             let leafSignature;
             let leafLocalStat;
             if (mistakeIndex>nodeIdx) { // mistake at mistakeIndex AND leaf at mistakeIndex-1
                 leafSignature = this.getNodeSeparatedSGF({node:node, nodeIdx:mistakeIndex-1});
                 leafLocalStat = localStats.get(leafSignature);
-                if(!leafLocalStat) {
-                    leafLocalStat = this.getZeroStats();
-                }
-                leafLocalStat.mistakeCount ++;
 
-                stats.leafCount++;// no mistake, we count this as a valid Leaf
+
+
             } else if(node.parent && node.parent.nodes && node.parent.nodes.length) {
                 // mistake at mistakeIndex AND leaf at the parent's last of nodes[]
                 leafSignature = this.getNodeSeparatedSGF({node:node.parent, nodeIdx:node.parent.nodes.length-1});
                 leafLocalStat = localStats.get(leafSignature);
             }
-
+            if(!leafLocalStat) {
+                leafLocalStat = this.getZeroStats();
+                localStats.set(leafSignature, leafLocalStat);
+            }
+            leafLocalStat.leafCount++;
+            stats.leafCount++;
             return;
         }
         if(!node.sequences || !node.sequences.length) return;

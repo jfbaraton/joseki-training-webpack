@@ -5,6 +5,7 @@ import axios from "axios";
 var sgf = require('smartgame');
 
 var collection = sgf.parse(exampleSGF);
+var previousLeafSignature = "";
 
 const _getNextMoveOptions = function(game, isIgnoreErrors) {
     let sgfPosition = collection.gameTrees[0];
@@ -16,7 +17,7 @@ const _getNextMoveOptions = function(game, isIgnoreErrors) {
         oneMove =  game._moves[moveIdx];
         if (isInSequence) {
             //console.log('_getNextMoveOptions mv',moveIdx, ' transforms ', availableTransforms);
-            let newsgfPosition = _isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms, isIgnoreErrors);
+            let newsgfPosition = sgfutils.isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms, isIgnoreErrors);
             //console.log('AAAA                mv',newsgfPosition, ' transforms ', availableTransforms);
             if (newsgfPosition) {
                 //console.log('BBB  in seq              mv',newsgfPosition, ' transforms ', availableTransforms);
@@ -70,7 +71,7 @@ const _getPathComment = function(game, isShowOriginalComment) {
             pathComment += " - ";
         }
         if (isInSequence) {
-            let newsgfPosition = _isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms);
+            let newsgfPosition = sgfutils.isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms);
             if (newsgfPosition) {
                 if(newsgfPosition === sgfPosition) {
                     nodeIdx ++; // sgfPosition.nodes[] is the one way street that we have to follow before reaching the sequences
@@ -109,7 +110,7 @@ const _getCurrentSGFNode = function(game, isIgnoreErrors) {
     for (let moveIdx = 0 ; moveIdx < game._moves.length && isInSequence ; moveIdx++) {
         let oneMove =  game._moves[moveIdx];
         if (isInSequence) {
-            let newsgfPosition = _isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms, isIgnoreErrors);
+            let newsgfPosition = sgfutils.isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms, isIgnoreErrors);
             if (newsgfPosition) {
                 if(newsgfPosition === sgfPosition) {
                     nodeIdx ++; // sgfPosition.nodes[] is the one way street that we have to follow before reaching the sequences
@@ -127,80 +128,6 @@ const _getCurrentSGFNode = function(game, isIgnoreErrors) {
     return {node:sgfPosition, nodeIdx:nodeIdx};
 };
 
-    // is oneMove one of the allowed children of gameTreeSequenceNode
-    // if so, returns the matching sequences.X object
-const _isInSequence = function(game, oneMove, nodeIdx, gameTreeSequenceNode, availableTransforms, isIgnoreErrors) {
-    //console.log('_isInSequence ? '+availableTransforms.length+' move '+nodeIdx+':',oneMove);
-    if(nodeIdx< gameTreeSequenceNode.nodes.length) {
-        //console.log('_isInSequence NODES '+nodeIdx,gameTreeSequenceNode.nodes[nodeIdx]);
-        //console.log('2_isInSequence NODES '+nodeIdx,'#'+(oneMove.color === "black" ? gameTreeSequenceNode.nodes[nodeIdx].B : gameTreeSequenceNode.nodes[nodeIdx].W)+'#');
-        //console.log('2_isInSequence NODES '+nodeIdx,'#'+typeof(oneMove.color === "black" ? gameTreeSequenceNode.nodes[nodeIdx].B : gameTreeSequenceNode.nodes[nodeIdx].W)+'#');
-        //console.log('2_isInSequence NODES '+nodeIdx,'#'+(typeof(oneMove.color === "black" ? gameTreeSequenceNode.nodes[nodeIdx].B : gameTreeSequenceNode.nodes[nodeIdx].W)!== "undefined")+'#');
-        //console.log('3_isInSequence NODES '+nodeIdx,'#'+(gameTreeSequenceNode.nodes[nodeIdx].B + gameTreeSequenceNode.nodes[nodeIdx].W)+'#');
-        //console.log('3_isInSequence NODES '+nodeIdx,(!oneMove.pass || (gameTreeSequenceNode.nodes[nodeIdx].B + gameTreeSequenceNode.nodes[nodeIdx].W) === ""));
-        const oneChildMoves = gameTreeSequenceNode.nodes.
-            filter( (childNode, sequenceIdx) => sequenceIdx === nodeIdx). // we only consider the "nodeIdx" move of the nodes
-            filter(childNode => typeof (oneMove.color === "black" ? childNode.B : childNode.W) !== "undefined").
-            filter(childNode => !oneMove.pass || (oneMove.color === "black" ? childNode.B : childNode.W) === "").
-            filter(childNode => oneMove.pass || sgfutils.getPossibleTransforms(
-                sgfutils.sgfCoordToPoint(oneMove.color === "black" ? childNode.B : childNode.W) ,
-                {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
-                availableTransforms));
-
-        //console.log('_isInSequence NODES '+nodeIdx,oneChildMoves);
-        if(oneChildMoves && oneChildMoves.length && (isIgnoreErrors || sgfutils.isAcceptableMove(oneChildMoves[0]))) {
-            if(!oneMove.pass) {
-                let childNode = oneChildMoves[0];
-                let newAvailableTransforms = sgfutils.getPossibleTransforms(
-                     sgfutils.sgfCoordToPoint(oneMove.color === "black" ? childNode.B : childNode.W) ,
-                     {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
-                     availableTransforms);
-                let idx = availableTransforms.length;
-                while (idx--) {
-                    if (newAvailableTransforms.indexOf(availableTransforms[idx]) <0) {
-                        availableTransforms.splice(idx, 1);
-                    }
-                }
-            }
-            return gameTreeSequenceNode; // in sequence according to gameTreeSequenceNode.nodes
-        } else {
-            return false; // not in sequence
-        }
-    }
-
-    //console.log('_isInSequence end of nodes ?',nodeIdx);
-    for (let sequencesIdx = 0 ; gameTreeSequenceNode.sequences && sequencesIdx < gameTreeSequenceNode.sequences.length ; sequencesIdx++) {
-        let oneChild = gameTreeSequenceNode.sequences[sequencesIdx];
-        const oneChildMoves = oneChild.nodes && oneChild.nodes.
-            filter( (childNode, sequenceIdx) => sequenceIdx === 0). // we only consider the first move of the sequence
-            filter(childNode => typeof (oneMove.color === "black" ? childNode.B : childNode.W) !== "undefined").
-            filter(childNode => !oneMove.pass || (oneMove.color === "black" ? childNode.B : childNode.W) === "").
-            filter(childNode => oneMove.pass || sgfutils.getPossibleTransforms(
-                 sgfutils.sgfCoordToPoint(oneMove.color === "black" ? childNode.B : childNode.W) ,
-                 {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
-                 availableTransforms));
-
-        //console.log('_isInSequence '+i,oneChild);
-        //console.log('_isInSequence '+i,oneChildMoves);
-        if(oneChildMoves && oneChildMoves.length && (isIgnoreErrors || sgfutils.isAcceptableMove(oneChildMoves[0]))) {
-            if(!oneMove.pass) {
-                let childNode = oneChildMoves [0];
-                let newAvailableTransforms = sgfutils.getPossibleTransforms(
-                     sgfutils.sgfCoordToPoint(oneMove.color === "black" ? childNode.B : childNode.W) ,
-                     {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
-                     availableTransforms);
-                let idx = availableTransforms.length;
-                while (idx--) {
-                    if (newAvailableTransforms.indexOf(availableTransforms[idx]) <0) {
-                        availableTransforms.splice(idx, 1);
-                    }
-                }
-            }
-            return oneChild;// in sequence according to sequences.
-        }
-    }
-    return false;
-};
 
 const _childrenOptionsAsString = function(game, gameTreeSequenceNode, nodeIdx, moveColor, availableTransforms) {
     //console.log('DEBUG ',gameTreeSequenceNode);
@@ -351,24 +278,26 @@ const ExampleGameControls = function(element, game) {
         var currentState = this.game.currentState();
         var currentNodeDespiteErrors = _getCurrentSGFNode(this.game, true);
         var currentNode = _getCurrentSGFNode(this.game);
+        //localStorage.setItem("localStats", null);
+        let localStats = sgfutils.deepParse(localStorage.getItem("localStats")) || new Map();
 
         if(currentNode) {
-            console.log('current node: ',currentNode);
+            //console.log('current node: ',currentNode);
             let currentSGFVariation = [];
             sgfutils.getVariationSGF(currentNode.node, currentNode.nodeIdx, currentSGFVariation, true);
             const emptySGF = sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])');
             currentSGFVariation.forEach(node => emptySGF.gameTrees[0].nodes.push(node));
-            console.log('current path: ',sgf.generate(emptySGF));
+            //console.log('current path: ',sgf.generate(emptySGF));
             const moveSignature = sgfutils.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
-            let localStats = sgfutils.deepParse(localStorage.getItem("localStats")) || new Map();
             let nodeStats = localStats.get(moveSignature);
+            //let nodeStats = addStatsForNode();
             if(/*!nodeStats && */this.game.currentState().moveNumber > 0) {
             //if(this.game.currentState().moveNumber > 1 ) {
                 nodeStats = sgfutils.getZeroStats();
                 sgfutils.getNodeStats( currentNode.node, currentNode.nodeIdx, nodeStats, localStats);
                 localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
             }
-            newGameInfo += "\n"+nodeStats.leafCount+" valid VARIATIONS to find "+JSON.stringify(nodeStats);
+            newGameInfo += "\n"+(nodeStats && nodeStats.leafCount || "Nan")+" valid VARIATIONS to find "+JSON.stringify(nodeStats);
         }
 
         if (currentState.pass) {
@@ -381,10 +310,26 @@ const ExampleGameControls = function(element, game) {
             this.element.classList.remove("notInSequence");
             this.element.classList.remove("win");
         } else {
+            let signature = null;
+            let newStatToSet = null;
+            let newStatToAdd = null;
             if(currentNode === null) {
                 this.element.classList.add("notInSequence");
+                signature = this.getVariationSGF({});
+                newStatToAdd = {mistakeCount:1};
+                newStatToSet = {foundLeafCount:1};
             } else {
+                signature = sgfutils.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
                 this.element.classList.add("win");
+                newStatToAdd = {successLeafCount:1};
+                newStatToSet = {foundLeafCount:1};
+            }
+            if(signature && previousLeafSignature !== signature) {
+                previousLeafSignature = signature;
+                let nodeStats = sgfutils.setStatsForSignature(signature, newStatToSet, localStats);
+                sgfutils.addStats(nodeStats, newStatToAdd);
+
+                newGameInfo += "\nnew Stats :  "+JSON.stringify(nodeStats);
             }
             nextMoveOptions = _getNextMoveOptions(game, true);
         }

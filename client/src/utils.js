@@ -292,66 +292,129 @@ export default {
     // stats should be an object with {leafCount}
     // localStats is a Map<signature,{leafCount: 0, failedLeafCount:0, foundLeafCount:0, successLeafCount:0}>
     getNodeStats: function(node, nodeIdx, stats, localStats) {
-
+        //console.log('START getNodeStats '+localStats.size,stats);
         let mistakeIndex = node.nodes.findIndex( oneNode => !this.isAcceptableMove(oneNode));
         if(mistakeIndex>=nodeIdx) { // there is a leaf here, so we return
-            const mistakeSignature = this.getNodeSeparatedSGF({node:node, nodeIdx:mistakeIndex});
-            let mistakeLocalStat = localStats.get(mistakeSignature);
-            if(!mistakeLocalStat) {
-                mistakeLocalStat = this.getZeroStats();
-                localStats.set(mistakeSignature, mistakeLocalStat);
-            }
-            mistakeLocalStat.mistakeCount ++;
-            let leafSignature;
-            let leafLocalStat;
+
+            this.setStatsForNode({node:node, nodeIdx:mistakeIndex},{mistakeCount:1},localStats);
+
+            let leafSignature= null;
+            let leafLocalStat = null;
             if (mistakeIndex>nodeIdx) { // mistake at mistakeIndex AND leaf at mistakeIndex-1
-                leafSignature = this.getNodeSeparatedSGF({node:node, nodeIdx:mistakeIndex-1});
-                leafLocalStat = localStats.get(leafSignature);
-
-
-
-            } else if(node.parent && node.parent.nodes && node.parent.nodes.length) {
-                // mistake at mistakeIndex AND leaf at the parent's last of nodes[]
-                leafSignature = this.getNodeSeparatedSGF({node:node.parent, nodeIdx:node.parent.nodes.length-1});
-                leafLocalStat = localStats.get(leafSignature);
+                leafLocalStat = this.setStatsForNode({node:node, nodeIdx:mistakeIndex-1},{leafCount:1},localStats);
             }
-            if(!leafLocalStat) {
-                leafLocalStat = this.getZeroStats();
-                localStats.set(leafSignature, leafLocalStat);
-            }
-            leafLocalStat.leafCount++;
-            stats.leafCount++;
+            this.addStats(stats, leafLocalStat)
             return;
         }
-        if(!node.sequences || !node.sequences.length) return;
+
+        // we stop if a same player plays 2 times in a row (exists in some SGFs as example of continuation after tenuki...)
+        // or TODO: pre-treat such BB or WW to add a PASS in a middle, (and make that PASS a success leaf?)
+        let doubleMoveIdx = node.nodes.findIndex((oneNode, oneNodeIdx) =>
+            oneNodeIdx<node.nodes-1 &&
+            typeof oneNode.B === typeof node.nodes[oneNodeIdx+1].B &&
+            typeof oneNode.W === typeof node.nodes[oneNodeIdx+1].W
+            );
+
+        if(doubleMoveIdx>=nodeIdx) { // there is a leaf at doubleMoveIdx, so we return
+            console.log('getNodeStats FOUND A double!! ', {node:node, nodeIdx:doubleMoveIdx});
+            let leafLocalStat = this.setStatsForNode({node:node, nodeIdx:doubleMoveIdx},{leafCount:1},localStats);
+
+            this.addStats(stats, leafLocalStat)
+            return;
+
+        }
+
+        if(!node.sequences || !node.sequences.length) {
+            let leafLocalStat = this.setStatsForNode({node:node, nodeIdx:node.nodes.length-1},{leafCount:1},localStats);
+
+            this.addStats(stats, leafLocalStat)
+            return;
+        }
 
         // otherwise, call recursively
         for (let sequencesIdx = 0 ; sequencesIdx < node.sequences.length ; sequencesIdx++) {
             let oneChild = node.sequences[sequencesIdx];
-            const signature = this.getNodeSeparatedSGF({node:oneChild, nodeIdx:0});
+            //const signature = this.getNodeSeparatedSGF({node:oneChild, nodeIdx:0});
             let childStats =  this.getZeroStats();
             this.getNodeStats(oneChild, 0, childStats, localStats);
-            localStats.set(signature, childStats);
+            //localStats.set(signature, childStats);
+            let leafLocalStat = this.setStatsForNode({node:oneChild, nodeIdx:0},childStats,localStats);
             this.addStats(stats, childStats);
         }
+    },
 
+    setStatsForNode: function(currentNode, stats, pLocalStats) {
+        const moveSignature = this.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
+        return this.setStatsForSignature(moveSignature, stats, pLocalStats);
+    },
+
+    setStatsForSignature: function(moveSignature, stats, pLocalStats) {
+        let localStats = pLocalStats || this.deepParse(localStorage.getItem("localStats")) || new Map();
+        let nodeStats = localStats.get(moveSignature);
+        if(!nodeStats) {
+            console.log('setStatsForSignature NEW for '+moveSignature);
+            nodeStats = this.getZeroStats();
+            pLocalStats.set(moveSignature, nodeStats);
+        }
+
+        this.setStats(nodeStats, stats);
+        return nodeStats;
+    },
+
+    addStatsForNode: function(currentNode, stats, pLocalStats) {
+        const moveSignature = this.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
+        return this.addStatsForSignature(moveSignature, stats, pLocalStats);
+    },
+
+    addStatsForSignature: function(moveSignature, stats, pLocalStats) {
+        let localStats = pLocalStats || this.deepParse(localStorage.getItem("localStats")) || new Map();
+        let nodeStats = localStats.get(moveSignature);
+        if(!nodeStats) {
+            console.log('addStatsForSignature NEW for '+moveSignature);
+            nodeStats = this.getZeroStats();
+            pLocalStats.set(moveSignature, nodeStats);
+        }
+
+        this.addStats(nodeStats, stats);
+        return nodeStats;
     },
 
     addStats: function(target, source) {
-        if(!target.leafCount) target.leafCount = 0;
-        if(!target.failedLeafCount) target.failedLeafCount = 0;
-        if(!target.foundLeafCount) target.foundLeafCount = 0;
-        if(!target.successLeafCount) target.successLeafCount = 0;
-        if(!target.mistakeCount) target.mistakeCount = 0;
-        target.leafCount +=source.leafCount;
-        target.failedLeafCount +=source.failedLeafCount;
-        target.foundLeafCount +=source.foundLeafCount;
-        target.successLeafCount +=source.successLeafCount;
-        target.mistakeCount +=source.mistakeCount;
+        if(!source) return;
+        if(typeof source.leafCount !== "undefined")
+            target.leafCount +=source.leafCount;
+        if(typeof source.failedLeafCount !== "undefined")
+            target.failedLeafCount +=source.failedLeafCount;
+        if(typeof source.foundLeafCount !== "undefined")
+            target.foundLeafCount +=source.foundLeafCount;
+        if(typeof source.successLeafCount !== "undefined")
+            target.successLeafCount +=source.successLeafCount;
+        if(typeof source.mistakeCount !== "undefined")
+            target.mistakeCount +=source.mistakeCount;
+    },
+
+    setStats: function(target, source) {
+        if(!source) return;
+        if(typeof source.leafCount !== "undefined")
+            target.leafCount =source.leafCount;
+        if(typeof source.failedLeafCount !== "undefined")
+            target.failedLeafCount =source.failedLeafCount;
+        if(typeof source.foundLeafCount !== "undefined")
+            target.foundLeafCount =source.foundLeafCount;
+        if(typeof source.successLeafCount !== "undefined")
+            target.successLeafCount =source.successLeafCount;
+        if(typeof source.mistakeCount !== "undefined")
+            target.mistakeCount =source.mistakeCount;
     },
 
     getZeroStats: function() {
-        return {leafCount: 0, failedLeafCount:0, mistakeCount:0, foundLeafCount:0, successLeafCount:0};
+        return {
+            leafCount: 0,
+            failedLeafCount:0,
+            mistakeCount:0,
+            foundLeafCount:0,
+            successLeafCount:0
+        };
     },
 
     getVariationSGF: function(node, nodeIdx, result, isKeepOnlyMove, isRemoveComment) {
@@ -393,7 +456,7 @@ export default {
         let nodeIdx=0;
         for (let moveIdx = 0 ; moveIdx < 4 && moveIdx < game._moves.length && availableTransforms && availableTransforms.length ; moveIdx++) {
             let oneMove =  game._moves[moveIdx];
-            let newsgfPosition = _isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms);
+            let newsgfPosition = this.isInSequence(game, oneMove, nodeIdx+1, sgfPosition, availableTransforms);
             if(newsgfPosition) {
                 if(newsgfPosition === sgfPosition) {
                     nodeIdx ++; // sgfPosition.nodes[] is the one way street that we have to follow before reaching the sequences
@@ -408,6 +471,70 @@ export default {
         }
 
         return currentSelectedTransform;
+    },
+
+        // is oneMove one of the allowed children of gameTreeSequenceNode
+        // if so, returns the matching sequences.X object
+    isInSequence : function(game, oneMove, nodeIdx, gameTreeSequenceNode, availableTransforms, isIgnoreErrors) {
+        if(nodeIdx< gameTreeSequenceNode.nodes.length) {
+            const oneChildMoves = gameTreeSequenceNode.nodes.
+                filter( (childNode, sequenceIdx) => sequenceIdx === nodeIdx). // we only consider the "nodeIdx" move of the nodes
+                filter(childNode => typeof (oneMove.color === "black" ? childNode.B : childNode.W) !== "undefined").
+                filter(childNode => !oneMove.pass || (oneMove.color === "black" ? childNode.B : childNode.W) === "").
+                filter(childNode => oneMove.pass || this.getPossibleTransforms(
+                    this.sgfCoordToPoint(oneMove.color === "black" ? childNode.B : childNode.W) ,
+                    {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
+                    availableTransforms));
+
+            if(oneChildMoves && oneChildMoves.length && (isIgnoreErrors || this.isAcceptableMove(oneChildMoves[0]))) {
+                if(!oneMove.pass) {
+                    let childNode = oneChildMoves[0];
+                    let newAvailableTransforms = this.getPossibleTransforms(
+                         this.sgfCoordToPoint(oneMove.color === "black" ? childNode.B : childNode.W) ,
+                         {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
+                         availableTransforms);
+                    let idx = availableTransforms.length;
+                    while (idx--) {
+                        if (newAvailableTransforms.indexOf(availableTransforms[idx]) <0) {
+                            availableTransforms.splice(idx, 1);
+                        }
+                    }
+                }
+                return gameTreeSequenceNode; // in sequence according to gameTreeSequenceNode.nodes
+            } else {
+                return false; // not in sequence
+            }
+        }
+
+        for (let sequencesIdx = 0 ; gameTreeSequenceNode.sequences && sequencesIdx < gameTreeSequenceNode.sequences.length ; sequencesIdx++) {
+            let oneChild = gameTreeSequenceNode.sequences[sequencesIdx];
+            const oneChildMoves = oneChild.nodes && oneChild.nodes.
+                filter( (childNode, sequenceIdx) => sequenceIdx === 0). // we only consider the first move of the sequence
+                filter(childNode => typeof (oneMove.color === "black" ? childNode.B : childNode.W) !== "undefined").
+                filter(childNode => !oneMove.pass || (oneMove.color === "black" ? childNode.B : childNode.W) === "").
+                filter(childNode => oneMove.pass || this.getPossibleTransforms(
+                     this.sgfCoordToPoint(oneMove.color === "black" ? childNode.B : childNode.W) ,
+                     {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
+                     availableTransforms));
+
+            if(oneChildMoves && oneChildMoves.length && (isIgnoreErrors || this.isAcceptableMove(oneChildMoves[0]))) {
+                if(!oneMove.pass) {
+                    let childNode = oneChildMoves [0];
+                    let newAvailableTransforms = this.getPossibleTransforms(
+                         this.sgfCoordToPoint(oneMove.color === "black" ? childNode.B : childNode.W) ,
+                         {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
+                         availableTransforms);
+                    let idx = availableTransforms.length;
+                    while (idx--) {
+                        if (newAvailableTransforms.indexOf(availableTransforms[idx]) <0) {
+                            availableTransforms.splice(idx, 1);
+                        }
+                    }
+                }
+                return oneChild;// in sequence according to sequences.
+            }
+        }
+        return false;
     },
 
     string2Bin: function(str) {

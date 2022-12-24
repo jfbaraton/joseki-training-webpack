@@ -253,9 +253,15 @@ export default {
         return target;
     },
 
-    isAcceptableMove: function(node, minimumWinrate) {
+    isAcceptableMove: function(node, previousNode, minimumWinrate) {
         if(!node || node.BM) return false;
         //if(node.B || node.BM) return false;
+        if(previousNode) {
+            // if same move color as the previous move, we don t accept
+            if(
+                typeof node.B === typeof previousNode.B &&
+                typeof node.W === typeof previousNode.W) return false;
+        }
         return true;
     },
 
@@ -292,54 +298,62 @@ export default {
     // stats should be an object with {leafCount}
     // localStats is a Map<signature,{leafCount: 0, failedLeafCount:0, foundLeafCount:0, successLeafCount:0}>
     getNodeStats: function(node, nodeIdx, stats, localStats) {
-        //console.log('START getNodeStats '+localStats.size,stats);
-        let mistakeIndex = node.nodes.findIndex( oneNode => !this.isAcceptableMove(oneNode));
-        if(mistakeIndex>=nodeIdx) { // there is a leaf here, so we return
-
-            this.setStatsForNode({node:node, nodeIdx:mistakeIndex},{mistakeCount:1},localStats);
-
-            let leafSignature= null;
-            let leafLocalStat = null;
-            if (mistakeIndex>nodeIdx) { // mistake at mistakeIndex AND leaf at mistakeIndex-1
-                leafLocalStat = this.setStatsForNode({node:node, nodeIdx:mistakeIndex-1},{leafCount:1},localStats);
-            }
-            this.addStats(stats, leafLocalStat)
-            return;
-        }
-
-        // we stop if a same player plays 2 times in a row (exists in some SGFs as example of continuation after tenuki...)
-        // or TODO: pre-treat such BB or WW to add a PASS in a middle, (and make that PASS a success leaf?)
-        let doubleMoveIdx = node.nodes.findIndex((oneNode, oneNodeIdx) =>
-            oneNodeIdx<node.nodes-1 &&
-            typeof oneNode.B === typeof node.nodes[oneNodeIdx+1].B &&
-            typeof oneNode.W === typeof node.nodes[oneNodeIdx+1].W
-            );
-
+        //console.log('START getNodeStats '+this.copyNode(node.nodes[nodeIdx], true),stats);
+         // or TODO: pre-treat such BB or WW to add a PASS in a middle, (and make that PASS a success leaf?)
+        let doubleMoveIdx = node.nodes.findIndex((oneNode, oneNodeIdx) => {
+            return oneNodeIdx<node.nodes.length-1 && !this.isAcceptableMove(node.nodes[oneNodeIdx+1],oneNode);
+        });
+        //console.log('getNodeStats double ? ', node.nodes, nodeIdx:doubleMoveIdx});
         if(doubleMoveIdx>=nodeIdx) { // there is a leaf at doubleMoveIdx, so we return
-            console.log('getNodeStats FOUND A double!! ', {node:node, nodeIdx:doubleMoveIdx});
+            let mistakeIndex = doubleMoveIdx < (node.nodes.length -1) && !this.isAcceptableMove(node.nodes[doubleMoveIdx+1]) ? doubleMoveIdx +1 : -1// we stop if a same player plays 2 times in a row (exists in some SGFs as example of continuation after tenuki...)
+            if(mistakeIndex >= nodeIdx && mistakeIndex<=doubleMoveIdx) { // there is a leaf here, so we return
+
+                this.setStatsForNode({node:node, nodeIdx:mistakeIndex},{mistakeCount:1},localStats);
+
+                let leafSignature= null;
+                let leafLocalStat = null;
+                if (mistakeIndex>nodeIdx) { // mistake at mistakeIndex AND leaf at mistakeIndex-1
+                    leafLocalStat = this.setStatsForNode({node:node, nodeIdx:mistakeIndex-1},{leafCount:1},localStats);
+                }
+                this.addStats(stats, leafLocalStat);
+                //console.log('END getNodeStats FOUND A MISTAKE at '+this.copyNode(node.nodes[mistakeIndex], true),stats);
+                return;
+            }
+            //console.log('getNodeStats FOUND A double!! ', {node:node, nodeIdx:doubleMoveIdx});
             let leafLocalStat = this.setStatsForNode({node:node, nodeIdx:doubleMoveIdx},{leafCount:1},localStats);
 
-            this.addStats(stats, leafLocalStat)
+            this.addStats(stats, leafLocalStat);
+            //console.log('END getNodeStats FOUND A double!!'+this.copyNode(node.nodes[doubleMoveIdx], true),stats);
             return;
 
         }
 
-        if(!node.sequences || !node.sequences.length) {
-            let leafLocalStat = this.setStatsForNode({node:node, nodeIdx:node.nodes.length-1},{leafCount:1},localStats);
-
-            this.addStats(stats, leafLocalStat)
-            return;
-        }
 
         // otherwise, call recursively
-        for (let sequencesIdx = 0 ; sequencesIdx < node.sequences.length ; sequencesIdx++) {
+        let isAtLeastOneSeqValid = false;
+        for (let sequencesIdx = 0 ; node.sequences && sequencesIdx < node.sequences.length ; sequencesIdx++) {
             let oneChild = node.sequences[sequencesIdx];
-            //const signature = this.getNodeSeparatedSGF({node:oneChild, nodeIdx:0});
-            let childStats =  this.getZeroStats();
-            this.getNodeStats(oneChild, 0, childStats, localStats);
-            //localStats.set(signature, childStats);
-            let leafLocalStat = this.setStatsForNode({node:oneChild, nodeIdx:0},childStats,localStats);
-            this.addStats(stats, childStats);
+            //console.log('getNodeStats seq '+sequencesIdx);
+            if(this.isAcceptableMove(oneChild.nodes[0],node.nodes[node.nodes.length-1])) {
+                //console.log('getNodeStats seq '+sequencesIdx+' EXPLORED ',this.copyNode(oneChild.nodes[0], true));
+                isAtLeastOneSeqValid = true;
+                //const signature = this.getNodeSeparatedSGF({node:oneChild, nodeIdx:0});
+                let childStats =  this.getZeroStats();
+                this.getNodeStats(oneChild, 0, childStats, localStats);
+                //localStats.set(signature, childStats);
+                let leafLocalStat = this.setStatsForNode({node:oneChild, nodeIdx:0},childStats,localStats);
+                this.addStats(stats, childStats);
+            }
+
+            //console.log('END getNodeStats seq '+this.copyNode(node.nodes[node.nodes.length-1], true),stats);
+        }
+
+        if(!isAtLeastOneSeqValid) {
+            let leafLocalStat = this.setStatsForNode({node:node, nodeIdx:node.nodes.length-1},{leafCount:1},localStats);
+
+            this.addStats(stats, leafLocalStat);
+            //console.log('END getNodeStats NO seq after'+this.copyNode(node.nodes[node.nodes.length-1], true),stats);
+            return;
         }
     },
 
@@ -352,7 +366,7 @@ export default {
         let localStats = pLocalStats || this.deepParse(localStorage.getItem("localStats")) || new Map();
         let nodeStats = localStats.get(moveSignature);
         if(!nodeStats) {
-            console.log('setStatsForSignature NEW for '+moveSignature);
+            //console.log('setStatsForSignature NEW for '+moveSignature);
             nodeStats = this.getZeroStats();
             pLocalStats.set(moveSignature, nodeStats);
         }
@@ -370,7 +384,7 @@ export default {
         let localStats = pLocalStats || this.deepParse(localStorage.getItem("localStats")) || new Map();
         let nodeStats = localStats.get(moveSignature);
         if(!nodeStats) {
-            console.log('addStatsForSignature NEW for '+moveSignature);
+            //console.log('addStatsForSignature NEW for '+moveSignature);
             nodeStats = this.getZeroStats();
             pLocalStats.set(moveSignature, nodeStats);
         }

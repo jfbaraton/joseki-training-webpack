@@ -291,13 +291,22 @@ const ExampleGameControls = function(element, game) {
             const moveSignature = sgfutils.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
             let nodeStats = localStats.get(moveSignature);
             //let nodeStats = addStatsForNode();
-            if(/*!nodeStats && */this.game.currentState().moveNumber > 0) {
+            console.log(' stats for move ('+this.game.currentState().moveNumber+') '+moveSignature+' :',nodeStats);
+            if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
             //if(this.game.currentState().moveNumber > 1 ) {
-                nodeStats = sgfutils.getZeroStats();
-                sgfutils.getNodeStats( currentNode.node, currentNode.nodeIdx, nodeStats, localStats);
+                if(!nodeStats) {
+                    console.log('re-calculating stats for move '+this.game.currentState().moveNumber)
+                    nodeStats = sgfutils.getZeroStats();
+                }
+                let freshStats = sgfutils.getZeroStats();
+                sgfutils.getNodeStats( currentNode.node, currentNode.nodeIdx, freshStats, localStats);
+                nodeStats = freshStats;
                 localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
             }
-            newGameInfo += "\n"+(nodeStats && nodeStats.leafCount || "Nan")+" valid VARIATIONS to find "+JSON.stringify(nodeStats);
+            newGameInfo += "\n"+(nodeStats && nodeStats.leafCount || "Lots of")+" valid VARIATIONS to find ";
+            if(nodeStats) {
+                newGameInfo += JSON.stringify(nodeStats);
+            }
         }
 
         if (currentState.pass) {
@@ -315,9 +324,9 @@ const ExampleGameControls = function(element, game) {
             let newStatToAdd = null;
             if(currentNode === null) {
                 this.element.classList.add("notInSequence");
-                signature = this.getVariationSGF({});
+                signature = this.getVariationSGF({}, 1);
                 newStatToAdd = {mistakeCount:1};
-                newStatToSet = {foundLeafCount:1};
+                //newStatToSet = {foundLeafCount:1};
             } else {
                 signature = sgfutils.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
                 this.element.classList.add("win");
@@ -586,13 +595,13 @@ const ExampleGameControls = function(element, game) {
 
     // returns a one thread variation SGF of the current board state
     // sets nodeProperties to the leaf, like BM for bad move, GW/GB for "Good for White/Black"
-    this.getVariationSGF = function(nodeProperties) {
+    this.getVariationSGF = function(nodeProperties, skippedLastMoves = 0) {
         const emptySGF = sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])');
         // find polite transform based on first moves
         let currentSelectedTransform = sgfutils.getCurrentTransform(collection, game);
 
         //console.log('getVariationSGF currentSelectedTransform : ', currentSelectedTransform);
-        for (let moveIdx = 0 ; moveIdx < game._moves.length ; moveIdx++) {
+        for (let moveIdx = 0 ; moveIdx < game._moves.length-skippedLastMoves ; moveIdx++) {
             let oneMove =  game._moves[moveIdx];
             const node = moveIdx === game._moves.length-1 ? nodeProperties : {};
             const sgfCoords = oneMove.pass ? "" : sgfutils.pointToSgfCoord( sgfutils.revertMove({y:oneMove.playedPoint.y, x:oneMove.playedPoint.x}, currentSelectedTransform));

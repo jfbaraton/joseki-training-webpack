@@ -254,8 +254,7 @@ export default {
     },
 
     isAcceptableMove: function(node, previousNode, minimumWinrate) {
-        if(!node || node.BM) return false;
-        //if(node.B || node.BM) return false;
+        if(!node || node.BM || node.UC) return false;
         if(previousNode) {
             // if same move color as the previous move, we don t accept
             if(this.areMovesSameColor(node,previousNode)) return false;
@@ -273,6 +272,7 @@ export default {
         //console.log("copyMetadata ", target, source);
         if(!source || !target) return;
         if(typeof source.BM !== "undefined") {target.BM = source.BM;}
+        if(typeof source.UC !== "undefined") {target.UC = source.UC;}
         if(typeof source.GW !== "undefined") {target.GW = source.GW;}
         if(typeof source.GB !== "undefined") {target.GB = source.GB;}
         if(typeof source.DM !== "undefined") {target.DM = source.DM;}
@@ -658,7 +658,11 @@ export default {
         let isHandicap = moveNumberIfHandicap;
         if(nodeIdx < node.nodes.length) {
             // next move is in nodes
-            this.is14O16({node:node, nodeIdx:nodeIdx}, moveNumber);
+            //this.is14O16({node:node, nodeIdx:nodeIdx}, moveNumber);
+            if(node.nodes[nodeIdx].AW || node.nodes[nodeIdx].AB) {
+                this.deleteVariation(node,nodeIdx);
+                return;
+            }
             if(this.areMovesSameColor(node.nodes[nodeIdx],lastMoveNode)) {
                 if(isHandicap) {
                     isHandicap ++;
@@ -676,13 +680,18 @@ export default {
         // next move is in sequences
         for (let sequencesIdx = 0 ; node.sequences && sequencesIdx < node.sequences.length ; sequencesIdx++) {
             let oneChild = node.sequences[sequencesIdx];
-            this.is14O16({node:oneChild, nodeIdx:0}, moveNumber);
-            if(this.areMovesSameColor(oneChild.nodes[0],lastMoveNode)) {
+            //this.is14O16({node:oneChild, nodeIdx:0}, moveNumber);
+            if(oneChild.nodes[0].AW || oneChild.nodes[0].AB) {
+                this.deleteVariation(oneChild,0);
+                continue;
+            } else if(this.areMovesSameColor(oneChild.nodes[0],lastMoveNode)) {
                 if(isHandicap) {
                     isHandicap ++;
                 } else {
                     // add a PASS from the opponent as first move of the sequence
-                    this.addPASSBefore(oneChild, 0, lastMoveNode);
+                    //this.addPASSBefore(oneChild, 0, lastMoveNode);
+                    // add a PASS from the opponent as last .nodes
+                    this.addPASSBefore(node, nodeIdx, lastMoveNode);
                 }
             } else {
                 isHandicap = 0;
@@ -702,9 +711,26 @@ export default {
 
     addPASSBefore: function(node, nodeIdx, lastMoveNode) {
         console.log('addPASSBefore '+nodeIdx, lastMoveNode);
-        let addedMove = typeof lastMoveNode.W !== "undefined" ? {B:'', C:'PASS to show continuation'} : {W:'', C:'PASS to show continuation'};
+        // make a PASS that is a UC (unclear) move, so that the branch is not explored as a continuation
+        // the reasons is that those double moves can have different purpose, like to show later continuations (not supposed to happen NOW)
+        // we could find a different way/metadata to differentiate those variations
+        let addedMove = typeof lastMoveNode.W !== "undefined" ? {B:'', C:'PASS to show continuation', UC:1} : {W:'', C:'PASS to show continuation', UC:1};
 
         node.nodes.splice(nodeIdx, 0, addedMove); // add move at index nodeIdx, deleting 0 nodes
+    },
+
+    deleteVariation: function(node, nodeIdx) {
+        console.log('deleteVariation '+nodeIdx);
+        if(nodeIdx > 0){
+            // delete this node and the following ones from .nodes
+            node.nodes.splice(nodeIdx, node.nodes.length-nodeIdx);
+            // delete .sequences
+            delete node.sequences;
+        } else {
+            // delete sequence from parent
+            let seqIdx = node.parent.sequences.findIndex(oneSeq => oneSeq === node);
+            node.parent.sequences.splice(seqIdx,1);
+        }
     },
 
     download: function(filename, text) {

@@ -424,7 +424,7 @@ const ExampleGameControls = function(element, game) {
         }
         this.declareJoseki = function(e) {
             e.preventDefault();
-            controls.updateMoveWithConfirm({BM:'', DM:'2', GW:'', GB:''});
+            controls.updateMoveWithConfirm({BM:'',UC:'', DM:'2', GW:'', GB:''});
         }
         this.reset = function(e) {
             e.preventDefault();
@@ -512,8 +512,8 @@ const ExampleGameControls = function(element, game) {
             //controls.updateMoveWithConfirm({BM:'1'});
             //console.log('getVariationSGF:', '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])');
             //controls.postNewJosekiSGF('');
-            //sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
-            sgfutils.cleanSGF(collection);
+            sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
+            //sgfutils.cleanSGF(collection);
         });
 
         resetButton.addEventListener("click", this.reset);
@@ -533,6 +533,13 @@ const ExampleGameControls = function(element, game) {
         if(typeof nodeProperties.BM !== "undefined") {
             if(nodeProperties.BM) {
                 changes.push("should be considered a big mistake, not even a joseki for low level players or an outdated joseki");
+            } else {
+                changes.push("is not a mistake");
+            }
+        }
+        if(typeof nodeProperties.UC !== "undefined") {
+            if(nodeProperties.UC) {
+                changes.push("This move should not be part of the variation. Maybe a move to consider later in the game");
             } else {
                 changes.push("is not a mistake");
             }
@@ -570,7 +577,7 @@ const ExampleGameControls = function(element, game) {
             text += "\n - All the moves of this variation (just the one line) that were NOT in the DB, are going to be added to DB and accepted as valid moves";
         }
         if (confirm(text) == true) {
-            let newSGF = controls.getVariationSGF({BM:'1'});
+            let newSGF = controls.getVariationSGF(nodeProperties);
             //controls.postNewJosekiSGF(newSGF);
         }
     }

@@ -508,11 +508,12 @@ const ExampleGameControls = function(element, game) {
         });
         testButton.addEventListener("click", function(e) {
             //controls.testMerge();
-            console.log('getVariationSGF:', controls.getVariationSGF({BM:'1'}));
-            controls.updateMoveWithConfirm({BM:'1'});
+            //console.log('getVariationSGF:', controls.getVariationSGF({BM:'1'}));
+            //controls.updateMoveWithConfirm({BM:'1'});
             //console.log('getVariationSGF:', '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])');
             //controls.postNewJosekiSGF('');
-
+            //sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
+            sgfutils.cleanSGF(collection);
         });
 
         resetButton.addEventListener("click", this.reset);
@@ -521,7 +522,7 @@ const ExampleGameControls = function(element, game) {
 
         //localStorage.setItem("knownVersions", JSON.stringify([]));
         // LAST getLatestSGF
-        setTimeout(this.getLatestSGF,200);
+        //setTimeout(this.getLatestSGF,200);
         setTimeout(this.updateGUIFromState,200);
 
     }

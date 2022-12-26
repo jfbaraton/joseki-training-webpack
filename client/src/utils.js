@@ -258,11 +258,15 @@ export default {
         //if(node.B || node.BM) return false;
         if(previousNode) {
             // if same move color as the previous move, we don t accept
-            if(
-                typeof node.B === typeof previousNode.B &&
-                typeof node.W === typeof previousNode.W) return false;
+            if(this.areMovesSameColor(node,previousNode)) return false;
         }
         return true;
+    },
+
+    areMovesSameColor: function(node, previousNode) {
+        if(!node || !previousNode) return false;
+        return typeof node.B === typeof previousNode.B &&
+                               typeof node.W === typeof previousNode.W;
     },
 
     copyMetadata: function(target, source) {
@@ -637,6 +641,87 @@ export default {
     deepParse: function(str) {
         return JSON.parse(str, this.reviver);
     },
+
+    // check for several moves in a row by the same player
+    // adds opponent PASS between them (when it is not a handicap move)
+    // returns a gameTree
+    cleanSGF: function(originalSGFOrgameTree) {
+        // make a copy of the original gametree
+        const originalSGFString = typeof originalSGFOrgameTree === "string" ? originalSGFOrgameTree : sgf.generate(originalSGFOrgameTree);
+        let resultTree = sgf.parse(originalSGFString);
+        this.cleanSGFBranch(resultTree.gameTrees[0], 1, resultTree.gameTrees[0].nodes[0], 1, 1)
+        return resultTree;
+    },
+
+    cleanSGFBranch: function(node, nodeIdx, lastMoveNode, moveNumberIfHandicap, moveNumber) {
+
+        let isHandicap = moveNumberIfHandicap;
+        if(nodeIdx < node.nodes.length) {
+            // next move is in nodes
+            this.is14O16({node:node, nodeIdx:nodeIdx}, moveNumber);
+            if(this.areMovesSameColor(node.nodes[nodeIdx],lastMoveNode)) {
+                if(isHandicap) {
+                    isHandicap ++;
+                } else {
+                    // add a PASS from the opponent
+                    this.addPASSBefore(node, nodeIdx, lastMoveNode);
+                    // nodeIdx++;
+                }
+            } else {
+                isHandicap = 0;
+            }
+            this.cleanSGFBranch(node, nodeIdx+1, node.nodes[nodeIdx], isHandicap, moveNumber+1);
+            return;
+        }
+        // next move is in sequences
+        for (let sequencesIdx = 0 ; node.sequences && sequencesIdx < node.sequences.length ; sequencesIdx++) {
+            let oneChild = node.sequences[sequencesIdx];
+            this.is14O16({node:oneChild, nodeIdx:0}, moveNumber);
+            if(this.areMovesSameColor(oneChild.nodes[0],lastMoveNode)) {
+                if(isHandicap) {
+                    isHandicap ++;
+                } else {
+                    // add a PASS from the opponent as first move of the sequence
+                    this.addPASSBefore(oneChild, 0, lastMoveNode);
+                }
+            } else {
+                isHandicap = 0;
+            }
+            this.cleanSGFBranch(oneChild, 1, oneChild.nodes[0], isHandicap, moveNumber+1);
+        }
+    },
+
+    is14O16: function(currentNode, moveNumber){
+        const O16 = "nd";
+        let move = currentNode.node.nodes[currentNode.nodeIdx];
+        if(14 === moveNumber && (move.B === O16 || move.W === O16)) {
+            console.log('found O16 as move 14 : ',this.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx}));
+        }
+
+    },
+
+    addPASSBefore: function(node, nodeIdx, lastMoveNode) {
+        console.log('addPASSBefore '+nodeIdx, lastMoveNode);
+        let addedMove = typeof lastMoveNode.W !== "undefined" ? {B:'', C:'PASS to show continuation'} : {W:'', C:'PASS to show continuation'};
+
+        node.nodes.splice(nodeIdx, 0, addedMove); // add move at index nodeIdx, deleting 0 nodes
+    },
+
+    download: function(filename, text) {
+      var element = document.createElement('a');
+      element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+      element.setAttribute('download', filename);
+
+      element.style.display = 'none';
+      document.body.appendChild(element);
+
+      element.click();
+
+      document.body.removeChild(element);
+    },
+
+    // Start file download.
+    //download("hello.txt","This is the content of my file :)");
 
 
     // everything from addedTree that is not already defined in masterTree will be added to masterTree

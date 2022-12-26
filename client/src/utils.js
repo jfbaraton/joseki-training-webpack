@@ -298,12 +298,12 @@ export default {
     // stats should be an object with {leafCount}
     // localStats is a Map<signature,{leafCount: 0, failedLeafCount:0, foundLeafCount:0, successLeafCount:0}>
     getNodeStats: function(node, nodeIdx, stats, localStats) {
-        //console.log('START getNodeStats '+this.copyNode(node.nodes[nodeIdx], true),stats);
+        console.log('START getNodeStats ',this.copyNode(node.nodes[nodeIdx], true),stats);
          // or TODO: pre-treat such BB or WW to add a PASS in a middle, (and make that PASS a success leaf?)
         let doubleMoveIdx = node.nodes.findIndex((oneNode, oneNodeIdx) => {
             return oneNodeIdx<node.nodes.length-1 && !this.isAcceptableMove(node.nodes[oneNodeIdx+1],oneNode);
         });
-        //console.log('getNodeStats double ? ', node.nodes, nodeIdx:doubleMoveIdx});
+        console.log('getNodeStats double ? ', node.nodes, doubleMoveIdx);
         if(doubleMoveIdx>=nodeIdx) { // there is a leaf at doubleMoveIdx, so we return
             let mistakeIndex = doubleMoveIdx < (node.nodes.length -1) && !this.isAcceptableMove(node.nodes[doubleMoveIdx+1]) ? doubleMoveIdx +1 : -1// we stop if a same player plays 2 times in a row (exists in some SGFs as example of continuation after tenuki...)
             if(mistakeIndex >= nodeIdx && mistakeIndex<=doubleMoveIdx) { // there is a leaf here, so we return
@@ -315,15 +315,15 @@ export default {
                 if (mistakeIndex>nodeIdx) { // mistake at mistakeIndex AND leaf at mistakeIndex-1
                     leafLocalStat = this.setStatsForNode({node:node, nodeIdx:mistakeIndex-1},{leafCount:1},localStats);
                 }
-                this.addStats(stats, leafLocalStat);
-                //console.log('END getNodeStats FOUND A MISTAKE at '+this.copyNode(node.nodes[mistakeIndex], true),stats);
+                this.aggregateStats(stats, leafLocalStat);
+                //console.log('END getNodeStats FOUND A MISTAKE at ',this.copyNode(node.nodes[mistakeIndex], true),stats);
                 return;
             }
             //console.log('getNodeStats FOUND A double!! ', {node:node, nodeIdx:doubleMoveIdx});
             let leafLocalStat = this.setStatsForNode({node:node, nodeIdx:doubleMoveIdx},{leafCount:1},localStats);
 
-            this.addStats(stats, leafLocalStat);
-            //console.log('END getNodeStats FOUND A double!!'+this.copyNode(node.nodes[doubleMoveIdx], true),stats);
+            this.aggregateStats(stats, leafLocalStat);
+            //console.log('END getNodeStats FOUND A double!!',this.copyNode(node.nodes[doubleMoveIdx], true),stats);
             return;
 
         }
@@ -335,24 +335,24 @@ export default {
             let oneChild = node.sequences[sequencesIdx];
             //console.log('getNodeStats seq '+sequencesIdx);
             if(this.isAcceptableMove(oneChild.nodes[0],node.nodes[node.nodes.length-1])) {
-                //console.log('getNodeStats seq '+sequencesIdx+' EXPLORED ',this.copyNode(oneChild.nodes[0], true));
+                console.log('getNodeStats seq '+sequencesIdx+' EXPLORED ',this.copyNode(oneChild.nodes[0], true));
                 isAtLeastOneSeqValid = true;
                 //const signature = this.getNodeSeparatedSGF({node:oneChild, nodeIdx:0});
                 let childStats =  this.getZeroStats();
                 this.getNodeStats(oneChild, 0, childStats, localStats);
                 //localStats.set(signature, childStats);
                 let leafLocalStat = this.setStatsForNode({node:oneChild, nodeIdx:0},childStats,localStats);
-                this.addStats(stats, childStats);
+                this.aggregateStats(stats, childStats);
             }
 
-            //console.log('END getNodeStats seq '+this.copyNode(node.nodes[node.nodes.length-1], true),stats);
+            //console.log('END getNodeStats seq ',this.copyNode(node.nodes[node.nodes.length-1], true),stats);
         }
 
         if(!isAtLeastOneSeqValid) {
             let leafLocalStat = this.setStatsForNode({node:node, nodeIdx:node.nodes.length-1},{leafCount:1},localStats);
 
-            this.addStats(stats, leafLocalStat);
-            //console.log('END getNodeStats NO seq after'+this.copyNode(node.nodes[node.nodes.length-1], true),stats);
+            this.aggregateStats(stats, leafLocalStat);
+            console.log('END getNodeStats NO seq after',this.copyNode(node.nodes[node.nodes.length-1], true),stats);
             return;
         }
     },
@@ -372,6 +372,24 @@ export default {
         }
 
         this.setStats(nodeStats, stats);
+        return nodeStats;
+    },
+
+    aggregateStatsForNode: function(currentNode, stats, pLocalStats) {
+        const moveSignature = this.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
+        return this.aggregateStatsForSignature(moveSignature, stats, pLocalStats);
+    },
+
+    aggregateStatsForSignature: function(moveSignature, stats, pLocalStats) {
+        let localStats = pLocalStats || this.deepParse(localStorage.getItem("localStats")) || new Map();
+        let nodeStats = localStats.get(moveSignature);
+        if(!nodeStats) {
+            //console.log('aggregateStatsForSignature NEW for '+moveSignature);
+            nodeStats = this.getZeroStats();
+            pLocalStats.set(moveSignature, nodeStats);
+        }
+
+        this.aggregateStats(nodeStats, stats);
         return nodeStats;
     },
 
@@ -396,15 +414,40 @@ export default {
     addStats: function(target, source) {
         if(!source) return;
         if(typeof source.leafCount !== "undefined")
-            target.leafCount +=source.leafCount;
+            target.leafCount = (target.leafCount || 0) + source.leafCount;
         if(typeof source.failedLeafCount !== "undefined")
-            target.failedLeafCount +=source.failedLeafCount;
+            target.failedLeafCount = (target.failedLeafCount || 0) + source.failedLeafCount;
         if(typeof source.foundLeafCount !== "undefined")
-            target.foundLeafCount +=source.foundLeafCount;
+            target.foundLeafCount = (target.foundLeafCount || 0) + source.foundLeafCount;
         if(typeof source.successLeafCount !== "undefined")
-            target.successLeafCount +=source.successLeafCount;
+            target.successLeafCount = (target.successLeafCount || 0) + source.successLeafCount;
         if(typeof source.mistakeCount !== "undefined")
-            target.mistakeCount +=source.mistakeCount;
+            target.mistakeCount = (target.mistakeCount || 0) + source.mistakeCount;
+    },
+
+    aggregateStats: function(target, source) {
+        if(!source) return;
+        if(typeof source.leafCount !== "undefined")
+            target.agg_leafCount = (target.agg_leafCount || 0) + source.leafCount;
+        if(typeof source.failedLeafCount !== "undefined")
+            target.agg_failedLeafCount = (target.agg_failedLeafCount || 0) + source.failedLeafCount;
+        if(typeof source.foundLeafCount !== "undefined")
+            target.agg_foundLeafCount = (target.agg_foundLeafCount || 0) + source.foundLeafCount;
+        if(typeof source.successLeafCount !== "undefined")
+            target.agg_successLeafCount = (target.agg_successLeafCount || 0) + source.successLeafCount;
+        if(typeof source.mistakeCount !== "undefined")
+            target.agg_mistakeCount = (target.agg_mistakeCount || 0) + source.mistakeCount;
+
+        if(typeof source.agg_leafCount !== "undefined")
+            target.agg_leafCount = (target.agg_leafCount || 0) + source.agg_leafCount;
+        if(typeof source.agg_failedLeafCount !== "undefined")
+            target.agg_failedLeafCount = (target.agg_failedLeafCount || 0) + source.agg_failedLeafCount;
+        if(typeof source.agg_foundLeafCount !== "undefined")
+            target.agg_foundLeafCount = (target.agg_foundLeafCount || 0) + source.agg_foundLeafCount;
+        if(typeof source.agg_successLeafCount !== "undefined")
+            target.agg_successLeafCount = (target.agg_successLeafCount || 0) + source.agg_successLeafCount;
+        if(typeof source.agg_mistakeCount !== "undefined")
+            target.agg_mistakeCount = (target.agg_mistakeCount || 0) + source.agg_mistakeCount;
     },
 
     setStats: function(target, source) {

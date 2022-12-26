@@ -292,18 +292,20 @@ const ExampleGameControls = function(element, game) {
             let nodeStats = localStats.get(moveSignature);
             //let nodeStats = addStatsForNode();
             console.log(' stats for move ('+this.game.currentState().moveNumber+') '+moveSignature+' :',nodeStats);
-            if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
+            //if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
+            if(/*!nodeStats && */this.game.currentState().moveNumber > 9) {
             //if(this.game.currentState().moveNumber > 1 ) {
                 if(!nodeStats) {
                     console.log('re-calculating stats for move '+this.game.currentState().moveNumber)
                     nodeStats = sgfutils.getZeroStats();
                 }
                 let freshStats = sgfutils.getZeroStats();
+                //let freshStats = nodeStats;
                 sgfutils.getNodeStats( currentNode.node, currentNode.nodeIdx, freshStats, localStats);
                 nodeStats = freshStats;
                 localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
             }
-            newGameInfo += "\n"+(nodeStats && nodeStats.leafCount || "Lots of")+" valid VARIATIONS to find ";
+            newGameInfo += "\n"+(nodeStats && (nodeStats.leafCount + nodeStats.agg_leafCount )|| "Lots of")+" valid VARIATIONS to find ";
             if(nodeStats) {
                 newGameInfo += JSON.stringify(nodeStats);
             }
@@ -338,7 +340,7 @@ const ExampleGameControls = function(element, game) {
                 let nodeStats = sgfutils.setStatsForSignature(signature, newStatToSet, localStats);
                 sgfutils.addStats(nodeStats, newStatToAdd);
 
-                newGameInfo += "\nnew Stats :  "+JSON.stringify(nodeStats);
+                newGameInfo += "\nnew Stats for "+signature+":  "+JSON.stringify(nodeStats);
             }
             nextMoveOptions = _getNextMoveOptions(game, true);
         }

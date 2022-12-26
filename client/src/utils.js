@@ -1,5 +1,8 @@
 var sgf = require('smartgame');
 
+// how many points can you lose in one move and still consider it joseki?
+const JOSEKI_MARGIN = 4;
+
 export default {
     flatten: function(ary) {
         return ary.reduce((a, b) => a.concat(b));
@@ -253,11 +256,23 @@ export default {
         return target;
     },
 
-    isAcceptableMove: function(node, previousNode, minimumWinrate) {
+    isAcceptableMove: function(node, previousNode, minimumScore) {
         if(!node || node.BM || node.UC) return false;
+        if(node.DM || typeof node.B === "string" && node.B == '' || typeof node.W === "string" && node.W == '' ) return true; // joseki or pass always accepted
+
         if(previousNode) {
             // if same move color as the previous move, we don t accept
             if(this.areMovesSameColor(node,previousNode)) return false;
+            const margin = typeof node.B === "string" ? JOSEKI_MARGIN : -JOSEKI_MARGIN;
+            let scoreThreshold = typeof minimumScore !== "undefined" ? minimumScore : typeof previousNode.V !== "undefined" ? (parseFloat(previousNode.V)-margin) : null;
+            if(typeof source.V !== "undefined" && scoreThreshold != null) {
+                if(typeof node.B === "string" && parseFloat(source.V)<scoreThreshold) { // black move
+                    return false;
+                } else if(typeof node.W === "string" && parseFloat(source.V)>scoreThreshold) { // black move
+                    return true;
+                }
+            }
+
         }
         return true;
     },
@@ -674,6 +689,7 @@ export default {
             } else {
                 isHandicap = 0;
             }
+            this.cleanKatrainNode(node.nodes[nodeIdx]);
             this.cleanSGFBranch(node, nodeIdx+1, node.nodes[nodeIdx], isHandicap, moveNumber+1);
             return;
         }
@@ -696,6 +712,7 @@ export default {
             } else {
                 isHandicap = 0;
             }
+            this.cleanKatrainNode(oneChild.nodes[0]);
             this.cleanSGFBranch(oneChild, 1, oneChild.nodes[0], isHandicap, moveNumber+1);
         }
     },
@@ -731,6 +748,45 @@ export default {
             let seqIdx = node.parent.sequences.findIndex(oneSeq => oneSeq === node);
             node.parent.sequences.splice(seqIdx,1);
         }
+    },
+
+    cleanKatrainNode: function(node) {
+        if (node.KT)
+            delete node.KT;
+
+        if (node.C) {
+            const katrainCommentStart = "Move ";
+            const katrainScoreStart = "Score: ";
+            const katrainCommentEnd = "​";
+
+            const katrainCommentStartIdx = node.C.indexOf(katrainCommentStart);
+            const katrainScoreStartIdx = node.C.indexOf(katrainScoreStart);
+            let katrainCommentEndIdx = node.C.indexOf(katrainCommentEnd);
+            //console.log('node has a comment ',katrainCommentStartIdx,katrainScoreStartIdx,katrainCommentEndIdx);
+            //console.log('node has a comment ',(katrainCommentStartIdx >=0));
+            //console.log('node has a comment ',(katrainScoreStartIdx >katrainCommentStartIdx));
+            //console.log('node has a comment ',(katrainCommentEndIdx >katrainScoreStartIdx));
+
+            if(katrainCommentStartIdx >=0 && katrainScoreStartIdx >katrainCommentStartIdx && katrainCommentEndIdx >katrainScoreStartIdx) {
+                // "Score: W+1.2\n"
+                let scoreString = node.C.slice(katrainScoreStartIdx+katrainScoreStart.length, katrainCommentEndIdx);
+                scoreString = scoreString.slice(0, scoreString.indexOf("\n"));
+                //('scoreString #'+scoreString+'#');
+                let multiplier = 1;
+                if(0==scoreString.indexOf("W")) multiplier = -1;
+                node.V = multiplier*parseFloat(scoreString.slice(1));
+                let newlineIdx = node.C.slice(katrainCommentEndIdx).indexOf("\n");
+                if(newlineIdx>0) {
+                    katrainCommentEndIdx += newlineIdx+1;
+                }
+
+                node.C = node.C.slice(0,katrainCommentStartIdx)+node.C.slice(katrainCommentEndIdx+1);
+                //console.log('node.C #'+node.C+'#');
+            }
+        }
+        //console.log('cleanKatrainNode FINISHED');
+
+
     },
 
     download: function(filename, text) {

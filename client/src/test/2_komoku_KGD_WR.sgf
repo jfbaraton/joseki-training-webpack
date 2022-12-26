@@ -1,5 +1,4 @@
-//const exampleSGF = String.raw`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]KM[7.5]SZ[19]DT[2022-12-08];B[pd];W[qc];B[qd];W[pc];B[oc];W[ob];B[nc])`;
-const exampleSGF = String.raw`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]ST[2]RU[Japanese]SZ[19]KM[0.00]GN[Kogo's Joseki Dictionary]DT[25.02.2014]CP[see below]GC[Commercial distribution without permission and a link to the KJD web page is a copyright violation. Please ask for permission prior to distribution.
+(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.51.1]ST[2]RU[Japanese]SZ[19]KM[7.5]GN[Kogo's Joseki Dictionary]DT[25.02.2014]CP[see below]GC[Commercial distribution without permission and a link to the KJD web page is a copyright violation. Please ask for permission prior to distribution.
 Contact: kogo@waterfire.us.
 Updates available at: http://waterfire.us/joseki.htm.
 
@@ -2898,7 +2897,7 @@ influence.](;B[nb];W[mb];B[ob];W[ld];B[me];W[kd];B[qg];W[rg];B[qh];W[rh];B[qi];W
 
 For other possible continuations than the one given, learn what happens if, instead of Black 13 here, Black plays X, White Y, Black Z or 13.];W[ne]C[White first needs to provide escape for the two stones.];B[of];W[qh]C[White 16 is the only continuation.]))(;W[nc]LB[nb:a][ne:c][of:d][qf:b]C[Black 'a' is the correct refutation.
 
-'b' looks like a better move, and it leads to a more favorable position for Black. However the continuation is more complex, with more room for error. 'b' is where White needs the ladder.
+ 'b' looks like a better move, and it leads to a more favorable position for Black. However the continuation is more complex, with more room for error. 'b' is where White needs the ladder.
 
 Black can always get a good result with 'c'.
 
@@ -3551,6 +3550,4 @@ Takageima Shimari
 After another tenuki 'c' Black can secure his corner completely.
 ](;W[qd]LB[qc:B][pd:A]C['a' takes the outside, 'b' the corner.](;B[pd];W[qc];B[re];W[ob]LB[nb:B][nc:A]C['a' is correct, 'b' is a mistake: White sacrifices two stones
 and reduces in sente.](;B[nc];W[nb];B[lc];W[rb]C[White lives in gote.])(;B[nb];W[nc];B[pb];W[mb];B[pc]))(;B[qc];W[pd];B[pc];W[pe];B[rd];W[re];B[qf];W[oe];B[rc];W[nd];B[oc];W[pg];B[rf];W[ng]))(;W[qc]LB[pb:B][pc:A]C['a' encloses White, 'b' drives him out.](;B[pc];W[qd];B[pe];W[rb];B[pb];W[re];B[rf];W[sc];B[rd];W[se];B[qb];W[ra])(;B[pb]LB[qb:A][re:B]C['a' is correct, 'b' a mistake.](;W[qb];B[pc];W[re]LB[rd:A][rf:B]C['a' drives White out, 'b' encloses him.](;B[rd];W[qd];B[rf];W[pe];B[qf];W[pd];B[nc];W[rc];B[se])(;B[rf];W[rd];B[qf];W[sc];B[se];W[rb]))(;W[re];B[rf];W[rd];B[qf];W[qb];B[se];W[sc];B[rb];W[ra];B[sb];W[pc];B[ob];W[oc];B[nc];W[nb];B[mb];W[nd];B[mc];W[oe];B[pd])))(;W[pp];B[nc]))(;B[qc];W[mc]LB[qc:3]TR[qd]C[Black has no move to secure an efficient amount of territory.
-If he'd like to make a light moyo with a wide extension, White 3 on the triangled position would be much better shape.]))))`;
-
-export default exampleSGF;
+If he'd like to make a light moyo with a wide extension, White 3 on the triangled position would be much better shape.]))))

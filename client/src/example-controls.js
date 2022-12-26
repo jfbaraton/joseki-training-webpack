@@ -604,7 +604,7 @@ const ExampleGameControls = function(element, game) {
 
         localStorage.setItem("knownVersions", JSON.stringify([]));
         // LAST getLatestSGF
-        setTimeout(this.getLatestSGF,200);
+        //setTimeout(this.getLatestSGF,200);
         setTimeout(this.updateGUIFromState,200);
 
     }
@@ -824,6 +824,7 @@ const ExampleGameControls = function(element, game) {
         let knownVersions = JSON.parse(localStorage && localStorage.getItem("knownVersions") || "[]");
         //console.log('getLatestSGF ', knownVersions);
         const lastKnownVersion = knownVersions.length && knownVersions[knownVersions.length-1].id || 0;
+        let milestoneVersion = knownVersions.length && knownVersions[0].id || 0;
 
         if(!controls.isKnownVersionLoaded) {
             for(var SGFrevIdx = 0 ; SGFrevIdx < knownVersions.length; SGFrevIdx++) {
@@ -834,6 +835,7 @@ const ExampleGameControls = function(element, game) {
                     collection = sgf.parse(knownVersions[SGFrevIdx].SGF);
                     //console.log('init created ', collection);
                     controls.isKnownVersionLoaded = true;
+                    milestoneVersion = knownVersions[SGFrevIdx].id;
                 } else {
                     //console.log('merge with ', knownVersions[SGFrevIdx]);
                     //console.log('2merge with ', sgf.parse(knownVersions[SGFrevIdx].SGF));
@@ -857,6 +859,7 @@ const ExampleGameControls = function(element, game) {
                         if(res.data[SGFrevIdx].milestone){
                             //console.log('init with ', res.data[SGFrevIdx]);
                             collection = sgf.parse(res.data[SGFrevIdx].SGF);
+                            milestoneVersion = knownVersions[SGFrevIdx].id;
                             //console.log('init created ', collection);
                         } else {
                             //console.log('merge with ', res.data[SGFrevIdx]);
@@ -866,7 +869,7 @@ const ExampleGameControls = function(element, game) {
                     }
 
                     // TODO filter out everything that precedes a milestone
-
+                    knownVersions = knownVersions.filter(oneVersion => oneVersion.id >= milestoneVersion);
                     localStorage.setItem("knownVersions", JSON.stringify(knownVersions));
                 }
             });

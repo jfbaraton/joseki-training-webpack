@@ -1,7 +1,7 @@
 var sgf = require('smartgame');
 
-// how many points can you lose in one move and still consider it joseki?
-const JOSEKI_MARGIN = 4;
+// how many points can you lose in one move and still consider it "joseki"?
+const JOSEKI_MARGIN = 2;
 
 export default {
     flatten: function(ary) {
@@ -265,11 +265,15 @@ export default {
             if(this.areMovesSameColor(node,previousNode)) return false;
             const margin = typeof node.B === "string" ? JOSEKI_MARGIN : -JOSEKI_MARGIN;
             let scoreThreshold = typeof minimumScore !== "undefined" ? minimumScore : typeof previousNode.V !== "undefined" ? (parseFloat(previousNode.V)-margin) : null;
-            if(typeof source.V !== "undefined" && scoreThreshold != null) {
-                if(typeof node.B === "string" && parseFloat(source.V)<scoreThreshold) { // black move
+            if(typeof node.V !== "undefined" && scoreThreshold != null && node.W === "pc") {
+                console.log("is acceptable based on V?", node);
+                console.log("?", previousNode);
+                console.log("B<?", typeof node.B === "string", parseFloat(node.V), scoreThreshold);
+                console.log("W>?", typeof node.W === "string");
+                if(typeof node.B === "string" && parseFloat(node.V)<scoreThreshold) { // black move
                     return false;
-                } else if(typeof node.W === "string" && parseFloat(source.V)>scoreThreshold) { // black move
-                    return true;
+                } else if(typeof node.W === "string" && parseFloat(node.V)>scoreThreshold) { // white move
+                    return false;
                 }
             }
 
@@ -324,7 +328,7 @@ export default {
         });
         console.log('getNodeStats double ? ', node.nodes, doubleMoveIdx);
         if(doubleMoveIdx>=nodeIdx) { // there is a leaf at doubleMoveIdx, so we return
-            let mistakeIndex = doubleMoveIdx < (node.nodes.length -1) && !this.isAcceptableMove(node.nodes[doubleMoveIdx+1]) ? doubleMoveIdx +1 : -1// we stop if a same player plays 2 times in a row (exists in some SGFs as example of continuation after tenuki...)
+            let mistakeIndex = doubleMoveIdx < (node.nodes.length -1) && !this.isAcceptableMove(node.nodes[doubleMoveIdx+1], (nodeIdx >0 ? node.nodes[nodeIdx-1] : node.parent.nodes[node.parent.length-1])) ? doubleMoveIdx +1 : -1// we stop if a same player plays 2 times in a row (exists in some SGFs as example of continuation after tenuki...)
             if(mistakeIndex >= nodeIdx && mistakeIndex<=doubleMoveIdx) { // there is a leaf here, so we return
 
                 this.setStatsForNode({node:node, nodeIdx:mistakeIndex},{mistakeCount:1},localStats);
@@ -562,7 +566,7 @@ export default {
                     {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
                     availableTransforms));
 
-            if(oneChildMoves && oneChildMoves.length && (isIgnoreErrors || this.isAcceptableMove(oneChildMoves[0]))) {
+            if(oneChildMoves && oneChildMoves.length && (isIgnoreErrors || this.isAcceptableMove(oneChildMoves[0], (nodeIdx >0 ? gameTreeSequenceNode.nodes[nodeIdx-1] : gameTreeSequenceNode.parent.nodes[gameTreeSequenceNode.parent.length-1])))) {
                 if(!oneMove.pass) {
                     let childNode = oneChildMoves[0];
                     let newAvailableTransforms = this.getPossibleTransforms(
@@ -593,7 +597,7 @@ export default {
                      {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
                      availableTransforms));
 
-            if(oneChildMoves && oneChildMoves.length && (isIgnoreErrors || this.isAcceptableMove(oneChildMoves[0]))) {
+            if(oneChildMoves && oneChildMoves.length && (isIgnoreErrors || this.isAcceptableMove(oneChildMoves[0], gameTreeSequenceNode.nodes[gameTreeSequenceNode.nodes.length-1]))) {
                 if(!oneMove.pass) {
                     let childNode = oneChildMoves [0];
                     let newAvailableTransforms = this.getPossibleTransforms(
@@ -675,6 +679,7 @@ export default {
         if(nodeIdx < node.nodes.length) {
             // next move is in nodes
             //this.is14O16({node:node, nodeIdx:nodeIdx}, moveNumber);
+            //this.is17N16({node:node, nodeIdx:nodeIdx}, moveNumber);
             if(node.nodes[nodeIdx].AW || node.nodes[nodeIdx].AB) {
                 this.deleteVariation(node,nodeIdx);
                 return;
@@ -698,6 +703,7 @@ export default {
         for (let sequencesIdx = 0 ; node.sequences && sequencesIdx < node.sequences.length ; sequencesIdx++) {
             let oneChild = node.sequences[sequencesIdx];
             //this.is14O16({node:oneChild, nodeIdx:0}, moveNumber);
+            //this.is17N16({node:oneChild, nodeIdx:0}, moveNumber);
             if(oneChild.nodes[0].AW || oneChild.nodes[0].AB) {
                 this.deleteVariation(oneChild,0);
                 sequencesIdx--;
@@ -724,6 +730,14 @@ export default {
         let move = currentNode.node.nodes[currentNode.nodeIdx];
         if(14 === moveNumber && (move.B === O16 || move.W === O16)) {
             console.log('found O16 as move 14 : ',this.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx}));
+        }
+
+    },
+    is17N16: function(currentNode, moveNumber){
+        const N16 = "md";
+        let move = currentNode.node.nodes[currentNode.nodeIdx];
+        if(17 === moveNumber && (move.B === N16 || move.W === N16)) {
+            console.log('found N16 as move 17 : ',this.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx}));
         }
 
     },

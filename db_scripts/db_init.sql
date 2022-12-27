@@ -38,6 +38,7 @@ INSERT INTO `sgfs` ( id, `recordtime`, `tags`, `milestone`, `SGF`) VALUES (5,320
 -- 4_komoku_KGD_WR_clean
 -- 5_rest_KGD_WR_clean
 -- eidogo_joseki.sgf
+-- eidogo_joseki_WR.sgf
 -- requires my.ini to have
 --
 -- secure_file_priv="c:/Users/yamak/Documents/joseki-training-webpack/client/src/test"

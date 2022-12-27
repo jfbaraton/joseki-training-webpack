@@ -4,7 +4,14 @@ import axios from "axios";
 
 var sgf = require('smartgame');
 
-var collection = sgf.parse(exampleSGF);
+import file1 from '!raw-loader!./test/eidogo_joseki_WR.sgf';
+//import file1 from '!raw-loader!./test/1_hoshi_KGD_WR_clean.sgf';
+//import file2 from '!raw-loader!./test/4_komoku_KGD_WR_clean.sgf';
+//import file3 from '!raw-loader!./test/5_rest_KGD_WR_clean.sgf';
+
+var collection = sgf.parse(file1.toString());
+//sgfutils.merge(collection.gameTrees[0], sgf.parse(file2.toString()).gameTrees[0], 1, 1);
+//sgfutils.merge(collection.gameTrees[0], sgf.parse(file3.toString()).gameTrees[0], 1, 1);
 var previousLeafSignature = "";
 
 const _getNextMoveOptions = function(game, isIgnoreErrors) {
@@ -137,52 +144,6 @@ const _childrenOptionsAsString = function(game, gameTreeSequenceNode, nodeIdx, m
     ).join(" or ") : "";
 };
 
-const _childrenOptionsAsString2 = function(game, gameTreeSequenceNode, nodeIdx, moveColor) {
-    //console.log('DEBUG ',gameTreeSequenceNode);
-    let childAsPoint;
-    let resultString = "";
-    let oneChildMoves;
-
-    if(gameTreeSequenceNode.nodes && nodeIdx< gameTreeSequenceNode.nodes.length) {
-        // we have only one option, because we are in the gameTreeSequenceNode.nodes[] one way street
-        oneChildMoves = gameTreeSequenceNode.nodes.
-            filter( (childNode, sequenceIdx) => sequenceIdx === nodeIdx). // we only consider the first move of the sequence
-            filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W)!== "undefined");
-
-        if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
-            if (typeof oneChildMoves[0].B !== "undefined" || typeof oneChildMoves[0].W !== "undefined") {
-                childAsPoint = sgfutils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
-                resultString += String(game.coordinatesFor(childAsPoint.y, childAsPoint.x));
-            } else {
-                resultString += "Tenuki (play away)";
-            }
-        }
-    } else {
-        // we consider sequences
-        oneChildMoves = gameTreeSequenceNode.sequences && gameTreeSequenceNode.sequences[0].nodes.
-                filter( (childNode, sequenceIdx) => sequenceIdx === 0). // we only consider the first move of the sequence
-                filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W) !== "undefined");
-        if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
-            childAsPoint = sgfutils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
-            resultString += String(game.coordinatesFor(childAsPoint.y, childAsPoint.x));
-        }
-        for (let sequencesIdx = 1 ; gameTreeSequenceNode.sequences && sequencesIdx < gameTreeSequenceNode.sequences.length ; sequencesIdx++) {
-            //console.log('DEBUG '+i,gameTreeSequenceNode.sequences[sequencesIdx]);
-            let oneChild = gameTreeSequenceNode.sequences[sequencesIdx];
-
-            oneChildMoves = oneChild.nodes.
-                filter( (childNode, sequenceIdx) => sequenceIdx === 0). // we only consider the first move of the sequence
-                filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W)!== "undefined");
-
-            if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
-                childAsPoint = sgfutils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
-                resultString += (resultString ? "" : " or ")+game.coordinatesFor(childAsPoint.y, childAsPoint.x);
-            }
-        }
-    }
-    return resultString;
-};
-
 const _childrenOptions = function(game, gameTreeSequenceNode, nodeIdx, moveColor, availableTransforms) {
     let childAsPoint;
     let result = [];
@@ -196,7 +157,7 @@ const _childrenOptions = function(game, gameTreeSequenceNode, nodeIdx, moveColor
             filter( (childNode, sequenceIdx) => sequenceIdx === nodeIdx). // we only consider the first move of the sequence
             filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W)!== "undefined");
 
-        if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
+        if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0], (nodeIdx >0 ? gameTreeSequenceNode.nodes[nodeIdx-1] : gameTreeSequenceNode.parent.nodes[gameTreeSequenceNode.parent.length-1]))) {
             if (moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W) {
                 childAsPoint = sgfutils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
                 availableTransforms.forEach(oneTransform => {
@@ -223,7 +184,7 @@ const _childrenOptions = function(game, gameTreeSequenceNode, nodeIdx, moveColor
                 filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W)!== "undefined");
 
             //console.log('DEBUG oneChildMoves && oneChildMoves.length ',oneChildMoves && oneChildMoves.length);
-            if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0])) {
+            if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0], gameTreeSequenceNode.nodes[gameTreeSequenceNode.nodes.length-1])) {
                 //console.log('typeof oneChildMoves[0] defined ',typeof oneChildMoves[0].B !== "undefined" || typeof oneChildMoves[0].W !== "undefined");
                 if (moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W) {
                     childAsPoint = sgfutils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
@@ -283,6 +244,7 @@ const ExampleGameControls = function(element, game) {
 
         if(currentNode) {
             //console.log('current node: ',currentNode);
+            newGameInfo += ": Black Score "+currentNode.node.nodes[currentNode.nodeIdx].V || "??"+ " Pts";
             let currentSGFVariation = [];
             sgfutils.getVariationSGF(currentNode.node, currentNode.nodeIdx, currentSGFVariation, true);
             const emptySGF = sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])');
@@ -525,9 +487,9 @@ const ExampleGameControls = function(element, game) {
         mistakeButton.addEventListener("click", this.declareMistake);
         josekiButton.addEventListener("click", this.declareJoseki);
 
-        localStorage.setItem("knownVersions", JSON.stringify([]));
+        //localStorage.setItem("knownVersions", JSON.stringify([]));
         // LAST getLatestSGF
-        //setTimeout(this.getLatestSGF,200);
+        setTimeout(this.getLatestSGF,200);
         setTimeout(this.updateGUIFromState,200);
 
     }

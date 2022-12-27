@@ -664,6 +664,7 @@ export default {
         // make a copy of the original gametree
         const originalSGFString = typeof originalSGFOrgameTree === "string" ? originalSGFOrgameTree : sgf.generate(originalSGFOrgameTree);
         let resultTree = sgf.parse(originalSGFString);
+        this.cleanKatrainNode(resultTree.gameTrees[0].nodes[0]);
         this.cleanSGFBranch(resultTree.gameTrees[0], 1, resultTree.gameTrees[0].nodes[0], 1, 1)
         return resultTree;
     },
@@ -750,6 +751,10 @@ export default {
         }
     },
 
+    readFile: function(node) {
+
+    },
+
     cleanKatrainNode: function(node) {
         if (node.KT)
             delete node.KT;
@@ -758,34 +763,43 @@ export default {
             const katrainCommentStart = "Move ";
             const katrainScoreStart = "Score: ";
             const katrainCommentEnd = "​";
+            const katrainCommentEnd2 = "";
+            //const katrainCommentEnd3 = "¤";
+            const katrainCommentEnd3 = "¤";
 
             const katrainCommentStartIdx = node.C.indexOf(katrainCommentStart);
             const katrainScoreStartIdx = node.C.indexOf(katrainScoreStart);
-            let katrainCommentEndIdx = node.C.indexOf(katrainCommentEnd);
+            let katrainCommentEndIdx = node.C.lastIndexOf(katrainCommentEnd);
+            let katrainCommentEnd2Idx = node.C.lastIndexOf(katrainCommentEnd2);
+            let katrainCommentEnd3Idx = node.C.lastIndexOf(katrainCommentEnd3);
             //console.log('node has a comment ',katrainCommentStartIdx,katrainScoreStartIdx,katrainCommentEndIdx);
             //console.log('node has a comment ',(katrainCommentStartIdx >=0));
             //console.log('node has a comment ',(katrainScoreStartIdx >katrainCommentStartIdx));
             //console.log('node has a comment ',(katrainCommentEndIdx >katrainScoreStartIdx));
 
-            if(katrainCommentStartIdx >=0 && katrainScoreStartIdx >katrainCommentStartIdx && katrainCommentEndIdx >katrainScoreStartIdx) {
+            if (katrainCommentStartIdx >= 0 && katrainScoreStartIdx > katrainCommentStartIdx &&
+                (katrainCommentEndIdx > katrainScoreStartIdx ||katrainCommentEnd2Idx > katrainScoreStartIdx ||katrainCommentEnd3Idx > katrainScoreStartIdx)) {
                 // "Score: W+1.2\n"
-                let scoreString = node.C.slice(katrainScoreStartIdx+katrainScoreStart.length, katrainCommentEndIdx);
+                let endMaxIdx = Math.max(katrainCommentEndIdx,katrainCommentEnd2Idx,katrainCommentEnd2Idx);
+                let scoreString = node.C.slice(katrainScoreStartIdx + katrainScoreStart.length, endMaxIdx);
                 scoreString = scoreString.slice(0, scoreString.indexOf("\n"));
                 //('scoreString #'+scoreString+'#');
                 let multiplier = 1;
-                if(0==scoreString.indexOf("W")) multiplier = -1;
-                node.V = multiplier*parseFloat(scoreString.slice(1));
-                let newlineIdx = node.C.slice(katrainCommentEndIdx).indexOf("\n");
-                if(newlineIdx>0) {
-                    katrainCommentEndIdx += newlineIdx+1;
-                }
+                if (0 === scoreString.indexOf("W")) multiplier = -1;
+                node.V = multiplier * parseFloat(scoreString.slice(1));
+                /*let newlineIdx = node.C.slice(endMaxIdx).indexOf("\n");
+                if (newlineIdx > 0) {
+                    endMaxIdx += newlineIdx + 1;
+                }*/
 
-                node.C = node.C.slice(0,katrainCommentStartIdx)+node.C.slice(katrainCommentEndIdx+1);
+                node.C = node.C.slice(0, katrainCommentStartIdx) + node.C.slice(endMaxIdx + 1);
                 //console.log('node.C #'+node.C+'#');
+            } else if (katrainCommentStartIdx >= 0) {
+                console.log('couldn t parse #'+node.C+'#', node);
             }
+
         }
         //console.log('cleanKatrainNode FINISHED');
-
 
     },
 
@@ -813,7 +827,7 @@ export default {
         const isMasterNextMoveInMasterNodes = masterTree && masterTree.nodes && masterTree.nodes.length && masterTree.nodes.length > masterTreeNodeNextMoveIdx;
 
         if(!addedTree || !addedTree.nodes || !addedTree.nodes.length) return;
-        //console.log('the the next node from addedTree is in nodes?  ', (addedTree && addedTree.nodes),')');
+        //console.log('the next node from addedTree is in nodes?  ', (addedTree && addedTree.nodes),')');
 
         // if the next node from addedTree is in nodes
         if(addedTree.nodes.length> addedTreeNodeNextMoveIdx) {

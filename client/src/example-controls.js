@@ -516,7 +516,7 @@ const ExampleGameControls = function(element, game) {
             //sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
 
             //sgfutils.cleanSGF(collection);
-            this.testNodeCleaner();
+            controls.testNodeCleaner();
 
         });
 
@@ -534,87 +534,6 @@ const ExampleGameControls = function(element, game) {
     this.testNodeCleaner = function() {
 
         //sgfutils.cleanSGF(collection);
-        const katrainNode = {
-            B:'pd',LB:['qc:f','qd:h','rd:k','re:l','pf:b','qf:a','pg:c','qg:d','qh:i','qi:g','qj:j','dp:e'],
-            KT:'H4sIAEqpqWMC/w3JeUgUURwA4EqzyyzUlc1tl9mZ99783rzRNc3IslLcMizKNCqSysryiMigwMgOCaIoPMAzdV1n110ddyXNtKzQICJD0RDTLro8StuwiE66vn+/D34KF4TmYZ59hjGE8CDyRUXGONAyPXsUEi/+rfxq/Y0z5+9f/IArACu7DsuD83SZ6AIuIQshDWJhH6uYY1QD3GbbJ2ERVmgLPsGWUl9+J1+Jv5AQ7CWnh/aEXQu/avrR1OfItT4WR7grNXOb2/QtMEj74CdNktZIt2WDaUEERLIVESYfxx54BqO1JYa4hgPoPc2d5kFteFiMpcdZdMjeJRsjMiMjw80csEtitnUf6lLM+HLNqkXeyEpSYQj6aRwbCLWFFYRnmJx2f/rC2G8/WFhW5RPsnZfNOVGj+B1G4RUUU708KWtDk0MzDG/FrcZflRbhVmW2UKLPRLfITaihX6lCRyGBjknDdLa0RSAwyedqx409l6KFKMyRDlGFfLpMEv7/dDoBu0GLykkqvSecKTkSfMxvHBlwPn5MdNANWdRMn0MSHBezoAoqIFFKQPmBWbo03Q2kQfHoG14ghoED0iFJNJB2UkXvSDnSa7YZrdb3cP2aNt6rsFy/gcd4gHSJU6Qbd+AZNFk+Kp+WvFgytnDzDOrldcp6yw1Lom61oOLzpBP/QWHopbhLfsImpAPSB1Ku6cXM1VEX1GBS3pVt4nNQAGb4jfhRY5FWSvdD0iVv2WgstdU4Jt0jrtTaSAerkLlvyIMTxAnRn5RxF8GLnacXpbu1vg2d6tnWDPWw0xjoqdtWlVI0zl0hGvEkCkTvmuPRU+hiLY0ad5Qrxz2zPoZrsP+xKtUXgsIFLZqFTSjVdko5hKJta7UxLtbU7t7h8m68ac2yf6k2lz7VpwnFyM538Sl1d2pLnXn6qfqHrpNN7SpxeBRcaDZ8594I53AvWUa241Y8VDy1uNp2SH2l/gNIfTzp0gIAAA==][H4sIAEqpqWMC/x1SW0hUURRd++o9505OiF4tX02aoylpjo5TWlIfBaJEQxCIlFEEDkKhaY8PQRkIhIGBokFxygoRBBGVCNNR0JSkFKEygvyK+grRDw2kn6ZlbPY5+9677tpr7XNsHEchfIyTrEpRBDdcjFTWlShAGfdD/NKIfsSRIQuIYRELzEnMYwlRWZVGOS9tRHoRwtPsuLsl7ZHzmdWiEvQJ1WeWmx2OaykR4621nmFKDnH5csftrQyk3jePmYOJLeqwbjY/J9apQbPEwOxNR4GcRgWuSoVdnxaVP7DlkmxIkfFFeiQsfRKQbXlhBKSaunbhcRY7FsQhLmmQxxIlok2Ckiud8juxLmWH/cqotF6vqT65IJflnryUERlmdpFrWOLmlDWGTKLeY0B9V7XGlISImZE5xpgM8I+g7CaUm5OchYfOwzrPChmrEmGvIfK8Jk9Q2ll9Nf1qBEeImscP3WRFjCVieoiMEhkiU7t8kBXt0zHksuMb1OhWXW2E+L6NeoKM2/RRy/26rlETOEDUHN6pb+ovfd/4j+pkNEiVpDOXzYNqETmcxCy69KiO0OFZcvRwFiHOLVk2kSxJymHFkEVdn9DlDOuo5JDrIT2uUnWD7GITWeJXTUkxnqIPdRK3x9ODVD0it4xtY1/CsrHX30tdd1PCqRv0WAGXBAo7fO3p0+YW9a1YPy2H5VIeta6703q9Q+4dnKGuXpRmdhf67fykj6ZHndMP9JZyq1ar3um3+92/Mp6TqwhX8IR8tqxhDNMY5foKE7xjazjFvuNoRglssuWhiquXXlzI5/3cu63ZKOZzJSd6FPtxEf8AFtRPCtQCAAA=][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',
-            SQ:['dd','dp','pd'],MA:'pp',C:"Move 1: B Q16\n"+
-            "Score: W+1.2\n"+
-            "Win rate: W 58.2%\n"+
-            "Predicted top move was Q4 (W+1.3).\n"+
-            "PV: BQ4\n"+
-            "Move was #4 according to policy  (9.58%).\n"+
-            "Top policy move was Q4 (10.5%).\n"+
-            "ㅤ​ㅤㅤ\n"+
-            "Star Point = Hoshi = Hwajeom, Seongjeom = Xingwei\n"+
-            "---------------------------------------------------------\n"+
-            "\n"+
-            "The star or hoshi (4-4) point, emphasizing influence at the potential expense of territory.\n\n"+
-
-            "The first experiments with the star point were around 1840 in Japan; its first appearances in pro games date to the early 1900's.\n"+
-            "Its rise to preeminence came during the 'New Fuseki' movement in Japan in the mid-1930's.\n\n"+
-
-            "White approaches with 'a', 'b', 'c' or 'd'. White 'a' is the standard approach move. The variations after it cover the great majority of hoshi joseki. Other approaches invite a local loss, but may make sense strategically.\n\n"+
-
-            "'e' covers White playing elsewhere. These variations show White approaches when there are multiple Black stones locally.\n\n"+
-
-            "'f' shows the too early sansan invasion (which is not joseki).\n\n"+
-
-            "'g' shows a splitting move (esp. when Black has already played at the top).\n\n"+
-
-            "'h' is feasible if strategically sensible.\n\n"+
-
-            "'i' is a move on the side preparing to approach from the other side.\n\n"+
-
-            "'j', 'k' and 'l' are covered in another branching.\n\n"+
-
-            "g7, f6, e5, d4, c3, b2, a1\n"
-
-        };
-
-        let copiedNode = JSON.parse(JSON.stringify(katrainNode));
-        delete copiedNode.KT;
-        copiedNode.V = -1.2;
-        copiedNode.C =
-        //"Move 1: B Q16\n"+
-        //"Score: W+1.2\n"+
-        //"Win rate: W 58.2%\n"+
-        //"Predicted top move was Q4 (W+1.3).\n"+
-        //"PV: BQ4\n"+
-        //"Move was #4 according to policy  (9.58%).\n"+
-        //"Top policy move was Q4 (10.5%).\n"+
-        //"ㅤ​ㅤㅤ\n"+
-        "Star Point = Hoshi = Hwajeom, Seongjeom = Xingwei\n"+
-        "---------------------------------------------------------\n"+
-        "\n"+
-        "The star or hoshi (4-4) point, emphasizing influence at the potential expense of territory.\n\n"+
-
-        "The first experiments with the star point were around 1840 in Japan; its first appearances in pro games date to the early 1900's.\n"+
-        "Its rise to preeminence came during the 'New Fuseki' movement in Japan in the mid-1930's.\n\n"+
-
-        "White approaches with 'a', 'b', 'c' or 'd'. White 'a' is the standard approach move. The variations after it cover the great majority of hoshi joseki. Other approaches invite a local loss, but may make sense strategically.\n\n"+
-
-        "'e' covers White playing elsewhere. These variations show White approaches when there are multiple Black stones locally.\n\n"+
-
-        "'f' shows the too early sansan invasion (which is not joseki).\n\n"+
-
-        "'g' shows a splitting move (esp. when Black has already played at the top).\n\n"+
-
-        "'h' is feasible if strategically sensible.\n\n"+
-
-        "'i' is a move on the side preparing to approach from the other side.\n\n"+
-
-        "'j', 'k' and 'l' are covered in another branching.\n\n"+
-
-        "g7, f6, e5, d4, c3, b2, a1\n"
-
-        sgfutils.cleanKatrainNode(katrainNode)
-        console.log('cleanKatrainNode:'+(JSON.stringify(katrainNode) === JSON.stringify(copiedNode)),katrainNode);
-        console.log('cleanKatrainNode:'+(katrainNode.KT === copiedNode.KT));
-        console.log('cleanKatrainNode:'+(katrainNode.C === copiedNode.C));
-        console.log('cleanKatrainNode:'+katrainNode.C);
-        console.log('cleanKatrainNode:'+copiedNode.C);
-        console.log('cleanKatrainNode:'+(katrainNode.V === copiedNode.V));
-        console.log('cleanKatrainNode:'+katrainNode.C);
         /*const katrainNode = {
             B:'pd',LB:['qc:f','qd:h','rd:k','re:l','pf:b','qf:a','pg:c','qg:d','qh:i','qi:g','qj:j','dp:e'],
             KT:'H4sIAEqpqWMC/w3JeUgUURwA4EqzyyzUlc1tl9mZ99783rzRNc3IslLcMizKNCqSysryiMigwMgOCaIoPMAzdV1n110ddyXNtKzQICJD0RDTLro8StuwiE66vn+/D34KF4TmYZ59hjGE8CDyRUXGONAyPXsUEi/+rfxq/Y0z5+9f/IArACu7DsuD83SZ6AIuIQshDWJhH6uYY1QD3GbbJ2ERVmgLPsGWUl9+J1+Jv5AQ7CWnh/aEXQu/avrR1OfItT4WR7grNXOb2/QtMEj74CdNktZIt2WDaUEERLIVESYfxx54BqO1JYa4hgPoPc2d5kFteFiMpcdZdMjeJRsjMiMjw80csEtitnUf6lLM+HLNqkXeyEpSYQj6aRwbCLWFFYRnmJx2f/rC2G8/WFhW5RPsnZfNOVGj+B1G4RUUU708KWtDk0MzDG/FrcZflRbhVmW2UKLPRLfITaihX6lCRyGBjknDdLa0RSAwyedqx409l6KFKMyRDlGFfLpMEv7/dDoBu0GLykkqvSecKTkSfMxvHBlwPn5MdNANWdRMn0MSHBezoAoqIFFKQPmBWbo03Q2kQfHoG14ghoED0iFJNJB2UkXvSDnSa7YZrdb3cP2aNt6rsFy/gcd4gHSJU6Qbd+AZNFk+Kp+WvFgytnDzDOrldcp6yw1Lom61oOLzpBP/QWHopbhLfsImpAPSB1Ku6cXM1VEX1GBS3pVt4nNQAGb4jfhRY5FWSvdD0iVv2WgstdU4Jt0jrtTaSAerkLlvyIMTxAnRn5RxF8GLnacXpbu1vg2d6tnWDPWw0xjoqdtWlVI0zl0hGvEkCkTvmuPRU+hiLY0ad5Qrxz2zPoZrsP+xKtUXgsIFLZqFTSjVdko5hKJta7UxLtbU7t7h8m68ac2yf6k2lz7VpwnFyM538Sl1d2pLnXn6qfqHrpNN7SpxeBRcaDZ8594I53AvWUa241Y8VDy1uNp2SH2l/gNIfTzp0gIAAA==][H4sIAEqpqWMC/x1SW0hUURRd++o9505OiF4tX02aoylpjo5TWlIfBaJEQxCIlFEEDkKhaY8PQRkIhIGBokFxygoRBBGVCNNR0JSkFKEygvyK+grRDw2kn6ZlbPY5+9677tpr7XNsHEchfIyTrEpRBDdcjFTWlShAGfdD/NKIfsSRIQuIYRELzEnMYwlRWZVGOS9tRHoRwtPsuLsl7ZHzmdWiEvQJ1WeWmx2OaykR4621nmFKDnH5csftrQyk3jePmYOJLeqwbjY/J9apQbPEwOxNR4GcRgWuSoVdnxaVP7DlkmxIkfFFeiQsfRKQbXlhBKSaunbhcRY7FsQhLmmQxxIlok2Ckiud8juxLmWH/cqotF6vqT65IJflnryUERlmdpFrWOLmlDWGTKLeY0B9V7XGlISImZE5xpgM8I+g7CaUm5OchYfOwzrPChmrEmGvIfK8Jk9Q2ll9Nf1qBEeImscP3WRFjCVieoiMEhkiU7t8kBXt0zHksuMb1OhWXW2E+L6NeoKM2/RRy/26rlETOEDUHN6pb+ovfd/4j+pkNEiVpDOXzYNqETmcxCy69KiO0OFZcvRwFiHOLVk2kSxJymHFkEVdn9DlDOuo5JDrIT2uUnWD7GITWeJXTUkxnqIPdRK3x9ODVD0it4xtY1/CsrHX30tdd1PCqRv0WAGXBAo7fO3p0+YW9a1YPy2H5VIeta6703q9Q+4dnKGuXpRmdhf67fykj6ZHndMP9JZyq1ar3um3+92/Mp6TqwhX8IR8tqxhDNMY5foKE7xjazjFvuNoRglssuWhiquXXlzI5/3cu63ZKOZzJSd6FPtxEf8AFtRPCtQCAAA=][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',
@@ -689,13 +608,37 @@ const ExampleGameControls = function(element, game) {
         "g7, f6, e5, d4, c3, b2, a1\n"
 
         sgfutils.cleanKatrainNode(katrainNode)
-        console.log('cleanKatrainNode:'+(JSON.stringify(katrainNode) == JSON.stringify(copiedNode)),katrainNode);
-        console.log('cleanKatrainNode:'+(katrainNode.KT === copiedNode.KT));
-        console.log('cleanKatrainNode:'+(katrainNode.C === copiedNode.C));
-        console.log('cleanKatrainNode:'+katrainNode.C);
-        console.log('cleanKatrainNode:'+copiedNode.C);
-        console.log('cleanKatrainNode:'+(katrainNode.V === copiedNode.V));
-        console.log('cleanKatrainNode:'+katrainNode.C);*/
+        console.log('wholenode:'+(JSON.stringify(katrainNode) == JSON.stringify(copiedNode)),katrainNode);
+        console.log('KT:'+(katrainNode.KT === copiedNode.KT));
+        console.log('C:'+(katrainNode.C === copiedNode.C));
+        console.log('original:'+katrainNode.C);
+        console.log('cleaned:'+copiedNode.C);
+        console.log('V:'+(katrainNode.V === copiedNode.V));
+        console.log('cleaned V:'+copiedNode.V);*/
+        const katrainNode = collection.gameTrees[0].nodes[0];
+
+        let copiedNode = JSON.parse(JSON.stringify(katrainNode));
+        delete copiedNode.KT;
+        copiedNode.V = -1.2;
+        copiedNode.C =
+        //"Move 1: B Q16\n"+
+        //"Score: W+1.2\n"+
+        //"Win rate: W 58.2%\n"+
+        //"Predicted top move was Q4 (W+1.3).\n"+
+        //"PV: BQ4\n"+
+        //"Move was #4 according to policy  (9.58%).\n"+
+        //"Top policy move was Q4 (10.5%).\n"+
+        //"ㅤ​ㅤㅤ\n"+
+        "\n";
+
+        sgfutils.cleanKatrainNode(katrainNode)
+        console.log('wholenode:'+(JSON.stringify(katrainNode) == JSON.stringify(copiedNode)),katrainNode);
+        console.log('KT:'+(katrainNode.KT === copiedNode.KT));
+        console.log('C:'+(katrainNode.C === copiedNode.C));
+        console.log('original:'+katrainNode.C);
+        console.log('cleaned:'+copiedNode.C);
+        console.log('V:'+(katrainNode.V === copiedNode.V));
+        console.log('cleaned V:'+copiedNode.V);
     }
 
     this.renderPropertyChanges = function(nodeProperties) {

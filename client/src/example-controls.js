@@ -513,10 +513,11 @@ const ExampleGameControls = function(element, game) {
             //console.log('getVariationSGF:', '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])');
             //controls.postNewJosekiSGF('');
 
-            //sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
+            sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
+            //sgf.generate(sgfutils.cleanSGF(collection));
 
             //sgfutils.cleanSGF(collection);
-            controls.testNodeCleaner();
+            //controls.testNodeCleaner();
 
         });
 
@@ -619,26 +620,57 @@ const ExampleGameControls = function(element, game) {
 
         let copiedNode = JSON.parse(JSON.stringify(katrainNode));
         delete copiedNode.KT;
-        copiedNode.V = -1.2;
+        //copiedNode.V = -1.2;
         copiedNode.C =
-        //"Move 1: B Q16\n"+
-        //"Score: W+1.2\n"+
-        //"Win rate: W 58.2%\n"+
-        //"Predicted top move was Q4 (W+1.3).\n"+
-        //"PV: BQ4\n"+
-        //"Move was #4 according to policy  (9.58%).\n"+
-        //"Top policy move was Q4 (10.5%).\n"+
-        //"ㅤ​ㅤㅤ\n"+
-        "\n";
+         "Kogo's Joseki Dictionary\n"+
+         "-------------------------------------------------\n\n"+
+
+         "Variation 1: 3-3 Point = San-san = Sam-sam = San-san\n"+
+         "Variation 2: 3-4 Point = Komoku = Somok = Xiao~mu\n"+
+         "Variation 3: 4-4 Point = Hoshi = Hwajeom, Seongjeom = Xingwei\n"+
+         "Variation 4: 5-3 Point = Mokuhazushi = Waemok = Waimu\n"+
+         "Variation 5: 5-4 Point = Takamoku = Gomok = Gaomu\n"+
+         "Variation 6: 6-3 Point = Oomokuhazushi\n"+
+         "Variation 7: 6-4 Point = Ootakamoku = Chaogao\n"+
+         "Variation 8: 5-5 Point = Go-no-go = Wu~wu~\n"+
+         "Variation 9: Reducing against 10-3\n\n\n"+
+
+
+         "A joseki is a variation that gives an equitable result for both players. In other words, a joseki is fair to both players. A player should of course prefer a variation that gives a favorable result, but be satisfied with joseki in the context of whole-board strategy.\n\n"+
+
+         "Choosing a joseki:\n"+
+         "Since josekis work effectively in a certain direction, examine positions at adjacent corners and sides before choosing a joseki.\n\n"+
+
+         "The opposite corner matters only if a ladder is involved. Some guidelines:\n"+
+         "1. Have support for a fight. A high position provides support; a low position does not.\n"+
+         "2. Take the side with most value.\n"+
+         "2a. A juncture point for both sides is of great value.\n"+
+         "2b. A side where making territory is uncertain is of little value.\n"+
+         "3. Consider strategic balance.\n"+
+         "4. Get sente if there are more big points on the board.\n"+
+         "5. If there are two variations with similar outcome, but one with a ladder and one without, avoid the ladder, because you don't need to risk an opponent's ladder breaker.\n\n"+
+
+         "How to learn joseki:\n"+
+         "If you don't know joseki or a specific joseki, which you want to learn, don't try to remember every single variation you find here. Look first at the joseki. Then try to remember the easiest variations. When you learn a joseki, look also for the follow-ups in the middle and end game.\n\n"+
+
+         "If something goes wrong or you want to know more, look up variations, special strategies, trick plays and mistakes. To understand why variations are only for special situations, or are always mistakes, compare their results with the results of joseki (instead of looking at their results in isolation).\n\n"+
+
+         "Open this file twice to put two results beside each other on your screen.\n\n"+
+
+         "-----------------------------------------------------------------------------------------------\n\n"+
+
+         "Mistakes:\n"+
+         "If you find a mistake in KJD content, please email kogo@waterfire.us.";
 
         sgfutils.cleanKatrainNode(katrainNode)
         console.log('wholenode:'+(JSON.stringify(katrainNode) == JSON.stringify(copiedNode)),katrainNode);
         console.log('KT:'+(katrainNode.KT === copiedNode.KT));
         console.log('C:'+(katrainNode.C === copiedNode.C));
-        console.log('original:'+katrainNode.C);
-        console.log('cleaned:'+copiedNode.C);
+        console.log('cleaned:'+katrainNode.C.slice(0,40));
+        console.log('expected:'+copiedNode.C.slice(0,40));
         console.log('V:'+(katrainNode.V === copiedNode.V));
-        console.log('cleaned V:'+copiedNode.V);
+        console.log('cleaned V:'+katrainNode.V);
+        console.log('expected V:'+copiedNode.V);
     }
 
     this.renderPropertyChanges = function(nodeProperties) {

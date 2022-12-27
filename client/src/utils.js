@@ -700,6 +700,7 @@ export default {
             //this.is14O16({node:oneChild, nodeIdx:0}, moveNumber);
             if(oneChild.nodes[0].AW || oneChild.nodes[0].AB) {
                 this.deleteVariation(oneChild,0);
+                sequencesIdx--;
                 continue;
             } else if(this.areMovesSameColor(oneChild.nodes[0],lastMoveNode)) {
                 if(isHandicap) {
@@ -728,7 +729,7 @@ export default {
     },
 
     addPASSBefore: function(node, nodeIdx, lastMoveNode) {
-        console.log('addPASSBefore '+nodeIdx, lastMoveNode);
+        //console.log('addPASSBefore '+nodeIdx, lastMoveNode);
         // make a PASS that is a UC (unclear) move, so that the branch is not explored as a continuation
         // the reasons is that those double moves can have different purpose, like to show later continuations (not supposed to happen NOW)
         // we could find a different way/metadata to differentiate those variations
@@ -751,16 +752,12 @@ export default {
         }
     },
 
-    readFile: function(node) {
-
-    },
-
     cleanKatrainNode: function(node) {
         if (node.KT)
             delete node.KT;
 
         if (node.C) {
-            const katrainCommentStart = "Move ";
+            const katrainCommentStart = "Move";
             const katrainScoreStart = "Score: ";
             const katrainCommentEnd = "​";
             const katrainCommentEnd2 = "";
@@ -776,17 +773,19 @@ export default {
             //console.log('node has a comment ',(katrainCommentStartIdx >=0));
             //console.log('node has a comment ',(katrainScoreStartIdx >katrainCommentStartIdx));
             //console.log('node has a comment ',(katrainCommentEndIdx >katrainScoreStartIdx));
-
-            if (katrainCommentStartIdx >= 0 && katrainScoreStartIdx > katrainCommentStartIdx &&
-                (katrainCommentEndIdx > katrainScoreStartIdx ||katrainCommentEnd2Idx > katrainScoreStartIdx ||katrainCommentEnd3Idx > katrainScoreStartIdx)) {
+            //console.log('endings ', katrainCommentEndIdx, katrainCommentEnd2Idx, katrainCommentEnd3Idx);
+            if (katrainCommentStartIdx >= 0 &&
+                (katrainCommentEndIdx > katrainCommentStartIdx ||katrainCommentEnd2Idx > katrainCommentStartIdx ||katrainCommentEnd3Idx > katrainCommentStartIdx)) {
                 // "Score: W+1.2\n"
-                let endMaxIdx = Math.max(katrainCommentEndIdx,katrainCommentEnd2Idx,katrainCommentEnd2Idx);
-                let scoreString = node.C.slice(katrainScoreStartIdx + katrainScoreStart.length, endMaxIdx);
-                scoreString = scoreString.slice(0, scoreString.indexOf("\n"));
-                //('scoreString #'+scoreString+'#');
-                let multiplier = 1;
-                if (0 === scoreString.indexOf("W")) multiplier = -1;
-                node.V = multiplier * parseFloat(scoreString.slice(1));
+                let endMaxIdx = Math.max(katrainCommentEndIdx,katrainCommentEnd2Idx,katrainCommentEnd3Idx);
+                if(katrainScoreStartIdx > katrainCommentStartIdx && endMaxIdx > katrainScoreStartIdx) {
+                    let scoreString = node.C.slice(katrainScoreStartIdx + katrainScoreStart.length, endMaxIdx);
+                    scoreString = scoreString.slice(0, scoreString.indexOf("\n"));
+                    //('scoreString #'+scoreString+'#');
+                    let multiplier = 1;
+                    if (0 === scoreString.indexOf("W")) multiplier = -1;
+                    node.V = multiplier * parseFloat(scoreString.slice(1));
+                }
                 let newlineIdx = node.C.slice(endMaxIdx).indexOf("\n");
                 if (newlineIdx >= 0 && newlineIdx < 4) {
                     endMaxIdx += newlineIdx;

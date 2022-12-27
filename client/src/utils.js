@@ -787,10 +787,10 @@ export default {
                 let multiplier = 1;
                 if (0 === scoreString.indexOf("W")) multiplier = -1;
                 node.V = multiplier * parseFloat(scoreString.slice(1));
-                /*let newlineIdx = node.C.slice(endMaxIdx).indexOf("\n");
-                if (newlineIdx > 0) {
-                    endMaxIdx += newlineIdx + 1;
-                }*/
+                let newlineIdx = node.C.slice(endMaxIdx).indexOf("\n");
+                if (newlineIdx >= 0 && newlineIdx < 4) {
+                    endMaxIdx += newlineIdx;
+                }
 
                 node.C = node.C.slice(0, katrainCommentStartIdx) + node.C.slice(endMaxIdx + 1);
                 //console.log('node.C #'+node.C+'#');

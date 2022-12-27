@@ -322,35 +322,23 @@ export default {
     // localStats is a Map<signature,{leafCount: 0, failedLeafCount:0, foundLeafCount:0, successLeafCount:0}>
     getNodeStats: function(node, nodeIdx, stats, localStats) {
         console.log('START getNodeStats ',this.copyNode(node.nodes[nodeIdx], true),stats);
-         // or TODO: pre-treat such BB or WW to add a PASS in a middle, (and make that PASS a success leaf?)
-        let doubleMoveIdx = node.nodes.findIndex((oneNode, oneNodeIdx) => {
+        //let mistakeIndex = doubleMoveIdx < (node.nodes.length -1) && !this.isAcceptableMove(node.nodes[doubleMoveIdx+1], (nodeIdx >0 ? node.nodes[nodeIdx-1] : node.parent.nodes[node.parent.length-1])) ? doubleMoveIdx +1 : -1// we stop if a same player plays 2 times in a row (exists in some SGFs as example of continuation after tenuki...)
+        let mistakeIndex = node.nodes.findIndex((oneNode, oneNodeIdx) => {
             return oneNodeIdx<node.nodes.length-1 && !this.isAcceptableMove(node.nodes[oneNodeIdx+1],oneNode);
         });
-        console.log('getNodeStats double ? ', node.nodes, doubleMoveIdx);
-        if(doubleMoveIdx>=nodeIdx) { // there is a leaf at doubleMoveIdx, so we return
-            let mistakeIndex = doubleMoveIdx < (node.nodes.length -1) && !this.isAcceptableMove(node.nodes[doubleMoveIdx+1], (nodeIdx >0 ? node.nodes[nodeIdx-1] : node.parent.nodes[node.parent.length-1])) ? doubleMoveIdx +1 : -1// we stop if a same player plays 2 times in a row (exists in some SGFs as example of continuation after tenuki...)
-            if(mistakeIndex >= nodeIdx && mistakeIndex<=doubleMoveIdx) { // there is a leaf here, so we return
+        if(mistakeIndex >= nodeIdx) { // there is a leaf here, so we return
 
-                this.setStatsForNode({node:node, nodeIdx:mistakeIndex},{mistakeCount:1},localStats);
+            this.setStatsForNode({node:node, nodeIdx:mistakeIndex},{mistakeCount:1},localStats);
 
-                let leafSignature= null;
-                let leafLocalStat = null;
-                if (mistakeIndex>nodeIdx) { // mistake at mistakeIndex AND leaf at mistakeIndex-1
-                    leafLocalStat = this.setStatsForNode({node:node, nodeIdx:mistakeIndex-1},{leafCount:1},localStats);
-                }
-                this.aggregateStats(stats, leafLocalStat);
-                //console.log('END getNodeStats FOUND A MISTAKE at ',this.copyNode(node.nodes[mistakeIndex], true),stats);
-                return;
+            let leafSignature= null;
+            let leafLocalStat = null;
+            if (mistakeIndex>nodeIdx) { // mistake at mistakeIndex AND leaf at mistakeIndex-1
+                leafLocalStat = this.setStatsForNode({node:node, nodeIdx:mistakeIndex-1},{leafCount:1},localStats);
             }
-            //console.log('getNodeStats FOUND A double!! ', {node:node, nodeIdx:doubleMoveIdx});
-            let leafLocalStat = this.setStatsForNode({node:node, nodeIdx:doubleMoveIdx},{leafCount:1},localStats);
-
             this.aggregateStats(stats, leafLocalStat);
-            //console.log('END getNodeStats FOUND A double!!',this.copyNode(node.nodes[doubleMoveIdx], true),stats);
+            //console.log('END getNodeStats FOUND A MISTAKE at ',this.copyNode(node.nodes[mistakeIndex], true),stats);
             return;
-
         }
-
 
         // otherwise, call recursively
         let isAtLeastOneSeqValid = false;
@@ -678,7 +666,7 @@ export default {
         let isHandicap = moveNumberIfHandicap;
         if(nodeIdx < node.nodes.length) {
             // next move is in nodes
-            //this.is14O16({node:node, nodeIdx:nodeIdx}, moveNumber);
+            this.isTenukiAsD4({node:node, nodeIdx:nodeIdx}, moveNumber);
             //this.is17N16({node:node, nodeIdx:nodeIdx}, moveNumber);
             if(node.nodes[nodeIdx].AW || node.nodes[nodeIdx].AB) {
                 this.deleteVariation(node,nodeIdx);
@@ -703,6 +691,7 @@ export default {
         for (let sequencesIdx = 0 ; node.sequences && sequencesIdx < node.sequences.length ; sequencesIdx++) {
             let oneChild = node.sequences[sequencesIdx];
             //this.is14O16({node:oneChild, nodeIdx:0}, moveNumber);
+            this.isTenukiAsD4({node:oneChild, nodeIdx:0}, moveNumber);
             //this.is17N16({node:oneChild, nodeIdx:0}, moveNumber);
             if(oneChild.nodes[0].AW || oneChild.nodes[0].AB) {
                 this.deleteVariation(oneChild,0);
@@ -738,6 +727,19 @@ export default {
         let move = currentNode.node.nodes[currentNode.nodeIdx];
         if(17 === moveNumber && (move.B === N16 || move.W === N16)) {
             console.log('found N16 as move 17 : ',this.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx}));
+        }
+
+    },
+    isTenukiAsD4: function(currentNode, moveNumber){
+        const D4 = "dp";
+        let move = currentNode.node.nodes[currentNode.nodeIdx];
+        if(move.B === D4 || move.W === D4) {
+            console.log('found Tenuki as D4 : ',this.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx}));
+            if(move.B === D4) {
+                move.B = '';
+            } else {
+                move.W = '';
+            }
         }
 
     },
@@ -807,9 +809,9 @@ export default {
 
                 node.C = node.C.slice(0, katrainCommentStartIdx) + node.C.slice(endMaxIdx + 1);
                 //console.log('node.C #'+node.C+'#');
-            } else if (katrainCommentStartIdx >= 0) {
+            }/* else if (katrainCommentStartIdx >= 0) {
                 console.log('couldn t parse #'+node.C+'#', node);
-            }
+            }*/
 
         }
         //console.log('cleanKatrainNode FINISHED');

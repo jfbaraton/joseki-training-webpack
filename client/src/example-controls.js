@@ -135,7 +135,6 @@ const _getCurrentSGFNode = function(game, isIgnoreErrors) {
     return {node:sgfPosition, nodeIdx:nodeIdx};
 };
 
-
 const _childrenOptionsAsString = function(game, gameTreeSequenceNode, nodeIdx, moveColor, availableTransforms) {
     //console.log('DEBUG ',gameTreeSequenceNode);
     let allOptions = _childrenOptions(game, gameTreeSequenceNode, nodeIdx, moveColor, availableTransforms)
@@ -255,13 +254,14 @@ const ExampleGameControls = function(element, game) {
             //let nodeStats = addStatsForNode();
             console.log(' stats for move ('+this.game.currentState().moveNumber+') '+moveSignature+' :',nodeStats);
             //if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
-            if(/*!nodeStats && */this.game.currentState().moveNumber > 9) {
+            if(/*!nodeStats && */this.game.currentState().moveNumber > 4) {
             //if(this.game.currentState().moveNumber > 1 ) {
                 if(!nodeStats) {
                     console.log('re-calculating stats for move '+this.game.currentState().moveNumber)
                     nodeStats = sgfutils.getZeroStats();
                 }
                 let freshStats = sgfutils.getZeroStats();
+                sgfutils.addStats(freshStats,nodeStats);
                 //let freshStats = nodeStats;
                 sgfutils.getNodeStats( currentNode.node, currentNode.nodeIdx, freshStats, localStats);
                 nodeStats = freshStats;
@@ -303,6 +303,7 @@ const ExampleGameControls = function(element, game) {
                 sgfutils.addStats(nodeStats, newStatToAdd);
 
                 newGameInfo += "\nnew Stats for "+signature+":  "+JSON.stringify(nodeStats);
+                localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
             }
             nextMoveOptions = _getNextMoveOptions(game, true);
         }
@@ -487,7 +488,7 @@ const ExampleGameControls = function(element, game) {
         mistakeButton.addEventListener("click", this.declareMistake);
         josekiButton.addEventListener("click", this.declareJoseki);
 
-        //localStorage.setItem("knownVersions", JSON.stringify([]));
+        localStorage.setItem("knownVersions", JSON.stringify([]));
         // LAST getLatestSGF
         setTimeout(this.getLatestSGF,200);
         setTimeout(this.updateGUIFromState,200);

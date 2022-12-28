@@ -1,10 +1,9 @@
-import exampleSGF from "./baseSGF";
 import sgfutils from "./utils";
 import axios from "axios";
 
 var sgf = require('smartgame');
 
-import file1 from '!raw-loader!./test/eidogo_joseki_WR.sgf';
+import file1 from '!raw-loader!./test/eidogo_joseki_trimmed.sgf';
 //import file1 from '!raw-loader!./test/1_hoshi_KGD_WR_clean.sgf';
 //import file2 from '!raw-loader!./test/4_komoku_KGD_WR_clean.sgf';
 //import file3 from '!raw-loader!./test/5_rest_KGD_WR_clean.sgf';
@@ -490,7 +489,7 @@ const ExampleGameControls = function(element, game) {
 
         localStorage.setItem("knownVersions", JSON.stringify([]));
         // LAST getLatestSGF
-        setTimeout(this.getLatestSGF,200);
+        //setTimeout(this.getLatestSGF,200);
         setTimeout(this.updateGUIFromState,200);
 
     }

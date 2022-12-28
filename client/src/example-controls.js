@@ -3,7 +3,8 @@ import axios from "axios";
 
 var sgf = require('smartgame');
 
-import file1 from '!raw-loader!./test/eidogo_joseki_trimmed.sgf';
+//import file1 from '!raw-loader!./test/eidogo_joseki_trimmed.sgf';
+import file1 from '!raw-loader!./test/5_rest_KGD.sgf';
 //import file1 from '!raw-loader!./test/1_hoshi_KGD_WR_clean.sgf';
 //import file2 from '!raw-loader!./test/4_komoku_KGD_WR_clean.sgf';
 //import file3 from '!raw-loader!./test/5_rest_KGD_WR_clean.sgf';

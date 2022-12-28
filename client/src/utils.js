@@ -666,8 +666,8 @@ export default {
         let isHandicap = moveNumberIfHandicap;
         if(nodeIdx < node.nodes.length) {
             // next move is in nodes
-            this.isTenukiAsD4({node:node, nodeIdx:nodeIdx}, moveNumber);
-            //this.is17N16({node:node, nodeIdx:nodeIdx}, moveNumber);
+            //this.isTenukiAsD4({node:node, nodeIdx:nodeIdx}, moveNumber);
+            this.is17N16({node:node, nodeIdx:nodeIdx}, moveNumber);
             if(node.nodes[nodeIdx].AW || node.nodes[nodeIdx].AB) {
                 this.deleteVariation(node,nodeIdx);
                 return;
@@ -691,8 +691,8 @@ export default {
         for (let sequencesIdx = 0 ; node.sequences && sequencesIdx < node.sequences.length ; sequencesIdx++) {
             let oneChild = node.sequences[sequencesIdx];
             //this.is14O16({node:oneChild, nodeIdx:0}, moveNumber);
-            this.isTenukiAsD4({node:oneChild, nodeIdx:0}, moveNumber);
-            //this.is17N16({node:oneChild, nodeIdx:0}, moveNumber);
+            //this.isTenukiAsD4({node:oneChild, nodeIdx:0}, moveNumber);
+            this.is17N16({node:oneChild, nodeIdx:0}, moveNumber);
             if(oneChild.nodes[0].AW || oneChild.nodes[0].AB) {
                 this.deleteVariation(oneChild,0);
                 sequencesIdx--;
@@ -725,7 +725,7 @@ export default {
     is17N16: function(currentNode, moveNumber){
         const N16 = "md";
         let move = currentNode.node.nodes[currentNode.nodeIdx];
-        if(17 === moveNumber && (move.B === N16 || move.W === N16)) {
+        if(18 === moveNumber && (move.B === N16 || move.W === N16)) {
             console.log('found N16 as move 17 : ',this.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx}));
         }
 

@@ -1,4 +1,6 @@
 import sgfutils from "./utils";
+import learning from "./learning";
+import stats from "./stats";
 import axios from "axios";
 
 var sgf = require('smartgame');
@@ -254,23 +256,24 @@ const ExampleGameControls = function(element, game) {
             //let nodeStats = addStatsForNode();
             console.log(' stats for move ('+this.game.currentState().moveNumber+') '+moveSignature+' :',nodeStats);
             //if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
-            if(/*!nodeStats && */this.game.currentState().moveNumber > 4) {
+            if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
             //if(this.game.currentState().moveNumber > 1 ) {
                 if(!nodeStats) {
                     console.log('re-calculating stats for move '+this.game.currentState().moveNumber)
-                    nodeStats = sgfutils.getZeroStats();
+                    nodeStats = stats.getZeroStats();
                 }
-                let freshStats = sgfutils.getZeroStats();
-                sgfutils.addStats(freshStats,nodeStats);
+                let freshStats = stats.getZeroStats();
+                stats.addStats(freshStats,nodeStats);
                 //let freshStats = nodeStats;
-                sgfutils.getNodeStats( currentNode.node, currentNode.nodeIdx, freshStats, localStats);
+                stats.getNodeStats( currentNode.node, currentNode.nodeIdx, freshStats, localStats);
                 nodeStats = freshStats;
                 localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
             }
-            newGameInfo += "\n"+(nodeStats && (nodeStats.leafCount + nodeStats.agg_leafCount )|| "Lots of")+" valid VARIATIONS to find ";
-            if(nodeStats) {
-                newGameInfo += JSON.stringify(nodeStats);
-            }
+            newGameInfo += "\n"+(nodeStats && ((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.leafCount + nodeStats.agg_leafCount )|| "Lots of")+" valid VARIATIONS to find \n";
+            newGameInfo += "\n"+(nodeStats && ((nodeStats.successLeafCount + nodeStats.agg_successLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.successLeafCount + nodeStats.agg_successLeafCount + nodeStats.failedLeafCount + nodeStats.agg_failedLeafCount )|| 1)+" successful attempts\n";
+            /*if(nodeStats) {
+                newGameInfo += JSON.stringify(nodeStats).replaceAll(",", ",\n");
+            }*/
         }
 
         if (currentState.pass) {
@@ -299,8 +302,8 @@ const ExampleGameControls = function(element, game) {
             }
             if(signature && previousLeafSignature !== signature) {
                 previousLeafSignature = signature;
-                let nodeStats = sgfutils.setStatsForSignature(signature, newStatToSet, localStats);
-                sgfutils.addStats(nodeStats, newStatToAdd);
+                let nodeStats = stats.setStatsForSignature(signature, newStatToSet, localStats);
+                stats.addStats(nodeStats, newStatToAdd);
 
                 newGameInfo += "\nnew Stats for "+signature+":  "+JSON.stringify(nodeStats);
                 localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
@@ -476,21 +479,21 @@ const ExampleGameControls = function(element, game) {
             //console.log('getVariationSGF:', '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])');
             //controls.postNewJosekiSGF('');
 
-            sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
+            //sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
             //sgf.generate(sgfutils.cleanSGF(collection));
 
             //sgfutils.cleanSGF(collection);
             //controls.testNodeCleaner();
-
+            learning.test();
         });
 
         resetButton.addEventListener("click", this.reset);
         mistakeButton.addEventListener("click", this.declareMistake);
         josekiButton.addEventListener("click", this.declareJoseki);
 
-        localStorage.setItem("knownVersions", JSON.stringify([]));
+        //localStorage.setItem("knownVersions", JSON.stringify([]));
         // LAST getLatestSGF
-        //setTimeout(this.getLatestSGF,200);
+        setTimeout(this.getLatestSGF,200);
         setTimeout(this.updateGUIFromState,200);
 
     }

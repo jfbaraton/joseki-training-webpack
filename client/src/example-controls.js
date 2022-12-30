@@ -1,13 +1,13 @@
 import sgfutils from "./utils";
+import learning from "./learning";
+import stats from "./stats";
 import axios from "axios";
 
 var sgf = require('smartgame');
 
 //import file1 from '!raw-loader!./test/eidogo_joseki_trimmed.sgf';
-//import file1 from '!raw-loader!./test/1_hoshi_KGD_WR.sgf';
-//import file1 from '!raw-loader!./test/4_komoku_KGD_WR.sgf';
-//import file1 from '!raw-loader!./test/5_rest_KGD_WR.sgf';
-import file1 from '!raw-loader!./test/eidogo_joseki_WR_clean.sgf';
+//import file1 from '!raw-loader!./test/5_rest_KGD.sgf';
+import file1 from '!raw-loader!./test/3_hane_variations.sgf';
 //import file1 from '!raw-loader!./test/1_hoshi_KGD_WR_clean.sgf';
 //import file2 from '!raw-loader!./test/4_komoku_KGD_WR_clean.sgf';
 //import file3 from '!raw-loader!./test/5_rest_KGD_WR_clean.sgf';
@@ -244,37 +244,6 @@ const ExampleGameControls = function(element, game) {
         //localStorage.setItem("localStats", null);
         let localStats = sgfutils.deepParse(localStorage.getItem("localStats")) || new Map();
 
-        if(currentNode) {
-            //console.log('current node: ',currentNode);
-            newGameInfo += ": Black Score "+currentNode.node.nodes[currentNode.nodeIdx].V || "??"+ " Pts";
-            let currentSGFVariation = [];
-            sgfutils.getVariationSGF(currentNode.node, currentNode.nodeIdx, currentSGFVariation, true);
-            const emptySGF = sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])');
-            currentSGFVariation.forEach(node => emptySGF.gameTrees[0].nodes.push(node));
-            //console.log('current path: ',sgf.generate(emptySGF));
-            const moveSignature = sgfutils.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
-            let nodeStats = localStats.get(moveSignature);
-            //let nodeStats = addStatsForNode();
-            console.log(' stats for move ('+this.game.currentState().moveNumber+') '+moveSignature+' :',nodeStats);
-            //if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
-            if(/*!nodeStats && */this.game.currentState().moveNumber > 4) {
-            //if(this.game.currentState().moveNumber > 1 ) {
-                if(!nodeStats) {
-                    console.log('re-calculating stats for move '+this.game.currentState().moveNumber)
-                    nodeStats = sgfutils.getZeroStats();
-                }
-                let freshStats = sgfutils.getZeroStats();
-                sgfutils.addStats(freshStats,nodeStats);
-                //let freshStats = nodeStats;
-                sgfutils.getNodeStats( currentNode.node, currentNode.nodeIdx, freshStats, localStats);
-                nodeStats = freshStats;
-                localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
-            }
-            newGameInfo += "\n"+(nodeStats && (nodeStats.leafCount + nodeStats.agg_leafCount )|| "Lots of")+" valid VARIATIONS to find ";
-            if(nodeStats) {
-                newGameInfo += JSON.stringify(nodeStats);
-            }
-        }
 
         if (currentState.pass) {
             var player = currentState.color[0].toUpperCase() + currentState.color.substr(1);
@@ -285,6 +254,39 @@ const ExampleGameControls = function(element, game) {
         if(nextMoveOptions && nextMoveOptions.length) {
             this.element.classList.remove("notInSequence");
             this.element.classList.remove("win");
+
+            if(currentNode) {
+                //console.log('current node: ',currentNode);
+                newGameInfo += ": Black Score "+currentNode.node.nodes[currentNode.nodeIdx].V || "??"+ " Pts";
+                let currentSGFVariation = [];
+                sgfutils.getVariationSGF(currentNode.node, currentNode.nodeIdx, currentSGFVariation, true);
+                const emptySGF = sgfutils.getEmptySGF();
+                currentSGFVariation.forEach(node => emptySGF.gameTrees[0].nodes.push(node));
+                //console.log('current path: ',sgf.generate(emptySGF));
+                const moveSignature = sgfutils.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
+                let nodeStats = localStats.get(moveSignature);
+                //let nodeStats = addStatsForNode();
+                console.log(' stats for move ('+this.game.currentState().moveNumber+') '+moveSignature+' :',nodeStats);
+                //if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
+                if(/*!nodeStats && */this.game.currentState().moveNumber > 0) {
+                    //if(this.game.currentState().moveNumber > 1 ) {
+                    if(!nodeStats) {
+                        console.log('re-calculating stats for move '+this.game.currentState().moveNumber)
+                        nodeStats = stats.getZeroStats();
+                    }
+                    let freshStats = stats.getZeroStats();
+                    stats.addStats(freshStats,nodeStats);
+                    //let freshStats = nodeStats;
+                    stats.getNodeStats( currentNode.node, currentNode.nodeIdx, freshStats, localStats);
+                    nodeStats = freshStats;
+                    localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
+                }
+                newGameInfo += "\nYou have found "+(nodeStats && ((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.leafCount + nodeStats.agg_leafCount )|| "Lots of")+" valid VARIATIONS\n";
+                newGameInfo += "\n"+(nodeStats && ((nodeStats.successLeafCount + nodeStats.agg_successLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.successLeafCount + nodeStats.agg_successLeafCount + nodeStats.failedLeafCount + nodeStats.agg_failedLeafCount + nodeStats.mistakeCount + nodeStats.agg_mistakeCount )|| 1)+" successful attempts\n";
+                /*if(nodeStats) {
+                    newGameInfo += JSON.stringify(nodeStats).replaceAll(",", ",\n");
+                }*/
+            }
         } else {
             let signature = null;
             let newStatToSet = null;
@@ -302,8 +304,8 @@ const ExampleGameControls = function(element, game) {
             }
             if(signature && previousLeafSignature !== signature) {
                 previousLeafSignature = signature;
-                let nodeStats = sgfutils.setStatsForSignature(signature, newStatToSet, localStats);
-                sgfutils.addStats(nodeStats, newStatToAdd);
+                let nodeStats = stats.setStatsForSignature(signature, newStatToSet, localStats);
+                stats.addStats(nodeStats, newStatToAdd);
 
                 newGameInfo += "\nnew Stats for "+signature+":  "+JSON.stringify(nodeStats);
                 localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
@@ -479,12 +481,12 @@ const ExampleGameControls = function(element, game) {
             //console.log('getVariationSGF:', '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])');
             //controls.postNewJosekiSGF('');
 
-            sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
+            //sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
             //sgf.generate(sgfutils.cleanSGF(collection));
 
             //sgfutils.cleanSGF(collection);
             //controls.testNodeCleaner();
-
+            learning.test();
         });
 
         resetButton.addEventListener("click", this.reset);
@@ -690,6 +692,7 @@ const ExampleGameControls = function(element, game) {
         }
         if (confirm(text) == true) {
             let newSGF = controls.getVariationSGF(nodeProperties);
+            // cleanSGF
             //controls.postNewJosekiSGF(newSGF);
         }
     }
@@ -718,7 +721,7 @@ const ExampleGameControls = function(element, game) {
     // returns a one thread variation SGF of the current board state
     // sets nodeProperties to the leaf, like BM for bad move, GW/GB for "Good for White/Black"
     this.getVariationSGF = function(nodeProperties, skippedLastMoves = 0) {
-        const emptySGF = sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])');
+        const emptySGF = sgfutils.getEmptySGF();
         // find polite transform based on first moves
         let currentSelectedTransform = sgfutils.getCurrentTransform(collection, game);
 

@@ -1,0 +1,49 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1">
+
+<head>
+
+</head>
+
+<div class="example-heading">
+  <p>Need to curate, rate and add more joseki variations :)</p>
+</div>
+
+<div class="boardContainer" style="width: 6px; height: 6px;">
+  <div class="tenuki-board" style="width:10px" data-include-coordinates=true></div>
+</div>
+<div class="controls">
+  <div class="buttons">
+    <a class="pass" href="#">Pass</a>
+    <a class="undo" href="#">Undo</a>
+    <a class="reset" href="#" accesskey="r">Reset</a>
+    <a class="mistake" href="#" title="This move should be considered a big mistake, not even a joseki for low level players or an outdated joseki">Mistake !</a>
+    <a class="joseki" href="#" title="This move should be considered a joseki (this can also be for outdated joseki that dont have a clear refutation, and for joseki that are only good enough for amateur players)">Joseki !</a>
+    <a class="setPath" href="#" title="Set current position to be the starting point. After that, clicking Reset will bring you back to this move">Start from here</a>
+    <div>
+      <div id="isAutoPlayContainer">
+        <input id="isAutoPlay" type="checkbox" name="isAutoPlay" value="isAutoPlay">
+        <label for="isAutoPlay" title="when enabled, the CPU will choose the variations that exist in DB (it will play as the opponent color). when disabled, you have to play both colors"> CPU plays the other color</label>
+      </div>
+      <div id="isPlayAsWhiteContainer">
+        <input id="isPlayAsWhite" type="checkbox" name="isPlayAsWhite" value="isPlayAsWhite">
+        <label for="isPlayAsWhite" title="when enabled, you play as white, and the CPU chooses a response in DB as black">I want CPU to play black</label>
+      </div>
+      <div>
+        <input id="isAllowDifferentCorners" type="checkbox" name="isAllowDifferentCorners" value="isAllowDifferentCorners">
+        <label id="isAllowDifferentCornersLabel" for="isAllowDifferentCorners"  title="When checked, we allow any symmetrical variation all over the board. When unchecked, you have to play in the top right corner"> I want to play in any corner</label>
+      </div>
+      <div id="isAllowSymmetryContainer" style="display:none">
+        <input id="isAllowSymmetry" type="checkbox" name="isAllowSymmetry" value="isAllowSymmetry">
+        <label id="isAllowSymmetryLabel" for="isAllowSymmetry" title="When checked, we allow symmetrical variations in the top right corner. When unchecked, you have to keep the variation as if black started in the polite half of the top right corner"> Vary orientation (other than polite triangle)</label>
+      </div>
+    </div>
+    <a class="test" href="#">Test</a>
+  </div>
+
+  <div class="branch-info" style="width:600px;"><p>&nbsp;</p></div>
+  <div class="game-info" style="width:600px;"><p>&nbsp;</p></div>
+  <div class="text-info" style="width:600px;"><p></p></div>
+</div>
+

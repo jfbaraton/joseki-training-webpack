@@ -65,6 +65,10 @@ module.exports = {
             template: "./public/index.html",
             filename: "./index.html"
         }),
+        new HtmlWebPackPlugin({
+            template: "./public/miniBoard.html",
+            filename: "./miniBoard.html"
+        }),
         new FaviconsWebpackPlugin('./public/favicon.ico') // svg works too!
     ],
     devServer: {

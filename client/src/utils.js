@@ -4,142 +4,8 @@ var sgf = require('smartgame');
 const JOSEKI_MARGIN = 2;
 
 export default {
-    flatten: function(ary) {
-        return ary.reduce((a, b) => a.concat(b));
-    },
-
-    flatMap: function(ary, lambda) {
-        return Array.prototype.concat.apply([], ary.map(lambda));
-    },
-
-    cartesianProduct: function(ary1, ary2) {
-        return this.flatten(ary1.map(x => ary2.map(y => [x, y])));
-    },
-
-    randomID: function(prefix) {
-        const str = [0, 1, 2, 3].map(() => {
-            return Math.floor(Math.random() * 0x10000).toString(16).substring(1);
-        }).join("");
-
-        return `${prefix}-${str}`;
-    },
-
-    clone: function(element) {
-        return element.cloneNode(true);
-    },
-
-    createElement: function(elementName, options) {
-        const element = document.createElement(elementName);
-
-        if (typeof options !== "undefined") {
-          if (options.class) {
-            element.className = options.class;
-          }
-        }
-
-        return element;
-    },
-
-    createSVGElement: function(elementName, options) {
-        const svgNamespace = "http://www.w3.org/2000/svg";
-        const element = document.createElementNS(svgNamespace, elementName);
-
-        if (typeof options !== "undefined") {
-          if (options.class) {
-            options.class.split(" ").forEach(name => {
-              this.addClass(element, name);
-            });
-          }
-
-          if (options.attributes) {
-            Object.keys(options.attributes).forEach(k => {
-              element.setAttribute(k, options.attributes[k]);
-            });
-          }
-
-          if (options.text) {
-            element.textContent = options.text.toString();
-          }
-        }
-
-        return element;
-    },
-
-    appendElement: function(parent, el) {
-        parent.insertBefore(el, null);
-    },
-
-    addEventListener: function(el, eventName, fn) {
-        el.addEventListener(eventName, fn, false);
-    },
-
-    removeClass: function(el, className) {
-        if (!this.hasClass(el, className)) {
-          return;
-        }
-
-        if (el.classList && el.classList.remove) {
-          el.classList.remove(className);
-          return;
-        }
-
-        const classNameRegex = RegExp('\\b' + className + '\\b', "g");
-
-        if (el instanceof SVGElement) {
-          el.setAttribute("class", el.getAttribute("class").replace(classNameRegex, ""));
-        } else {
-          el.className = el.getAttribute("class").replace(classNameRegex, "");
-        }
-    },
-
-    addClass: function(el, className) {
-        if (el.classList && el.classList.add) {
-          el.classList.add(className);
-          return;
-        }
-
-        if (el instanceof SVGElement) {
-          el.setAttribute("class", el.getAttribute("class") + " " + className);
-        } else {
-          el.className = el.getAttribute("class") + " " + className;
-        }
-    },
-
-    hasClass: function(el, className) {
-        if (el.classList && el.classList.contains) {
-          return el.classList.contains(className);
-        }
-
-        const classNameRegex = RegExp('\\b' + className + '\\b', "g");
-
-        if (el instanceof SVGElement) {
-          return classNameRegex.test(el.getAttribute("class"));
-        } else {
-          return classNameRegex.test(el.className);
-        }
-    },
-
-    toggleClass: function(el, className) {
-        if (el.classList && el.classList.toggle) {
-          el.classList.toggle(className);
-          return;
-        }
-
-        if (this.hasClass(el, className)) {
-          this.removeClass(el, className);
-        } else {
-          this.addClass(el, className);
-        }
-    },
-
-    unique: function(ary) {
-        let unique = [];
-        ary.forEach(el => {
-          if (unique.indexOf(el) < 0) {
-            unique.push(el);
-          }
-        });
-        return unique;
+    getEmptySGF: function() {
+        return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])');
     },
 
     sgfCoordToPoint:function(_18a){
@@ -312,178 +178,11 @@ export default {
     getNodeSeparatedSGF: function(currentNode) {
         let currentSGFVariation = [];
         this.getVariationSGF(currentNode.node, currentNode.nodeIdx, currentSGFVariation, true);
-        const emptySGF = sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])');
+        const emptySGF = this.getEmptySGF();
         currentSGFVariation.filter(node => !!node).forEach(node => emptySGF.gameTrees[0].nodes.push(node));
         return sgf.generate(emptySGF);
     },
 
-    // node is an sgf node to start from
-    // stats should be an object with {leafCount}
-    // localStats is a Map<signature,{leafCount: 0, failedLeafCount:0, foundLeafCount:0, successLeafCount:0}>
-    getNodeStats: function(node, nodeIdx, stats, localStats) {
-        console.log('START getNodeStats ',this.copyNode(node.nodes[nodeIdx], true),stats);
-        //let mistakeIndex = doubleMoveIdx < (node.nodes.length -1) && !this.isAcceptableMove(node.nodes[doubleMoveIdx+1], (nodeIdx >0 ? node.nodes[nodeIdx-1] : node.parent.nodes[node.parent.length-1])) ? doubleMoveIdx +1 : -1// we stop if a same player plays 2 times in a row (exists in some SGFs as example of continuation after tenuki...)
-        let mistakeIndex = node.nodes.findIndex((oneNode, oneNodeIdx) => {
-            return oneNodeIdx<node.nodes.length-1 && !this.isAcceptableMove(node.nodes[oneNodeIdx+1],oneNode);
-        });
-        if(mistakeIndex >= nodeIdx) { // there is a leaf here, so we return
-
-            this.setStatsForNode({node:node, nodeIdx:mistakeIndex},{mistakeCount:1},localStats);
-
-            let leafSignature= null;
-            let leafLocalStat = null;
-            if (mistakeIndex>nodeIdx) { // mistake at mistakeIndex AND leaf at mistakeIndex-1
-                leafLocalStat = this.setStatsForNode({node:node, nodeIdx:mistakeIndex-1},{leafCount:1},localStats);
-            }
-            this.aggregateStats(stats, leafLocalStat);
-            //console.log('END getNodeStats FOUND A MISTAKE at ',this.copyNode(node.nodes[mistakeIndex], true),stats);
-            return;
-        }
-
-        // otherwise, call recursively
-        let isAtLeastOneSeqValid = false;
-        for (let sequencesIdx = 0 ; node.sequences && sequencesIdx < node.sequences.length ; sequencesIdx++) {
-            let oneChild = node.sequences[sequencesIdx];
-            //console.log('getNodeStats seq '+sequencesIdx);
-            if(this.isAcceptableMove(oneChild.nodes[0],node.nodes[node.nodes.length-1])) {
-                console.log('getNodeStats seq '+sequencesIdx+' EXPLORED ',this.copyNode(oneChild.nodes[0], true));
-                isAtLeastOneSeqValid = true;
-                //const signature = this.getNodeSeparatedSGF({node:oneChild, nodeIdx:0});
-                let childStats =  this.getZeroStats();
-                this.getNodeStats(oneChild, 0, childStats, localStats);
-                //localStats.set(signature, childStats);
-                let leafLocalStat = this.setStatsForNode({node:oneChild, nodeIdx:0},childStats,localStats);
-                this.aggregateStats(stats, childStats);
-            }
-
-            //console.log('END getNodeStats seq ',this.copyNode(node.nodes[node.nodes.length-1], true),stats);
-        }
-
-        if(!isAtLeastOneSeqValid) {
-            let leafLocalStat = this.setStatsForNode({node:node, nodeIdx:node.nodes.length-1},{leafCount:1},localStats);
-
-            this.aggregateStats(stats, leafLocalStat);
-            console.log('END getNodeStats NO seq after',this.copyNode(node.nodes[node.nodes.length-1], true),stats);
-            return;
-        }
-    },
-
-    setStatsForNode: function(currentNode, stats, pLocalStats) {
-        const moveSignature = this.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
-        return this.setStatsForSignature(moveSignature, stats, pLocalStats);
-    },
-
-    setStatsForSignature: function(moveSignature, stats, pLocalStats) {
-        let localStats = pLocalStats || this.deepParse(localStorage.getItem("localStats")) || new Map();
-        let nodeStats = localStats.get(moveSignature);
-        if(!nodeStats) {
-            //console.log('setStatsForSignature NEW for '+moveSignature);
-            nodeStats = this.getZeroStats();
-            pLocalStats.set(moveSignature, nodeStats);
-        }
-
-        this.setStats(nodeStats, stats);
-        return nodeStats;
-    },
-
-    aggregateStatsForNode: function(currentNode, stats, pLocalStats) {
-        const moveSignature = this.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
-        return this.aggregateStatsForSignature(moveSignature, stats, pLocalStats);
-    },
-
-    aggregateStatsForSignature: function(moveSignature, stats, pLocalStats) {
-        let localStats = pLocalStats || this.deepParse(localStorage.getItem("localStats")) || new Map();
-        let nodeStats = localStats.get(moveSignature);
-        if(!nodeStats) {
-            //console.log('aggregateStatsForSignature NEW for '+moveSignature);
-            nodeStats = this.getZeroStats();
-            pLocalStats.set(moveSignature, nodeStats);
-        }
-
-        this.aggregateStats(nodeStats, stats);
-        return nodeStats;
-    },
-
-    addStatsForNode: function(currentNode, stats, pLocalStats) {
-        const moveSignature = this.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
-        return this.addStatsForSignature(moveSignature, stats, pLocalStats);
-    },
-
-    addStatsForSignature: function(moveSignature, stats, pLocalStats) {
-        let localStats = pLocalStats || this.deepParse(localStorage.getItem("localStats")) || new Map();
-        let nodeStats = localStats.get(moveSignature);
-        if(!nodeStats) {
-            //console.log('addStatsForSignature NEW for '+moveSignature);
-            nodeStats = this.getZeroStats();
-            pLocalStats.set(moveSignature, nodeStats);
-        }
-
-        this.addStats(nodeStats, stats);
-        return nodeStats;
-    },
-
-    addStats: function(target, source) {
-        if(!source) return;
-        if(typeof source.leafCount !== "undefined")
-            target.leafCount = (target.leafCount || 0) + source.leafCount;
-        if(typeof source.failedLeafCount !== "undefined")
-            target.failedLeafCount = (target.failedLeafCount || 0) + source.failedLeafCount;
-        if(typeof source.foundLeafCount !== "undefined")
-            target.foundLeafCount = (target.foundLeafCount || 0) + source.foundLeafCount;
-        if(typeof source.successLeafCount !== "undefined")
-            target.successLeafCount = (target.successLeafCount || 0) + source.successLeafCount;
-        if(typeof source.mistakeCount !== "undefined")
-            target.mistakeCount = (target.mistakeCount || 0) + source.mistakeCount;
-    },
-
-    aggregateStats: function(target, source) {
-        if(!source) return;
-        if(typeof source.leafCount !== "undefined")
-            target.agg_leafCount = (target.agg_leafCount || 0) + source.leafCount;
-        if(typeof source.failedLeafCount !== "undefined")
-            target.agg_failedLeafCount = (target.agg_failedLeafCount || 0) + source.failedLeafCount;
-        if(typeof source.foundLeafCount !== "undefined")
-            target.agg_foundLeafCount = (target.agg_foundLeafCount || 0) + source.foundLeafCount;
-        if(typeof source.successLeafCount !== "undefined")
-            target.agg_successLeafCount = (target.agg_successLeafCount || 0) + source.successLeafCount;
-        if(typeof source.mistakeCount !== "undefined")
-            target.agg_mistakeCount = (target.agg_mistakeCount || 0) + source.mistakeCount;
-
-        if(typeof source.agg_leafCount !== "undefined")
-            target.agg_leafCount = (target.agg_leafCount || 0) + source.agg_leafCount;
-        if(typeof source.agg_failedLeafCount !== "undefined")
-            target.agg_failedLeafCount = (target.agg_failedLeafCount || 0) + source.agg_failedLeafCount;
-        if(typeof source.agg_foundLeafCount !== "undefined")
-            target.agg_foundLeafCount = (target.agg_foundLeafCount || 0) + source.agg_foundLeafCount;
-        if(typeof source.agg_successLeafCount !== "undefined")
-            target.agg_successLeafCount = (target.agg_successLeafCount || 0) + source.agg_successLeafCount;
-        if(typeof source.agg_mistakeCount !== "undefined")
-            target.agg_mistakeCount = (target.agg_mistakeCount || 0) + source.agg_mistakeCount;
-    },
-
-    setStats: function(target, source) {
-        if(!source) return;
-        if(typeof source.leafCount !== "undefined")
-            target.leafCount =source.leafCount;
-        if(typeof source.failedLeafCount !== "undefined")
-            target.failedLeafCount =source.failedLeafCount;
-        if(typeof source.foundLeafCount !== "undefined")
-            target.foundLeafCount =source.foundLeafCount;
-        if(typeof source.successLeafCount !== "undefined")
-            target.successLeafCount =source.successLeafCount;
-        if(typeof source.mistakeCount !== "undefined")
-            target.mistakeCount =source.mistakeCount;
-    },
-
-    getZeroStats: function() {
-        return {
-            leafCount: 0,
-            failedLeafCount:0,
-            mistakeCount:0,
-            foundLeafCount:0,
-            successLeafCount:0
-        };
-    },
 
     getVariationSGF: function(node, nodeIdx, result, isKeepOnlyMove, isRemoveComment) {
         if(!node.parent) return;
@@ -667,7 +366,7 @@ export default {
         if(nodeIdx < node.nodes.length) {
             // next move is in nodes
             //this.isTenukiAsD4({node:node, nodeIdx:nodeIdx}, moveNumber);
-            this.is17N16({node:node, nodeIdx:nodeIdx}, moveNumber);
+            //this.is17N16({node:node, nodeIdx:nodeIdx}, moveNumber);
             if(node.nodes[nodeIdx].AW || node.nodes[nodeIdx].AB) {
                 this.deleteVariation(node,nodeIdx);
                 return;
@@ -692,7 +391,7 @@ export default {
             let oneChild = node.sequences[sequencesIdx];
             //this.is14O16({node:oneChild, nodeIdx:0}, moveNumber);
             //this.isTenukiAsD4({node:oneChild, nodeIdx:0}, moveNumber);
-            this.is17N16({node:oneChild, nodeIdx:0}, moveNumber);
+            //this.is17N16({node:oneChild, nodeIdx:0}, moveNumber);
             if(oneChild.nodes[0].AW || oneChild.nodes[0].AB) {
                 this.deleteVariation(oneChild,0);
                 sequencesIdx--;
@@ -713,7 +412,7 @@ export default {
             this.cleanSGFBranch(oneChild, 1, oneChild.nodes[0], isHandicap, moveNumber+1);
         }
     },
-
+/*
     is14O16: function(currentNode, moveNumber){
         const O16 = "nd";
         let move = currentNode.node.nodes[currentNode.nodeIdx];
@@ -742,7 +441,7 @@ export default {
             }
         }
 
-    },
+    },*/
 
     addPASSBefore: function(node, nodeIdx, lastMoveNode) {
         //console.log('addPASSBefore '+nodeIdx, lastMoveNode);

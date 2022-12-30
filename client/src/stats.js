@@ -1,55 +1,54 @@
 import sgfutils from "./utils";
 
 export default {
-
-
     // node is an sgf node to start from
     // stats should be an object with {leafCount}
     // localStats is a Map<signature,{leafCount: 0, failedLeafCount:0, foundLeafCount:0, successLeafCount:0}>
     getNodeStats: function(node, nodeIdx, stats, localStats) {
-        //console.log('START getNodeStats ',sgfutils.copyNode(node.nodes[nodeIdx], true),stats);
+        //console.log('START getNodeStats ',sgfutils.copyNode(node.nodes[nodeIdx], true),JSON.stringify(stats));
         //let mistakeIndex = doubleMoveIdx < (node.nodes.length -1) && !sgfutils.isAcceptableMove(node.nodes[doubleMoveIdx+1], (nodeIdx >0 ? node.nodes[nodeIdx-1] : node.parent.nodes[node.parent.length-1])) ? doubleMoveIdx +1 : -1// we stop if a same player plays 2 times in a row (exists in some SGFs as example of continuation after tenuki...)
         let mistakeIndex = node.nodes.findIndex((oneNode, oneNodeIdx) => {
             return oneNodeIdx<node.nodes.length-1 && !sgfutils.isAcceptableMove(node.nodes[oneNodeIdx+1],oneNode);
         });
         if(mistakeIndex >= nodeIdx) { // there is a leaf here, so we return
 
-            this.setStatsForNode({node:node, nodeIdx:mistakeIndex},{mistakeCount:1},localStats);
+            //this.setStatsForNode({node:node, nodeIdx:mistakeIndex},{mistakeCount:1},localStats);
 
-            let leafSignature= null;
+
             let leafLocalStat = null;
             if (mistakeIndex>nodeIdx) { // mistake at mistakeIndex AND leaf at mistakeIndex-1
                 leafLocalStat = this.setStatsForNode({node:node, nodeIdx:mistakeIndex-1},{leafCount:1},localStats);
             }
             this.aggregateStats(stats, leafLocalStat);
-            //console.log('END getNodeStats FOUND A MISTAKE at ',this.copyNode(node.nodes[mistakeIndex], true),stats);
+            //console.log('END getNodeStats FOUND A MISTAKE at ',this.copyNode(node.nodes[mistakeIndex], true),JSON.stringify(stats),JSON.stringify(leafLocalStat));
             return;
         }
-
+        //console.log('END getNodeStats NO MISTAKE in nodes');
         // otherwise, call recursively
         let isAtLeastOneSeqValid = false;
         for (let sequencesIdx = 0 ; node.sequences && sequencesIdx < node.sequences.length ; sequencesIdx++) {
             let oneChild = node.sequences[sequencesIdx];
             //console.log('getNodeStats seq '+sequencesIdx);
+            let childStats = null;
             if(sgfutils.isAcceptableMove(oneChild.nodes[0],node.nodes[node.nodes.length-1])) {
                 //console.log('getNodeStats seq '+sequencesIdx+' EXPLORED ',sgfutils.copyNode(oneChild.nodes[0], true));
                 isAtLeastOneSeqValid = true;
                 //const signature = this.getNodeSeparatedSGF({node:oneChild, nodeIdx:0});
-                let childStats =  this.getZeroStats();
+                childStats =  this.getZeroStats();
                 this.getNodeStats(oneChild, 0, childStats, localStats);
                 //localStats.set(signature, childStats);
-                let leafLocalStat = this.setStatsForNode({node:oneChild, nodeIdx:0},childStats,localStats);
+                //let leafLocalStat = this.setStatsForNode({node:oneChild, nodeIdx:0},childStats,localStats);
                 this.aggregateStats(stats, childStats);
             }
 
-            //console.log('END getNodeStats seq ',this.copyNode(node.nodes[node.nodes.length-1], true),stats);
+            //console.log('END getNodeStats seq ',sgfutils.copyNode(node.nodes[node.nodes.length-1], true),JSON.stringify(stats),JSON.stringify(childStats));
         }
 
         if(!isAtLeastOneSeqValid) {
             let leafLocalStat = this.setStatsForNode({node:node, nodeIdx:node.nodes.length-1},{leafCount:1},localStats);
 
             this.aggregateStats(stats, leafLocalStat);
-            //console.log('END getNodeStats NO seq after',sgfutils.copyNode(node.nodes[node.nodes.length-1], true),stats);
+            //console.log('END getNodeStats NO seq after',sgfutils.copyNode(node.nodes[node.nodes.length-1], true),JSON.stringify(stats),JSON.stringify(leafLocalStat));
             return;
         }
     },

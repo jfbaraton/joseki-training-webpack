@@ -2,6 +2,7 @@ import sgfutils from "./utils";
 import learning from "./learning";
 import stats from "./stats";
 import axios from "axios";
+var ProgressBar = require('progressbar.js');
 
 var sgf = require('smartgame');
 
@@ -219,6 +220,37 @@ const ExampleGameControls = function(element, game) {
     this.textInfo = element.querySelector(".text-info p");
     this.gameInfo = element.querySelector(".game-info p");
     this.branchInfo = element.querySelector(".branch-info p");
+    this.rootProgress = element.querySelector("#rootProgress");
+    this.rootProgressBar = new ProgressBar.SemiCircle(this.rootProgress, {
+        strokeWidth: 6,
+        color: '#FFEA82',
+        trailColor: '#eee',
+        trailWidth: 1,
+        easing: 'easeInOut',
+        duration: 1400,
+        svgStyle: null,
+        text: {
+            value: '',
+            alignToBottom: false
+        },
+        from: {color: '#FFEA82'},
+        to: {color: '#ED6A5A'},
+        // Set default step function for all animate calls
+        step: (state, bar) => {
+            bar.path.setAttribute('stroke', state.color);
+            var value = Math.round(bar.value() * 100);
+            if (value === 0) {
+                bar.setText('');
+            } else {
+                bar.setText(value);
+            }
+
+            bar.text.style.color = state.color;
+        }
+    });
+    this.rootProgressBar.text.style.fontFamily = '"Raleway", Helvetica, sans-serif';
+    this.rootProgressBar.text.style.fontSize = '2rem';
+    this.rootProgressBar.animate(1.0);  // Number from 0.0 to 1.0
 
     this.setText = function(str) {
         this.textInfo.innerText = str;

@@ -6,9 +6,10 @@ var ProgressBar = require('progressbar.js');
 
 var sgf = require('smartgame');
 
-//import file1 from '!raw-loader!./test/eidogo_joseki_trimmed.sgf';
+import file1 from '!raw-loader!./test/eidogo_joseki_WR_clean_OLD2.sgf';
 //import file1 from '!raw-loader!./test/5_rest_KGD.sgf';
-import file1 from '!raw-loader!./test/3_hane_variations.sgf';
+//import file1 from '!raw-loader!./test/3_hane_variations.sgf';
+//import file1 from '!raw-loader!./test/5_rest_KGD_WR.sgf';
 //import file1 from '!raw-loader!./test/1_hoshi_KGD_WR_clean.sgf';
 //import file2 from '!raw-loader!./test/4_komoku_KGD_WR_clean.sgf';
 //import file3 from '!raw-loader!./test/5_rest_KGD_WR_clean.sgf';
@@ -583,12 +584,12 @@ const ExampleGameControls = function(element, game) {
             //console.log('getVariationSGF:', '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])');
             //controls.postNewJosekiSGF('');
 
-            //sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
+            sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
             //sgf.generate(sgfutils.cleanSGF(collection));
 
             //sgfutils.cleanSGF(collection);
             //controls.testNodeCleaner();
-            learning.test();
+            //learning.test();
         });
 
         resetButton.addEventListener("click", this.reset);

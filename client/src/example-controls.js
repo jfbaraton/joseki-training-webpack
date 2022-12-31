@@ -214,6 +214,7 @@ const ExampleGameControls = function(element, game) {
     var controls = this;
     this.element = element;
     this.game = game;
+    this.mode = 'explore';
     this.isKnownVersionLoaded = false;
     this.isAllowDifferentCorners = !localStorage.getItem("isAllowDifferentCorners") || localStorage.getItem("isAllowDifferentCorners") === "true";
     this.isAllowSymmetry = localStorage.getItem("isAllowSymmetry") === "true";
@@ -389,7 +390,23 @@ const ExampleGameControls = function(element, game) {
         var autoPlayContainer = document.querySelector("#isAutoPlayContainer");
         var playAsWhiteContainer = document.querySelector("#isPlayAsWhiteContainer");
 
-        this.updateGUIFromState = function(e) {
+        var allTabHeaders = document. querySelectorAll(".tabHeader");
+        var allTabs = document. querySelectorAll(".Tab");
+        var josekiStart = document. querySelectorAll(".josekiStart");
+        this.updateGUIFromState = function(e, swapMode) {
+            // tabs
+            if(swapMode) {
+                // reset all tab headers and tabs
+                allTabHeaders.forEach(oneTabHeader => oneTabHeader.classList.remove('selected'));
+                allTabs.forEach(oneTab => oneTab.style.display = "none");
+                // show tab and highlight tab header
+                document.querySelector("#"+swapMode).classList.add('selected');
+                document.querySelector("#"+swapMode+'Tab').style.display = "block";
+
+                controls.mode = swapMode;
+            }
+
+            // settings
             if(controls.isAllowDifferentCorners) {
                 allowDifferentCorners.checked = true;
                 allowSymmetryContainer.style.display = "none";
@@ -418,6 +435,28 @@ const ExampleGameControls = function(element, game) {
                 autoPlay.checked = false;
             }
         }
+
+        this.swapMode = function(e) {
+            e.preventDefault();
+            let newMode = e.srcElement.id;
+            if(controls.mode !== newMode) {
+                console.log('swap to ',newMode);
+                controls.updateGUIFromState(e, newMode);
+            }
+        }
+        allTabHeaders.forEach(oneTabHeader => oneTabHeader.onclick = this.swapMode);
+        josekiStart.forEach(oneTabHeader => oneTabHeader.onclick = (e) =>{
+
+            let path = e.srcElement.getAttribute('data-sgf');
+            console.log('joseki start ', path);
+            if(path) {
+                localStorage.setItem("startPath", path);
+                controls.setText("Position saved! From now on, you can click on RESET to come back to the same variation");
+                controls.reset(e);
+            }
+        });
+        console.log('tabHeaders ', allTabHeaders);
+
         this.declareMistake = function(e) {
             e.preventDefault();
             controls.updateMoveWithConfirm({BM:'1', DM:''});
@@ -427,6 +466,36 @@ const ExampleGameControls = function(element, game) {
             controls.updateMoveWithConfirm({BM:'',UC:'', DM:'2', GW:'', GB:''});
         }
         this.reset = function(e) {
+            e.preventDefault();
+            //var startPath = JSON.parse(localStorage.getItem("startPath")) || [];
+            var startPath = localStorage.getItem("startPath") || sgfutils.getEmptySGF();
+            while (controls.game.currentState().moveNumber /*&& controls.game.currentState().moveNumber != startPath.length*/) {
+                controls.game.undo();
+            }
+
+            const availableTransforms =
+                controls.isAllowDifferentCorners ? sgfutils.getAllPossibleTransform() :
+                controls.isAllowSymmetry? sgfutils.getTopRightTransform() :
+                sgfutils.getIdentityTransform();
+            let oneTransformIdx = Math.floor(availableTransforms.length * Math.random());
+
+            const oneTransform = availableTransforms[oneTransformIdx];
+            sgf.parse(startPath).gameTrees[0].nodes.forEach((oneSGFMove, oneMoveIdx) => {
+                if(oneMoveIdx) {
+                    let oneMove = sgfutils.sgfCoordToPoint(oneSGFMove.B || oneSGFMove.W || '');
+                    if (oneMove.pass) {
+                        controls.game.pass();
+                    } else {
+                        const transformed = sgfutils.transformMove(oneMove, oneTransform);
+                        controls.game.playAt(transformed.y, transformed.x);
+                    }
+
+                }
+
+            });
+
+        };
+        this.resetOLD = function(e) {
             e.preventDefault();
             var startPath = JSON.parse(localStorage.getItem("startPath")) || [];
             while (controls.game.currentState().moveNumber /*&& controls.game.currentState().moveNumber != startPath.length*/) {
@@ -503,7 +572,8 @@ const ExampleGameControls = function(element, game) {
         });
 
         setPathButton.addEventListener("click", function(e) {
-            localStorage.setItem("startPath", JSON.stringify(getPath(controls.game)));
+            //localStorage.setItem("startPath", JSON.stringify(getPath(controls.game)));
+            localStorage.setItem("startPath", controls.getVariationSGF({}));
             controls.setText("Position saved! From now on, you can click on RESET to come back to the same variation");
         });
         testButton.addEventListener("click", function(e) {
@@ -730,12 +800,14 @@ const ExampleGameControls = function(element, game) {
     }
 
     this.autoPlay = function(game) {
-        let startPath = JSON.parse(localStorage && localStorage.getItem("startPath") || "[]");
+        //let startPath = JSON.parse(localStorage && localStorage.getItem("startPath") || "[]");
+        var startPath = localStorage.getItem("startPath") || sgfutils.getEmptySGF();
+        var startPathMoves = sgf.parse(startPath).gameTrees[0].nodes.length-1;
         //console.log('autoPlay startPath:', startPath);
         //console.log('autoPlay ? this.isAutoplay:', controls.isAutoplay);
         //console.log('autoPlay ? game.currentState().moveNumber:', game.currentState().moveNumber);
         //console.log('autoPlay ? game.currentState().color:', game.currentState().color);
-        if(controls.isAutoplay && game.currentState().moveNumber >= startPath.length && game.currentState().color === controls.isAutoplay) {
+        if(controls.isAutoplay && game.currentState().moveNumber >= startPathMoves && game.currentState().color === controls.isAutoplay) {
             let nextMoveOptions = _getNextMoveOptions(game);
             // check if the next move should be played automatically
             if(nextMoveOptions && nextMoveOptions.length) {

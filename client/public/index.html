@@ -14,12 +14,23 @@
 
 <div class="controls">
   <div class="buttons">
-    <a class="pass" href="#">Pass</a>
+    <a class="pass" href="#">Pass/Tenuki</a>
     <a class="undo" href="#">Undo</a>
     <a class="reset" href="#" accesskey="r">Reset</a>
-    <a class="mistake" href="#" title="This move should be considered a big mistake, not even a joseki for low level players or an outdated joseki">Mistake !</a>
-    <a class="joseki" href="#" title="This move should be considered a joseki (this can also be for outdated joseki that dont have a clear refutation, and for joseki that are only good enough for amateur players)">Joseki !</a>
     <a class="setPath" href="#" title="Set current position to be the starting point. After that, clicking Reset will bring you back to this move">Start from here</a>
+
+    <a class="test" href="#">Test</a>
+  </div>
+  <div class="tabHeaders">
+    <a id="learn" class="tabHeader" href="#">Learn</a>
+    <a id="explore" class="tabHeader" href="#">Explore</a>
+    <a id="settings" class="tabHeader" href="#">Settings</a>
+    <a id="other" class="tabHeader" href="#">Other</a>
+    <a id="contribute" class="tabHeader" href="#">Contribute/Report Error</a>
+
+  </div>
+
+  <div class="Tab" id="settingsTab"  style="display:none">
     <div>
       <div id="isAutoPlayContainer">
         <input id="isAutoPlay" type="checkbox" name="isAutoPlay" value="isAutoPlay">
@@ -38,10 +49,42 @@
         <label id="isAllowSymmetryLabel" for="isAllowSymmetry" title="When checked, we allow symmetrical variations in the top right corner. When unchecked, you have to keep the variation as if black started in the polite half of the top right corner"> Vary orientation (other than polite triangle)</label>
       </div>
     </div>
-    <a class="test" href="#">Test</a>
   </div>
-  <div id="progress_container">
-    <div id="rootProgress"></div>
+
+  <div class="Tab" id="learnTab" style="display:none">
+    <div id="progress_container">
+      <div id="rootProgress"></div>
+    </div>
+  </div>
+
+  <div class="Tab" id="otherTab" style="display:none"></div>
+  <div class="Tab" id="contributeTab" style="display:none">
+
+    <div class="buttons">
+      <a class="mistake" href="#" title="This move should be considered a big mistake, not even a joseki for low level players or an outdated joseki">Mistake !</a>
+      <a class="joseki" href="#" title="This move should be considered a joseki (this can also be for outdated joseki that dont have a clear refutation, and for joseki that are only good enough for amateur players)">Joseki !</a>
+    </div>
+  </div>
+  <div class="Tab" id="exploreTab" style="display:block">
+    <p>Most liked 1 stone joseki starts:<br>
+      <ul>
+        <li><a class="josekiStart hoshi" href="#" title="hoshi">Hoshi</a></li><li>
+        <a class="josekiStart hoshiSanSan" href="#" title="hoshi invaded at san san" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd])">San San</a></li><li>
+        <a class="josekiStart komoku" href="#" title="komoku" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd])">Komoku</a></li><li>
+        <a class="josekiStart komokuHigh" href="#" title="komoku approached high and close" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[od])">Komoku approached high</a></li>
+      </ul>
+
+    </p>
+    <p>Most liked Shimari continuations:<br>
+      <ul>
+        <li><a class="josekiStart hoshiKeimaShimari" href="#" title="Hoshi with a keima Shimari" data-sgf="">hoshi keima shimari</a></li><li>
+          <a class="josekiStart hoshiOgeimaShimari" href="#" title="Hoshi with an Ogeima Shimari" data-sgf="">hoshi ogeima shimari</a></li><li>
+          <a class="josekiStart komokuKeimaShimari" href="#" title="komoku with a keima shimari" data-sgf="">komoku keima shimari</a></li><li>
+          <a class="josekiStart komokuOgeimaShimari" href="#" title="komoku with an ogeima shimari" data-sgf="">komoku ogeima shimari</a></li><li>
+          <a class="josekiStart komokuIkentobiShimari" href="#" title="komoku with a keima shimari" data-sgf="">komoku ikentobi shimari</a></li>
+      </ul>
+
+    </p>
   </div>
   <div class="branch-info" style="width:600px;"><p>&nbsp;</p></div>
   <div class="game-info" style="width:600px;"><p>&nbsp;</p></div>

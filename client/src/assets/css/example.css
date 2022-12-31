@@ -1,5 +1,5 @@
 .tenuki-board {
-  max-width: 100%;
+  max-width: 50%;
 }
 
  @media (orientation:landscape) {
@@ -22,8 +22,11 @@
   margin-top: 18px;
 }
 
-.controls a + a {
+.buttons a + a {
   margin-left: 1em;
+}
+.tabHeaders{
+  margin-top: 1px;
 }
 
 .controls .game-info {
@@ -36,8 +39,33 @@
   overflow: auto;
   padding: 0.5em;
 }
+.Tab {
+  margin-left: 10px;
+  clear: both;
+  height: 90%;
+  overflow: auto;
+  padding: 0.5em;
+}
 
-.controls a {
+.tabHeaders .selected {
+  background: #023b12;
+}
+
+.tabHeaders a {
+  display: inline-block;
+  height: 100%;
+  font-size: 1em;
+  text-decoration: none;
+  color: inherit;
+  padding: 0.3em 0.5em;
+  border-radius: 1px;
+  background: #02a931;
+  color: white;
+  margin-left: 0.1em;
+}
+
+
+.buttons a {
   display: inline-block;
   height: 100%;
   font-size: 1em;
@@ -45,13 +73,11 @@
   color: inherit;
   padding: 0.3em 0.5em;
   border-radius: 7px;
-  background: gray;
+  background: #da7e16;
   color: white;
 }
 
-.controls p {
-  margin-top: 1em;
-}
+
 
 .notInSequence {
   background: red;

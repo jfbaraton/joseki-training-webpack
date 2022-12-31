@@ -241,19 +241,119 @@ const ExampleGameControls = function(element, game) {
         // Set default step function for all animate calls
         step: (state, bar) => {
             bar.path.setAttribute('stroke', state.color);
-            var value = Math.round(bar.value() * 100);
+            var value = Math.round(bar.value() * controls.rootProgressBarmax);
             if (value === 0) {
                 bar.setText('');
             } else {
-                bar.setText(value);
+                bar.setText(value+'\n found');
             }
 
             bar.text.style.color = state.color;
         }
     });
     this.rootProgressBar.text.style.fontFamily = '"Raleway", Helvetica, sans-serif';
-    this.rootProgressBar.text.style.fontSize = '2rem';
-    this.rootProgressBar.animate(1.0);  // Number from 0.0 to 1.0
+    this.rootProgressBar.text.style.fontSize = '0.7rem';
+    this.rootProgressBarmax = 2;
+    this.rootSuccess = element.querySelector("#rootSuccess");
+    this.rootSuccessBar = new ProgressBar.SemiCircle(this.rootSuccess, {
+        strokeWidth: 6,
+        color: '#FFEA82',
+        trailColor: '#eee',
+        trailWidth: 1,
+        easing: 'easeInOut',
+        duration: 1400,
+        svgStyle: null,
+        text: {
+            value: '',
+            alignToBottom: false
+        },
+        from: {color: '#FFEA82'},
+        to: {color: '#ED6A5A'},
+        // Set default step function for all animate calls
+        step: (state, bar) => {
+            bar.path.setAttribute('stroke', state.color);
+            var value = Math.round(bar.value() * controls.rootSuccessBarmax);
+            if (value === 0) {
+                bar.setText('');
+            } else {
+                bar.setText(value+'\n success');
+            }
+
+            bar.text.style.color = state.color;
+        }
+    });
+    this.rootSuccessBar.text.style.fontFamily = '"Raleway", Helvetica, sans-serif';
+    this.rootSuccessBar.text.style.fontSize = '0.7rem';
+    this.rootSuccessBarmax = 2;
+
+    this.localSuccessBarmax = 2;this.localProgress = element.querySelector("#localProgress");
+    this.localProgressBar = new ProgressBar.SemiCircle(this.localProgress, {
+        strokeWidth: 6,
+        color: '#FFEA82',
+        trailColor: '#eee',
+        trailWidth: 1,
+        easing: 'easeInOut',
+        duration: 1400,
+        svgStyle: null,
+        text: {
+            value: '',
+            alignToBottom: false
+        },
+        from: {color: '#FFEA82'},
+        to: {color: '#ED6A5A'},
+        // Set default step function for all animate calls
+        step: (state, bar) => {
+            bar.path.setAttribute('stroke', state.color);
+            var value = Math.round(bar.value() * controls.localProgressBarmax);
+            if (value === 0) {
+                bar.setText('');
+            } else {
+                bar.setText(value+'\n found');
+            }
+
+            bar.text.style.color = state.color;
+        }
+    });
+    this.localProgressBar.text.style.fontFamily = '"Raleway", Helvetica, sans-serif';
+    this.localProgressBar.text.style.fontSize = '0.7rem';
+    this.localProgressBarmax = 2;
+    this.localSuccess = element.querySelector("#localSuccess");
+    this.localSuccessBar = new ProgressBar.SemiCircle(this.localSuccess, {
+        strokeWidth: 6,
+        color: '#FFEA82',
+        trailColor: '#eee',
+        trailWidth: 1,
+        easing: 'easeInOut',
+        duration: 1400,
+        svgStyle: null,
+        text: {
+            value: '',
+            alignToBottom: false
+        },
+        from: {color: '#FFEA82'},
+        to: {color: '#ED6A5A'},
+        // Set default step function for all animate calls
+        step: (state, bar) => {
+            bar.path.setAttribute('stroke', state.color);
+            var value = Math.round(bar.value() * controls.localSuccessBarmax);
+            if (value === 0) {
+                bar.setText('');
+            } else {
+                bar.setText(value+'\n success');
+            }
+
+            bar.text.style.color = state.color;
+        }
+    });
+    this.localSuccessBar.text.style.fontFamily = '"Raleway", Helvetica, sans-serif';
+    this.localSuccessBar.text.style.fontSize = '0.7rem';
+    this.localSuccessBarmax = 2;
+
+
+    this.rootProgressBar.animate(1.00);  // Number from 0.0 to 1.0
+    this.rootSuccessBar.animate(1.00);  // Number from 0.0 to 1.0
+    this.localProgressBar.animate(1.00);  // Number from 0.0 to 1.0
+    this.localSuccessBar.animate(1.00);  // Number from 0.0 to 1.0
 
     this.setText = function(str) {
         this.textInfo.innerText = str;

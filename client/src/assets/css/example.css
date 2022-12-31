@@ -88,7 +88,22 @@
 }
 
 #rootProgress {
-  margin: 20px;
-  width: 200px;
-  height: 100px;
+  margin: 10px;
+  width: 75px;
+  height: 40px;
+}
+#rootSuccess {
+  margin: 10px;
+  width: 75px;
+  height: 40px;
+}
+#localProgress {
+  margin: 10px;
+  width: 75px;
+  height: 40px;
+}
+#localSuccess {
+  margin: 10px;
+  width: 75px;
+  height: 40px;
 }

@@ -6,7 +6,8 @@ var ProgressBar = require('progressbar.js');
 
 var sgf = require('smartgame');
 
-import file1 from '!raw-loader!./test/eidogo_joseki_WR_clean_OLD2.sgf';
+//import file1 from '!raw-loader!./test/eidogo_joseki_WR_clean_OLD2.sgf';
+import file1 from '!raw-loader!./test/6_more_sansan_variations.sgf';
 //import file1 from '!raw-loader!./test/5_rest_KGD.sgf';
 //import file1 from '!raw-loader!./test/3_hane_variations.sgf';
 //import file1 from '!raw-loader!./test/5_rest_KGD_WR.sgf';
@@ -215,7 +216,7 @@ const ExampleGameControls = function(element, game) {
     var controls = this;
     this.element = element;
     this.game = game;
-    this.mode = 'explore';
+    this.mode = 'learn';
     this.isKnownVersionLoaded = false;
     this.isAllowDifferentCorners = !localStorage.getItem("isAllowDifferentCorners") || localStorage.getItem("isAllowDifferentCorners") === "true";
     this.isAllowSymmetry = localStorage.getItem("isAllowSymmetry") === "true";
@@ -305,7 +306,7 @@ const ExampleGameControls = function(element, game) {
                 if(/*!nodeStats && */this.game.currentState().moveNumber > 0) {
                     //if(this.game.currentState().moveNumber > 1 ) {
                     if(!nodeStats) {
-                        console.log('re-calculating stats for move '+this.game.currentState().moveNumber)
+                        //console.log('re-calculating stats for move '+this.game.currentState().moveNumber)
                         nodeStats = stats.getZeroStats();
                     }
                     let freshStats = stats.getZeroStats();
@@ -313,6 +314,7 @@ const ExampleGameControls = function(element, game) {
                     //let freshStats = nodeStats;
                     stats.getNodeStats( currentNode.node, currentNode.nodeIdx, freshStats, localStats);
                     nodeStats = freshStats;
+                    console.log('calculated stats for move '+this.game.currentState().moveNumber, JSON.stringify(nodeStats).replaceAll(",", ",\n"))
                     localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
                 }
                 newGameInfo += "\nYou have found "+(nodeStats && ((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.leafCount + nodeStats.agg_leafCount )|| "Lots of")+" valid VARIATIONS\n";
@@ -340,9 +342,12 @@ const ExampleGameControls = function(element, game) {
                 previousLeafSignature = signature;
                 let nodeStats = stats.setStatsForSignature(signature, newStatToSet, localStats);
                 stats.addStats(nodeStats, newStatToAdd);
+                console.log('new stat '+signature,JSON.stringify(nodeStats));
 
                 newGameInfo += "\nnew Stats for "+signature+":  "+JSON.stringify(nodeStats);
                 localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
+            } else {
+                console.log('same signature as previous ', previousLeafSignature, signature)
             }
             nextMoveOptions = _getNextMoveOptions(game, true);
         }
@@ -584,12 +589,14 @@ const ExampleGameControls = function(element, game) {
             //console.log('getVariationSGF:', '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])');
             //controls.postNewJosekiSGF('');
 
-            sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
+            //sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
             //sgf.generate(sgfutils.cleanSGF(collection));
 
             //sgfutils.cleanSGF(collection);
             //controls.testNodeCleaner();
             //learning.test();
+            // reset stats
+            localStorage.setItem("localStats", null);
         });
 
         resetButton.addEventListener("click", this.reset);

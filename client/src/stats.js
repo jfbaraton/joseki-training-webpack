@@ -18,8 +18,13 @@ export default {
             let leafLocalStat = null;
             if (mistakeIndex>nodeIdx) { // mistake at mistakeIndex AND leaf at mistakeIndex-1
                 leafLocalStat = this.setStatsForNode({node:node, nodeIdx:mistakeIndex-1},{leafCount:1},localStats);
+                this.aggregateStats(stats, leafLocalStat);
+                let nodeAggIdx = mistakeIndex-2;
+                while (nodeAggIdx-- >= 0) {
+                    const moveSignature = sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:nodeAggIdx});
+                    this.aggregateStats(stats, localStats.get(moveSignature));
+                }
             }
-            this.aggregateStats(stats, leafLocalStat);
             //console.log('END getNodeStats FOUND A MISTAKE at ',this.copyNode(node.nodes[mistakeIndex], true),JSON.stringify(stats),JSON.stringify(leafLocalStat));
             return;
         }
@@ -48,8 +53,18 @@ export default {
             let leafLocalStat = this.setStatsForNode({node:node, nodeIdx:node.nodes.length-1},{leafCount:1},localStats);
 
             this.aggregateStats(stats, leafLocalStat);
+            let nodeAggIdx = node.nodes.length-2;
+            while (nodeAggIdx-- >= 0) {
+                const moveSignature = sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:nodeAggIdx});
+                this.aggregateStats(stats, localStats.get(moveSignature));
+            }
             //console.log('END getNodeStats NO seq after',sgfutils.copyNode(node.nodes[node.nodes.length-1], true),JSON.stringify(stats),JSON.stringify(leafLocalStat));
             return;
+        }
+        let nodeAggIdx = node.nodes.length-1;
+        while (nodeAggIdx-- >= 0) {
+            const moveSignature = sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:nodeAggIdx});
+            this.aggregateStats(stats, localStats.get(moveSignature));
         }
     },
 

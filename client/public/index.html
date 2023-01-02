@@ -53,17 +53,12 @@
 
   <div class="Tab" id="learnTab" style="display:block">
     <div id="progress_container" style="display:block">
-      <div style="display: inline-block">
-        from start position
+      <table>
+        <tr><th></th><th>variations found</th><th>success</th></tr>
+        <tr><td>from start</td><td><div id="rootProgress"></div></td><td><div id="rootSuccess"></div></td></tr>
+        <tr><td>from current position</td><td><div id="localProgress"></div></td><td><div id="localSuccess"></div></td></tr>
+      </table>
 
-        <div id="rootProgress"></div>
-        <div id="rootSuccess"></div>
-      </div>
-      <div style="display: inline-block">
-        from current position
-      <div id="localProgress"></div>
-      <div id="localSuccess"></div>
-      </div>
     </div>
   </div>
 

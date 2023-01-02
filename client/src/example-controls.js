@@ -233,11 +233,11 @@ const ExampleGameControls = function(element, game) {
         duration: 1400,
         svgStyle: null,
         text: {
-            value: '',
+            value: 'o',
             alignToBottom: false
         },
-        from: {color: '#FFEA82'},
-        to: {color: '#ED6A5A'},
+        from: {color: '#ED6A5A'},
+        to: {color: '#FFEA82'},
         // Set default step function for all animate calls
         step: (state, bar) => {
             bar.path.setAttribute('stroke', state.color);
@@ -245,7 +245,7 @@ const ExampleGameControls = function(element, game) {
             if (value === 0) {
                 bar.setText('');
             } else {
-                bar.setText(value+'\n found');
+                bar.setText(value+'/'+controls.rootProgressBarmax);
             }
 
             bar.text.style.color = state.color;
@@ -267,16 +267,16 @@ const ExampleGameControls = function(element, game) {
             value: '',
             alignToBottom: false
         },
-        from: {color: '#FFEA82'},
-        to: {color: '#ED6A5A'},
+        from: {color: '#ED6A5A'},
+        to: {color: '#FFEA82'},
         // Set default step function for all animate calls
         step: (state, bar) => {
             bar.path.setAttribute('stroke', state.color);
-            var value = Math.round(bar.value() * controls.rootSuccessBarmax);
+            var value = Math.round(bar.value() /* controls.rootSuccessBarmax*/*100);
             if (value === 0) {
-                bar.setText('');
+                bar.setText('0%');
             } else {
-                bar.setText(value+'\n success');
+                bar.setText(value+'%');
             }
 
             bar.text.style.color = state.color;
@@ -299,16 +299,16 @@ const ExampleGameControls = function(element, game) {
             value: '',
             alignToBottom: false
         },
-        from: {color: '#FFEA82'},
-        to: {color: '#ED6A5A'},
+        from: {color: '#ED6A5A'},
+        to: {color: '#FFEA82'},
         // Set default step function for all animate calls
         step: (state, bar) => {
             bar.path.setAttribute('stroke', state.color);
             var value = Math.round(bar.value() * controls.localProgressBarmax);
             if (value === 0) {
-                bar.setText('');
+                bar.setText('0');
             } else {
-                bar.setText(value+'\n found');
+                bar.setText(value+'/'+controls.localProgressBarmax);
             }
 
             bar.text.style.color = state.color;
@@ -330,16 +330,16 @@ const ExampleGameControls = function(element, game) {
             value: '',
             alignToBottom: false
         },
-        from: {color: '#FFEA82'},
-        to: {color: '#ED6A5A'},
+        from: {color: '#ED6A5A'},
+        to: {color: '#FFEA82'},
         // Set default step function for all animate calls
         step: (state, bar) => {
             bar.path.setAttribute('stroke', state.color);
-            var value = Math.round(bar.value() * controls.localSuccessBarmax);
+            var value = Math.round(bar.value() /* controls.localSuccessBarmax*/*100);
             if (value === 0) {
-                bar.setText('');
+                bar.setText('0%');
             } else {
-                bar.setText(value+'\n success');
+                bar.setText(value+'%');
             }
 
             bar.text.style.color = state.color;
@@ -419,9 +419,16 @@ const ExampleGameControls = function(element, game) {
                 }
                 newGameInfo += "\nYou have found "+(nodeStats && ((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.leafCount + nodeStats.agg_leafCount )|| "Lots of")+" valid VARIATIONS\n";
                 newGameInfo += "\n"+(nodeStats && ((nodeStats.successLeafCount + nodeStats.agg_successLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.successLeafCount + nodeStats.agg_successLeafCount + nodeStats.failedLeafCount + nodeStats.agg_failedLeafCount + nodeStats.mistakeCount + nodeStats.agg_mistakeCount )|| 1)+" successful attempts\n";
-                /*if(nodeStats) {
-                    newGameInfo += JSON.stringify(nodeStats).replaceAll(",", ",\n");
-                }*/
+                if(nodeStats) {
+                    //newGameInfo += JSON.stringify(nodeStats).replaceAll(",", ",\n");
+                    controls.localProgressBarmax = (nodeStats.leafCount + nodeStats.agg_leafCount )|| 1 ;
+                    controls.localSuccessBarmax = (nodeStats.successLeafCount + nodeStats.agg_successLeafCount + nodeStats.failedLeafCount + nodeStats.agg_failedLeafCount + nodeStats.mistakeCount + nodeStats.agg_mistakeCount )|| 1;
+                    
+                    controls.localProgressBar.animate(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.localProgressBarmax);  // Number from 0.0 to 1.0
+                    controls.localSuccessBar.animate(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.localSuccessBarmax);  // Number from 0.0 to 1.0
+                    console.log('progress animate ',(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.localProgressBarmax),(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.localSuccessBarmax));
+                    console.log('progress animate ',controls.localProgressBarmax,controls.localSuccessBarmax );
+                }
             }
         } else {
             let signature = null;
@@ -599,6 +606,47 @@ const ExampleGameControls = function(element, game) {
                 }
 
             });
+            var currentNode = _getCurrentSGFNode(controls.game);
+            if(currentNode) {
+                let currentSGFVariation = [];
+                sgfutils.getVariationSGF(currentNode.node, currentNode.nodeIdx, currentSGFVariation, true);
+                const emptySGF = sgfutils.getEmptySGF();
+                currentSGFVariation.forEach(node => emptySGF.gameTrees[0].nodes.push(node));
+                //console.log('current path: ',sgf.generate(emptySGF));
+                const moveSignature = sgfutils.getNodeSeparatedSGF({
+                    node: currentNode.node,
+                    nodeIdx: currentNode.nodeIdx
+                });
+                let localStats = sgfutils.deepParse(localStorage.getItem("localStats")) || new Map();
+                let nodeStats = localStats.get(moveSignature);
+                //let nodeStats = addStatsForNode();
+                console.log(' stats for move (' + controls.game.currentState().moveNumber + ') ' + moveSignature + ' :', nodeStats);
+                //if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
+                if (/*!nodeStats && */controls.game.currentState().moveNumber > 0) {
+                    //if(controls.game.currentState().moveNumber > 1 ) {
+                    if (!nodeStats) {
+                        //console.log('re-calculating stats for move '+controls.game.currentState().moveNumber)
+                        nodeStats = stats.getZeroStats();
+                    }
+                    let freshStats = stats.getZeroStats();
+                    stats.addStats(freshStats, nodeStats);
+                    //let freshStats = nodeStats;
+                    stats.getNodeStats(currentNode.node, currentNode.nodeIdx, freshStats, localStats);
+                    nodeStats = freshStats;
+                    console.log('calculated stats for move ' + controls.game.currentState().moveNumber, JSON.stringify(nodeStats).replaceAll(",", ",\n"))
+                    localStorage.setItem("localStats", sgfutils.deepStringify(localStats));
+                }
+                if (nodeStats) {
+                    //newGameInfo += JSON.stringify(nodeStats).replaceAll(",", ",\n");
+                    controls.rootProgressBarmax = (nodeStats.leafCount + nodeStats.agg_leafCount) || 1;
+                    controls.rootSuccessBarmax = (nodeStats.successLeafCount + nodeStats.agg_successLeafCount + nodeStats.failedLeafCount + nodeStats.agg_failedLeafCount + nodeStats.mistakeCount + nodeStats.agg_mistakeCount) || 1;
+
+                    controls.rootProgressBar.animate(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount) || 0) / controls.rootProgressBarmax);  // Number from 0.0 to 1.0
+                    controls.rootSuccessBar.animate(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount) || 0) / controls.rootSuccessBarmax);  // Number from 0.0 to 1.0
+                    //console.log('progress animate ',(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.rootProgressBarmax),(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.rootSuccessBarmax));
+                    //console.log('progress animate ',controls.rootProgressBarmax,controls.rootSuccessBarmax );
+                }
+            }
 
         };
         this.resetOLD = function(e) {

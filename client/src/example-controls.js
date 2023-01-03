@@ -6,8 +6,9 @@ var ProgressBar = require('progressbar.js');
 
 var sgf = require('smartgame');
 
+import file1 from '!raw-loader!./test/eidogo_joseki_no_double1.sgf';
 //import file1 from '!raw-loader!./test/eidogo_joseki_WR_clean_OLD2.sgf';
-import file1 from '!raw-loader!./test/6_more_sansan_variations.sgf';
+//import file1 from '!raw-loader!./test/6_more_sansan_variations.sgf';
 //import file1 from '!raw-loader!./test/5_rest_KGD.sgf';
 //import file1 from '!raw-loader!./test/3_hane_variations.sgf';
 //import file1 from '!raw-loader!./test/5_rest_KGD_WR.sgf';
@@ -243,7 +244,7 @@ const ExampleGameControls = function(element, game) {
             bar.path.setAttribute('stroke', state.color);
             var value = Math.round(bar.value() * controls.rootProgressBarmax);
             if (value === 0) {
-                bar.setText('');
+                bar.setText('0/'+controls.rootProgressBarmax);
             } else {
                 bar.setText(value+'/'+controls.rootProgressBarmax);
             }
@@ -306,7 +307,7 @@ const ExampleGameControls = function(element, game) {
             bar.path.setAttribute('stroke', state.color);
             var value = Math.round(bar.value() * controls.localProgressBarmax);
             if (value === 0) {
-                bar.setText('0');
+                bar.setText('0/'+controls.localProgressBarmax);
             } else {
                 bar.setText(value+'/'+controls.localProgressBarmax);
             }
@@ -736,15 +737,15 @@ const ExampleGameControls = function(element, game) {
             //controls.updateMoveWithConfirm({BM:'1'});
             //console.log('getVariationSGF:', '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])');
             //controls.postNewJosekiSGF('');
-
-            //sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
+            sgfutils.cleanPassForShow(collection.gameTrees[0]);
+            sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
             //sgf.generate(sgfutils.cleanSGF(collection));
 
             //sgfutils.cleanSGF(collection);
             //controls.testNodeCleaner();
             //learning.test();
             // reset stats
-            localStorage.setItem("localStats", null);
+            //localStorage.setItem("localStats", null);
         });
 
         resetButton.addEventListener("click", this.reset);

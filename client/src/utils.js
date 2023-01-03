@@ -348,6 +348,27 @@ export default {
         return JSON.parse(str, this.reviver);
     },
 
+    cleanPassForShow: function(node) {
+        let allNodeIdx = 0;
+        while(node.nodes.length >1 && allNodeIdx <node.nodes.length) {
+                // move is PASS
+            if(node.nodes[allNodeIdx].C && node.nodes[allNodeIdx].C.indexOf('PASS to show continuation') >=0) {
+                const lengthBefore = node.nodes.length
+                node.nodes.splice(allNodeIdx, 1);
+                //console.log('cleanPassForShow removed! '+lengthBefore +'->'+ node.nodes.length);
+            } else {
+                allNodeIdx++;
+            }
+        }
+
+        if(node.nodes.length === 1 && node.nodes[0].C && node.nodes[0].C.indexOf('PASS to show continuation') >=0) {
+            console.log('cleanPassForShow could not remove !', this.getNodeSeparatedSGF({node:node, nodeIdx:0}));
+        }
+        for(let seqIdx = 0 ; node.sequences && seqIdx < node.sequences.length;seqIdx++) {
+            this.cleanPassForShow(node.sequences[seqIdx]);
+        }
+    },
+
     // check for several moves in a row by the same player
     // adds opponent PASS between them (when it is not a handicap move)
     // returns a gameTree
@@ -360,10 +381,30 @@ export default {
         return resultTree;
     },
 
-    cleanSGFBranch: function(node, nodeIdx, lastMoveNode, moveNumberIfHandicap, moveNumber) {
+    cleanSGFBranch: function(node, pNodeIdx, lastMoveNode, moveNumberIfHandicap, moveNumber) {
+        let nodeIdx = pNodeIdx;
+
+        //look for pass+pass+move
+        let allNodeIdx = 0;
+        while(nodeIdx < node.nodes.length && node.nodes.length >1 && allNodeIdx <node.nodes.length) {
+            if(!node.nodes[allNodeIdx].B && !node.nodes[allNodeIdx].W) {
+                // move is PASS
+                if(node.nodes[allNodeIdx].C === 'PASS to show continuation') {
+                    node.nodes.splice(allNodeIdx, 1);
+                    if(allNodeIdx <nodeIdx) {
+                        nodeIdx--;
+                    }
+                } else {
+                    allNodeIdx++;
+                }
+            } else {
+                allNodeIdx++;
+            }
+        }
 
         let isHandicap = moveNumberIfHandicap;
         if(nodeIdx < node.nodes.length) {
+
             // next move is in nodes
             //this.isTenukiAsD4({node:node, nodeIdx:nodeIdx}, moveNumber);
             //this.is17N16({node:node, nodeIdx:nodeIdx}, moveNumber);
@@ -386,8 +427,13 @@ export default {
             this.cleanSGFBranch(node, nodeIdx+1, node.nodes[nodeIdx], isHandicap, moveNumber+1);
             return;
         }
+        const originalIsHandicap = isHandicap;
         // next move is in sequences
+        // keep track on same color move indexes
+        const sameColorSequences = [];
+        let passSequenceIdx = -1;
         for (let sequencesIdx = 0 ; node.sequences && sequencesIdx < node.sequences.length ; sequencesIdx++) {
+            isHandicap = originalIsHandicap;
             let oneChild = node.sequences[sequencesIdx];
             //this.is14O16({node:oneChild, nodeIdx:0}, moveNumber);
             //this.isTenukiAsD4({node:oneChild, nodeIdx:0}, moveNumber);
@@ -403,12 +449,65 @@ export default {
                     // add a PASS from the opponent as first move of the sequence
                     //this.addPASSBefore(oneChild, 0, lastMoveNode);
                     // add a PASS from the opponent as last .nodes
-                    this.addPASSBefore(node, nodeIdx, lastMoveNode);
+                    //this.addPASSBefore(node, nodeIdx, lastMoveNode);
+                    sameColorSequences.push(sequencesIdx);
+                    continue;
                 }
             } else {
+                if(!oneChild.nodes[0].B && !oneChild.nodes[0].W && sequencesIdx <0) { // is pass
+                    passSequenceIdx = sequencesIdx;
+                }
                 isHandicap = 0;
             }
             this.cleanKatrainNode(oneChild.nodes[0]);
+            this.cleanSGFBranch(oneChild, 1, oneChild.nodes[0], isHandicap, moveNumber+1);
+            if(passSequenceIdx>=0 && passSequenceIdx < node.sequences.length && (node.sequences[passSequenceIdx].nodes[0].B || node.sequences[passSequenceIdx].nodes[0].W)) {
+                passSequenceIdx = -1;
+            }
+        }
+
+        if(sameColorSequences.length) {
+            if (passSequenceIdx < 0) {
+                // create a pass sequence
+                let addedMove = {
+                    nodes: [typeof lastMoveNode.W !== "undefined" ? {
+                            B: '',
+                            C: 'PASS to show continuationz',
+                            UC: 1
+                        } : {W: '', C: 'PASS to show continuation', UC: 1}
+                    ],
+                    parent :node,
+                    sequences:[]
+                };
+                node.sequences.push(addedMove);
+                passSequenceIdx = node.sequences.length - 1;
+            } else {
+                // there was already a pass sequence
+                // make it one move long, and move the main variation (after pass) from nodes to sequences
+                node.sequences[passSequenceIdx].sequences.push(
+                    {
+                        nodes:node.sequences[passSequenceIdx].nodes.splice(1, node.sequences[passSequenceIdx].nodes.length-1),
+                        parent:node.sequences[passSequenceIdx],
+                        sequences:node.sequences[passSequenceIdx].sequences
+                    });
+            }
+            if (!node.sequences[passSequenceIdx].sequences) {
+                node.sequences[passSequenceIdx].sequences = [];
+            }
+            // move all sameColorSequences to passSequenceIdx.sequences
+            for (let sequencesIdx2 = sameColorSequences.length - 1; sequencesIdx2 >= 0; sequencesIdx2--) {
+                if(sameColorSequences.length>1 || node.sequences[passSequenceIdx].sequences.length) {
+                    node.sequences[passSequenceIdx].sequences.push(node.sequences[sameColorSequences[sequencesIdx2]]);
+                } else {
+                    // add the sequence straight after the pass, in nodes
+                    node.sequences[passSequenceIdx].nodes.splice(1,0,...node.sequences[sameColorSequences[sequencesIdx2]].nodes.splice(1, node.sequences[sameColorSequences[sequencesIdx2]].nodes.length-1));
+                }
+                node.sequences.splice(sameColorSequences[sequencesIdx2],1);
+                if(sameColorSequences[sequencesIdx2] < passSequenceIdx) {
+                    passSequenceIdx--;
+                }
+            }
+            let oneChild = node.sequences[passSequenceIdx];
             this.cleanSGFBranch(oneChild, 1, oneChild.nodes[0], isHandicap, moveNumber+1);
         }
     },
@@ -448,7 +547,7 @@ export default {
         // make a PASS that is a UC (unclear) move, so that the branch is not explored as a continuation
         // the reasons is that those double moves can have different purpose, like to show later continuations (not supposed to happen NOW)
         // we could find a different way/metadata to differentiate those variations
-        let addedMove = typeof lastMoveNode.W !== "undefined" ? {B:'', C:'PASS to show continuation', UC:1} : {W:'', C:'PASS to show continuation', UC:1};
+        let addedMove = typeof lastMoveNode.W !== "undefined" ? {B:'', C:'PASS to show continuations', UC:1} : {W:'', C:'PASS to show continuation', UC:1};
 
         node.nodes.splice(nodeIdx, 0, addedMove); // add move at index nodeIdx, deleting 0 nodes
     },

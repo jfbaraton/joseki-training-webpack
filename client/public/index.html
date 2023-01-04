@@ -7,7 +7,7 @@
 </head>
 
 <div class="example-heading">
-  <p>Need to curate, rate and add more joseki variations :)</p>
+  <p>Need to add more joseki variations :)</p>
 </div>
 
 <div class="tenuki-board" data-include-coordinates=true></div>
@@ -52,10 +52,10 @@
   </div>
 
   <div class="Tab" id="learnTab" style="display:block">
-    <div id="progress_container" style="display:block">
+    <div id="progress_container" style="display:none">
       <table>
         <tr><th></th><th>variations found</th><th>success</th></tr>
-        <tr><td>from start</td><td><div id="rootProgress"></div></td><td><div id="rootSuccess"></div></td></tr>
+        <tr id="rootStatsRow" style="display:none"><td>from start</td><td><div id="rootProgress"></div></td><td><div id="rootSuccess"></div></td></tr>
         <tr><td>from current position</td><td><div id="localProgress"></div></td><td><div id="localSuccess"></div></td></tr>
       </table>
 

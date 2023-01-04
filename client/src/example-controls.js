@@ -225,9 +225,12 @@ const ExampleGameControls = function(element, game) {
     this.gameInfo = element.querySelector(".game-info p");
     this.branchInfo = element.querySelector(".branch-info p");
     this.rootProgress = element.querySelector("#rootProgress");
+    const startColor = '#FF915A';
+    //const endColor = '#FFEA82';
+    const endColor = '#0FEA82';
     this.rootProgressBar = new ProgressBar.SemiCircle(this.rootProgress, {
         strokeWidth: 6,
-        color: '#FFEA82',
+        color: endColor,
         trailColor: '#eee',
         trailWidth: 1,
         easing: 'easeInOut',
@@ -237,8 +240,8 @@ const ExampleGameControls = function(element, game) {
             value: 'o',
             alignToBottom: false
         },
-        from: {color: '#ED6A5A'},
-        to: {color: '#FFEA82'},
+        from: {color: startColor},
+        to: {color: endColor},
         // Set default step function for all animate calls
         step: (state, bar) => {
             bar.path.setAttribute('stroke', state.color);
@@ -254,11 +257,11 @@ const ExampleGameControls = function(element, game) {
     });
     this.rootProgressBar.text.style.fontFamily = '"Raleway", Helvetica, sans-serif';
     this.rootProgressBar.text.style.fontSize = '0.7rem';
-    this.rootProgressBarmax = 2;
+    this.rootProgressBarmax = 1;
     this.rootSuccess = element.querySelector("#rootSuccess");
     this.rootSuccessBar = new ProgressBar.SemiCircle(this.rootSuccess, {
         strokeWidth: 6,
-        color: '#FFEA82',
+        color: endColor,
         trailColor: '#eee',
         trailWidth: 1,
         easing: 'easeInOut',
@@ -268,8 +271,8 @@ const ExampleGameControls = function(element, game) {
             value: '',
             alignToBottom: false
         },
-        from: {color: '#ED6A5A'},
-        to: {color: '#FFEA82'},
+        from: {color: startColor},
+        to: {color: endColor},
         // Set default step function for all animate calls
         step: (state, bar) => {
             bar.path.setAttribute('stroke', state.color);
@@ -285,12 +288,13 @@ const ExampleGameControls = function(element, game) {
     });
     this.rootSuccessBar.text.style.fontFamily = '"Raleway", Helvetica, sans-serif';
     this.rootSuccessBar.text.style.fontSize = '0.7rem';
-    this.rootSuccessBarmax = 2;
+    this.rootSuccessBarmax = 1;
 
-    this.localSuccessBarmax = 2;this.localProgress = element.querySelector("#localProgress");
+    this.localSuccessBarmax = 1;
+    this.localProgress = element.querySelector("#localProgress");
     this.localProgressBar = new ProgressBar.SemiCircle(this.localProgress, {
         strokeWidth: 6,
-        color: '#FFEA82',
+        color: endColor,
         trailColor: '#eee',
         trailWidth: 1,
         easing: 'easeInOut',
@@ -300,8 +304,8 @@ const ExampleGameControls = function(element, game) {
             value: '',
             alignToBottom: false
         },
-        from: {color: '#ED6A5A'},
-        to: {color: '#FFEA82'},
+        from: {color: startColor},
+        to: {color: endColor},
         // Set default step function for all animate calls
         step: (state, bar) => {
             bar.path.setAttribute('stroke', state.color);
@@ -317,11 +321,11 @@ const ExampleGameControls = function(element, game) {
     });
     this.localProgressBar.text.style.fontFamily = '"Raleway", Helvetica, sans-serif';
     this.localProgressBar.text.style.fontSize = '0.7rem';
-    this.localProgressBarmax = 2;
+    this.localProgressBarmax = 1;
     this.localSuccess = element.querySelector("#localSuccess");
     this.localSuccessBar = new ProgressBar.SemiCircle(this.localSuccess, {
         strokeWidth: 6,
-        color: '#FFEA82',
+        color: endColor,
         trailColor: '#eee',
         trailWidth: 1,
         easing: 'easeInOut',
@@ -331,8 +335,8 @@ const ExampleGameControls = function(element, game) {
             value: '',
             alignToBottom: false
         },
-        from: {color: '#ED6A5A'},
-        to: {color: '#FFEA82'},
+        from: {color: startColor},
+        to: {color: endColor},
         // Set default step function for all animate calls
         step: (state, bar) => {
             bar.path.setAttribute('stroke', state.color);
@@ -348,13 +352,13 @@ const ExampleGameControls = function(element, game) {
     });
     this.localSuccessBar.text.style.fontFamily = '"Raleway", Helvetica, sans-serif';
     this.localSuccessBar.text.style.fontSize = '0.7rem';
-    this.localSuccessBarmax = 2;
+    this.localSuccessBarmax = 1;
 
 
-    this.rootProgressBar.animate(1.00);  // Number from 0.0 to 1.0
-    this.rootSuccessBar.animate(1.00);  // Number from 0.0 to 1.0
-    this.localProgressBar.animate(1.00);  // Number from 0.0 to 1.0
-    this.localSuccessBar.animate(1.00);  // Number from 0.0 to 1.0
+    //this.rootProgressBar.animate(1.00);  // Number from 0.0 to 1.0
+    //this.rootSuccessBar.animate(1.00);  // Number from 0.0 to 1.0
+    //this.localProgressBar.animate(1.00);  // Number from 0.0 to 1.0
+    //this.localSuccessBar.animate(1.00);  // Number from 0.0 to 1.0
 
     this.setText = function(str) {
         this.textInfo.innerText = str;
@@ -424,7 +428,7 @@ const ExampleGameControls = function(element, game) {
                     //newGameInfo += JSON.stringify(nodeStats).replaceAll(",", ",\n");
                     controls.localProgressBarmax = (nodeStats.leafCount + nodeStats.agg_leafCount )|| 1 ;
                     controls.localSuccessBarmax = (nodeStats.successLeafCount + nodeStats.agg_successLeafCount + nodeStats.failedLeafCount + nodeStats.agg_failedLeafCount + nodeStats.mistakeCount + nodeStats.agg_mistakeCount )|| 1;
-                    
+                    controls.progressContainer.style.display = "block";
                     controls.localProgressBar.animate(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.localProgressBarmax);  // Number from 0.0 to 1.0
                     controls.localSuccessBar.animate(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.localSuccessBarmax);  // Number from 0.0 to 1.0
                     console.log('progress animate ',(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.localProgressBarmax),(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.localSuccessBarmax));
@@ -503,6 +507,8 @@ const ExampleGameControls = function(element, game) {
         var allowSymmetryContainer = document.querySelector("#isAllowSymmetryContainer");
         var autoPlayContainer = document.querySelector("#isAutoPlayContainer");
         var playAsWhiteContainer = document.querySelector("#isPlayAsWhiteContainer");
+        this.progressContainer = document.querySelector("#progress_container");
+        this.rootStatsRow = document.querySelector("#rootStatsRow");
 
         var allTabHeaders = document. querySelectorAll(".tabHeader");
         var allTabs = document. querySelectorAll(".Tab");
@@ -583,6 +589,9 @@ const ExampleGameControls = function(element, game) {
             e.preventDefault();
             //var startPath = JSON.parse(localStorage.getItem("startPath")) || [];
             var startPath = localStorage.getItem("startPath") || sgfutils.getEmptySGF();
+
+            const autoPlayValue = controls.isAutoplay;
+            controls.isAutoplay = null;
             while (controls.game.currentState().moveNumber /*&& controls.game.currentState().moveNumber != startPath.length*/) {
                 controls.game.undo();
             }
@@ -607,6 +616,9 @@ const ExampleGameControls = function(element, game) {
                 }
 
             });
+
+            controls.isAutoplay = autoPlayValue;
+
             var currentNode = _getCurrentSGFNode(controls.game);
             if(currentNode) {
                 let currentSGFVariation = [];
@@ -623,7 +635,7 @@ const ExampleGameControls = function(element, game) {
                 //let nodeStats = addStatsForNode();
                 console.log(' stats for move (' + controls.game.currentState().moveNumber + ') ' + moveSignature + ' :', nodeStats);
                 //if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
-                if (/*!nodeStats && */controls.game.currentState().moveNumber > 0) {
+                if (/*!nodeStats && */controls.game.currentState().moveNumber >= 0) {
                     //if(controls.game.currentState().moveNumber > 1 ) {
                     if (!nodeStats) {
                         //console.log('re-calculating stats for move '+controls.game.currentState().moveNumber)
@@ -641,7 +653,11 @@ const ExampleGameControls = function(element, game) {
                     //newGameInfo += JSON.stringify(nodeStats).replaceAll(",", ",\n");
                     controls.rootProgressBarmax = (nodeStats.leafCount + nodeStats.agg_leafCount) || 1;
                     controls.rootSuccessBarmax = (nodeStats.successLeafCount + nodeStats.agg_successLeafCount + nodeStats.failedLeafCount + nodeStats.agg_failedLeafCount + nodeStats.mistakeCount + nodeStats.agg_mistakeCount) || 1;
-
+                    if(controls.rootStatsRow.style.display === "none") {
+                        controls.progressContainer.style.display = "none";
+                        controls.rootStatsRow.style.display = "table-row";
+                        controls.progressContainer.style.display = "block";
+                    }
                     controls.rootProgressBar.animate(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount) || 0) / controls.rootProgressBarmax);  // Number from 0.0 to 1.0
                     controls.rootSuccessBar.animate(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount) || 0) / controls.rootSuccessBarmax);  // Number from 0.0 to 1.0
                     //console.log('progress animate ',(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.rootProgressBarmax),(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.rootSuccessBarmax));
@@ -737,7 +753,7 @@ const ExampleGameControls = function(element, game) {
             //controls.updateMoveWithConfirm({BM:'1'});
             //console.log('getVariationSGF:', '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])');
             //controls.postNewJosekiSGF('');
-            sgfutils.cleanPassForShow(collection.gameTrees[0]);
+            //sgfutils.cleanPassForShow(collection.gameTrees[0]);
             sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
             //sgf.generate(sgfutils.cleanSGF(collection));
 

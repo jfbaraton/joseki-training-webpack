@@ -163,7 +163,7 @@ const _childrenOptions = function(game, gameTreeSequenceNode, nodeIdx, moveColor
             filter( (childNode, sequenceIdx) => sequenceIdx === nodeIdx). // we only consider the first move of the sequence
             filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W)!== "undefined");
 
-        if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0], (nodeIdx >0 ? gameTreeSequenceNode.nodes[nodeIdx-1] : gameTreeSequenceNode.parent.nodes[gameTreeSequenceNode.parent.length-1]))) {
+        if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMoveIdx(gameTreeSequenceNode, nodeIdx)) {
             if (moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W) {
                 childAsPoint = sgfutils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
                 availableTransforms.forEach(oneTransform => {
@@ -190,7 +190,7 @@ const _childrenOptions = function(game, gameTreeSequenceNode, nodeIdx, moveColor
                 filter(childNode => typeof (moveColor === "black" ? childNode.B : childNode.W)!== "undefined");
 
             //console.log('DEBUG oneChildMoves && oneChildMoves.length ',oneChildMoves && oneChildMoves.length);
-            if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMove(oneChildMoves[0], gameTreeSequenceNode.nodes[gameTreeSequenceNode.nodes.length-1])) {
+            if (oneChildMoves && oneChildMoves.length && sgfutils.isAcceptableMoveIdx(oneChild, 0)) {
                 //console.log('typeof oneChildMoves[0] defined ',typeof oneChildMoves[0].B !== "undefined" || typeof oneChildMoves[0].W !== "undefined");
                 if (moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W) {
                     childAsPoint = sgfutils.sgfCoordToPoint(moveColor === "black" ? oneChildMoves[0].B : oneChildMoves[0].W);
@@ -406,7 +406,7 @@ const ExampleGameControls = function(element, game) {
                 const moveSignature = sgfutils.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
                 let nodeStats = localStats.get(moveSignature);
                 //let nodeStats = addStatsForNode();
-                console.log(' stats for move ('+this.game.currentState().moveNumber+') '+moveSignature+' :',nodeStats);
+                //console.log(' stats for move ('+this.game.currentState().moveNumber+') '+moveSignature+' :',nodeStats);
                 //if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
                 if(/*!nodeStats && */this.game.currentState().moveNumber > 0) {
                     //if(this.game.currentState().moveNumber > 1 ) {
@@ -419,7 +419,7 @@ const ExampleGameControls = function(element, game) {
                     //let freshStats = nodeStats;
                     stats.getNodeStats( currentNode.node, currentNode.nodeIdx, freshStats, localStats);
                     nodeStats = freshStats;
-                    console.log('calculated stats for move '+this.game.currentState().moveNumber, JSON.stringify(nodeStats).replaceAll(",", ",\n"))
+                    //console.log('calculated stats for move '+this.game.currentState().moveNumber, JSON.stringify(nodeStats).replaceAll(",", ",\n"))
                     localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
                 }
                 newGameInfo += "\nYou have found "+(nodeStats && ((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.leafCount + nodeStats.agg_leafCount )|| "Lots of")+" valid VARIATIONS\n";
@@ -431,8 +431,8 @@ const ExampleGameControls = function(element, game) {
                     controls.progressContainer.style.display = "block";
                     controls.localProgressBar.animate(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.localProgressBarmax);  // Number from 0.0 to 1.0
                     controls.localSuccessBar.animate(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.localSuccessBarmax);  // Number from 0.0 to 1.0
-                    console.log('progress animate ',(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.localProgressBarmax),(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.localSuccessBarmax));
-                    console.log('progress animate ',controls.localProgressBarmax,controls.localSuccessBarmax );
+                    //console.log('progress animate ',(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.localProgressBarmax),(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.localSuccessBarmax));
+                    //console.log('progress animate ',controls.localProgressBarmax,controls.localSuccessBarmax );
                 }
             }
         } else {
@@ -454,13 +454,13 @@ const ExampleGameControls = function(element, game) {
                 previousLeafSignature = signature;
                 let nodeStats = stats.setStatsForSignature(signature, newStatToSet, localStats);
                 stats.addStats(nodeStats, newStatToAdd);
-                console.log('new stat '+signature,JSON.stringify(nodeStats));
+                //console.log('new stat '+signature,JSON.stringify(nodeStats));
 
                 newGameInfo += "\nnew Stats for "+signature+":  "+JSON.stringify(nodeStats);
                 localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
-            } else {
+            } /*else {
                 console.log('same signature as previous ', previousLeafSignature, signature)
-            }
+            }*/
             nextMoveOptions = _getNextMoveOptions(game, true);
         }
         //console.log('current options:',nextMoveOptions);
@@ -575,7 +575,7 @@ const ExampleGameControls = function(element, game) {
                 controls.reset(e);
             }
         });
-        console.log('tabHeaders ', allTabHeaders);
+        //console.log('tabHeaders ', allTabHeaders);
 
         this.declareMistake = function(e) {
             e.preventDefault();
@@ -633,7 +633,7 @@ const ExampleGameControls = function(element, game) {
                 let localStats = sgfutils.deepParse(localStorage.getItem("localStats")) || new Map();
                 let nodeStats = localStats.get(moveSignature);
                 //let nodeStats = addStatsForNode();
-                console.log(' stats for move (' + controls.game.currentState().moveNumber + ') ' + moveSignature + ' :', nodeStats);
+                //console.log(' stats for move (' + controls.game.currentState().moveNumber + ') ' + moveSignature + ' :', nodeStats);
                 //if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
                 if (/*!nodeStats && */controls.game.currentState().moveNumber >= 0) {
                     //if(controls.game.currentState().moveNumber > 1 ) {
@@ -646,7 +646,7 @@ const ExampleGameControls = function(element, game) {
                     //let freshStats = nodeStats;
                     stats.getNodeStats(currentNode.node, currentNode.nodeIdx, freshStats, localStats);
                     nodeStats = freshStats;
-                    console.log('calculated stats for move ' + controls.game.currentState().moveNumber, JSON.stringify(nodeStats).replaceAll(",", ",\n"))
+                    //console.log('calculated stats for move ' + controls.game.currentState().moveNumber, JSON.stringify(nodeStats).replaceAll(",", ",\n"))
                     localStorage.setItem("localStats", sgfutils.deepStringify(localStats));
                 }
                 if (nodeStats) {

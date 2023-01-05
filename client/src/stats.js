@@ -8,7 +8,7 @@ export default {
         //console.log('START getNodeStats ',sgfutils.copyNode(node.nodes[nodeIdx], true),JSON.stringify(stats));
         //let mistakeIndex = doubleMoveIdx < (node.nodes.length -1) && !sgfutils.isAcceptableMove(node.nodes[doubleMoveIdx+1], (nodeIdx >0 ? node.nodes[nodeIdx-1] : node.parent.nodes[node.parent.length-1])) ? doubleMoveIdx +1 : -1// we stop if a same player plays 2 times in a row (exists in some SGFs as example of continuation after tenuki...)
         let mistakeIndex = node.nodes.findIndex((oneNode, oneNodeIdx) => {
-            return oneNodeIdx<node.nodes.length-1 && !sgfutils.isAcceptableMove(node.nodes[oneNodeIdx+1],oneNode);
+            return oneNodeIdx<node.nodes.length-1 && !sgfutils.isAcceptableMoveIdx(node,oneNodeIdx+1);
         });
         if(mistakeIndex >= nodeIdx) { // there is a leaf here, so we return
 
@@ -35,7 +35,7 @@ export default {
             let oneChild = node.sequences[sequencesIdx];
             //console.log('getNodeStats seq '+sequencesIdx);
             let childStats = null;
-            if(sgfutils.isAcceptableMove(oneChild.nodes[0],node.nodes[node.nodes.length-1])) {
+            if(sgfutils.isAcceptableMoveIdx(oneChild,0)) {
                 //console.log('getNodeStats seq '+sequencesIdx+' EXPLORED ',sgfutils.copyNode(oneChild.nodes[0], true));
                 isAtLeastOneSeqValid = true;
                 //const signature = this.getNodeSeparatedSGF({node:oneChild, nodeIdx:0});

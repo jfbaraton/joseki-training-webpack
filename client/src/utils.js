@@ -1,7 +1,8 @@
 var sgf = require('smartgame');
 
 // how many points can you lose in one move and still consider it "joseki"?
-const JOSEKI_MARGIN = 2;
+//const JOSEKI_MARGIN = 2.3;
+const JOSEKI_MARGIN = 4;
 
 export default {
     getEmptySGF: function() {
@@ -124,10 +125,10 @@ export default {
 
     isAcceptableMove: function(node, previousNode, minimumScore) {
         if(!node || node.BM || node.UC) return false;
-        if(node.DM || typeof node.B === "string" && node.B == '' || typeof node.W === "string" && node.W == '' ) return true; // joseki or pass always accepted
+        if(node.DM || typeof node.B === "string" && node.B === '' || typeof node.W === "string" && node.W === '' ) return true; // joseki or pass always accepted
 
         if(previousNode) {
-            // if same move color as the previous move, we don t accept
+            // if same move color as the previous move, we don't accept
             if(this.areMovesSameColor(node,previousNode)) return false;
             const margin = typeof node.B === "string" ? JOSEKI_MARGIN : -JOSEKI_MARGIN;
             let scoreThreshold = typeof minimumScore !== "undefined" ? minimumScore : typeof previousNode.V !== "undefined" ? (parseFloat(previousNode.V)-margin) : null;
@@ -140,6 +141,61 @@ export default {
                     return false;
                 } else if(typeof node.W === "string" && parseFloat(node.V)>scoreThreshold) { // white move
                     return false;
+                }
+            }
+
+        }
+        return true;
+    },
+
+    // returns {node:node, nodeIdx:nodeIdx} or null
+    getPreviousMove: function(nodeAndNodeIdx) {
+        if(!nodeAndNodeIdx ||!nodeAndNodeIdx.node || !nodeAndNodeIdx.node.nodes || !nodeAndNodeIdx.node.nodes.length || nodeAndNodeIdx.nodeIdx>=nodeAndNodeIdx.node.nodes.length){
+            console.log('sth wrong with ', nodeAndNodeIdx.node, nodeAndNodeIdx.nodeIdx);
+            return null;
+        }
+        if(nodeAndNodeIdx.nodeIdx <= 0 ) {
+            if(nodeAndNodeIdx.node.parent && nodeAndNodeIdx.node.parent.nodes && nodeAndNodeIdx.node.parent.nodes.length) {
+                return {node:nodeAndNodeIdx.node.parent, nodeIdx:nodeAndNodeIdx.node.parent.nodes.length-1};
+            } else {
+                //console.log('NO PARENT ', nodeAndNodeIdx.node, nodeAndNodeIdx.nodeIdx);
+                return null;
+            }
+        }
+        return {node:nodeAndNodeIdx.node, nodeIdx:nodeAndNodeIdx.nodeIdx-1};
+    },
+
+    isAcceptableMoveIdxOLD: function(node, nodeIdx) {
+        let previousNode = this.getPreviousMove({node:node, nodeIdx:nodeIdx});
+        let previousMove = previousNode ? previousNode.node.nodes[previousNode.nodeIdx]: null;
+        return this.isAcceptableMove(node.nodes[nodeIdx],previousMove);
+    },
+
+    isAcceptableMoveIdx: function(node, nodeIdx) {
+        let move = node.nodes[nodeIdx];
+        if(!move || move.BM || move.UC) return false;
+        if(move.DM || typeof move.B === "string" && move.B === '' || typeof move.W === "string" && move.W === '' ) return true; // joseki or pass always accepted
+        let previousNode = this.getPreviousMove({node:node, nodeIdx:nodeIdx});
+        if(previousNode) {
+            //console.log('found prev move');            // if same move color as the previous move, we don t accept
+            if(this.areMovesSameColor(move,previousNode.node.nodes[previousNode.nodeIdx])) return false;
+            const margin = typeof move.B === "string" ? JOSEKI_MARGIN : -JOSEKI_MARGIN;
+            if(typeof move.V !== "undefined") {
+                let lastScoreNode = previousNode;
+                while(lastScoreNode && typeof lastScoreNode.node.nodes[lastScoreNode.nodeIdx].V === "undefined") {
+                    lastScoreNode = this.getPreviousMove(lastScoreNode);
+                }
+                if(lastScoreNode) {
+                    let scoreThreshold = typeof lastScoreNode.node.nodes[lastScoreNode.nodeIdx].V !== "undefined" ? (parseFloat(lastScoreNode.node.nodes[lastScoreNode.nodeIdx].V) - margin) : null;
+                    //console.log("is acceptable based on V?", move);
+                    //console.log("?", lastScoreNode.node.nodes[lastScoreNode.nodeIdx].V);
+                    //console.log("B<?", typeof move.B === "string", parseFloat(move.V), scoreThreshold);
+                    //console.log("W>?", typeof move.W === "string");
+                    if (typeof move.B === "string" && parseFloat(move.V) < scoreThreshold) { // black move
+                        return false;
+                    } else if (typeof move.W === "string" && parseFloat(move.V) > scoreThreshold) { // white move
+                        return false;
+                    }
                 }
             }
 
@@ -253,7 +309,7 @@ export default {
                     {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
                     availableTransforms));
 
-            if(oneChildMoves && oneChildMoves.length && (isIgnoreErrors || this.isAcceptableMove(oneChildMoves[0], (nodeIdx >0 ? gameTreeSequenceNode.nodes[nodeIdx-1] : gameTreeSequenceNode.parent.nodes[gameTreeSequenceNode.parent.length-1])))) {
+            if(oneChildMoves && oneChildMoves.length && (isIgnoreErrors || this.isAcceptableMoveIdx(gameTreeSequenceNode, nodeIdx))) {
                 if(!oneMove.pass) {
                     let childNode = oneChildMoves[0];
                     let newAvailableTransforms = this.getPossibleTransforms(
@@ -284,7 +340,7 @@ export default {
                      {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x},
                      availableTransforms));
 
-            if(oneChildMoves && oneChildMoves.length && (isIgnoreErrors || this.isAcceptableMove(oneChildMoves[0], gameTreeSequenceNode.nodes[gameTreeSequenceNode.nodes.length-1]))) {
+            if(oneChildMoves && oneChildMoves.length && (isIgnoreErrors || this.isAcceptableMoveIdx(oneChild, 0))) {
                 if(!oneMove.pass) {
                     let childNode = oneChildMoves [0];
                     let newAvailableTransforms = this.getPossibleTransforms(

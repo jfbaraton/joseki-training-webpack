@@ -2,14 +2,47 @@
 
 const joseki_positions_calls = {
     "15081" : [
-        {"description":"## Empty Goban\n\nInfinite possibilities await!","variation_label":"_","category":"IDEAL","marks":null,"placement":"root","play":".root","contributor":1,"node_id":"15081","comment_count":21,"db_locked_down":false,"parent":{"placement":"root","category":"IDEAL","variation_label":"_","node_id":"15081"},"joseki_source":null,"tags":[],"next_moves":[{"placement":"Q15","category":"IDEAL","variation_label":"5","node_id":"30712"},{"placement":"Q14","category":"IDEAL","variation_label":"6","node_id":"15290"},{"placement":"Q16","category":"IDEAL","variation_label":"1","node_id":"15422"},{"placement":"R16","category":"IDEAL","variation_label":"2","node_id":"24140"},{"placement":"R17","category":"IDEAL","variation_label":"3","node_id":"31230"},{"placement":"R15","category":"IDEAL","variation_label":"4","node_id":"31394"}],"child_count":19011
+        {
+            "description":"## Empty Goban\n\nInfinite possibilities await!",
+            "variation_label":"_","category":"IDEAL","marks":null,"placement":"root",
+            "play":".root","contributor":1,"node_id":"15081","comment_count":21,
+            "db_locked_down":false,"parent":{"placement":"root","category":"IDEAL",
+                "variation_label":"_","node_id":"15081"},"joseki_source":null,"tags":[],
+            "next_moves":
+                [{"placement":"Q15","category":"IDEAL","variation_label":"5","node_id":"30712"},{"placement":"Q14","category":"IDEAL","variation_label":"6","node_id":"15290"},{"placement":"Q16","category":"IDEAL","variation_label":"1","node_id":"15422"},{"placement":"R16","category":"IDEAL","variation_label":"2","node_id":"24140"},{"placement":"R17","category":"IDEAL","variation_label":"3","node_id":"31230"},{"placement":"R15","category":"IDEAL","variation_label":"4","node_id":"31394"}
+                ],
+            "child_count":19011
         },
-        {"description":"## 3-4 Point\n\nAKA komoku. The 3-4 point favors territory. In this regard, its efficiency is between that of the star and the 3-3 point. Its effectiveness is maximized when the focus is on the corner. Since the 3-4 point is often considered to be the best play for a steady approach to the game, the 3-4 point has been favored by professionals (and AI) over the years. Even so, it lacks the star point's potential for influence and rapid center development. (pp. 6; see also Ishigure Ikuro—In the Beginning, p. 11.)","variation_label":"2","category":"IDEAL","joseki_source_id":130,"marks":"[]","placement":"R16","play":".root.R16","contributor":412892,"node_id":"24140","comment_count":1,"db_locked_down":false,"parent":{"placement":"root","category":"IDEAL","variation_label":"_","node_id":"15081"},"joseki_source":{"id":130,"description":"Yilun Yang—Fundamental Principles of Go","url":"https://senseis.xmp.net/?FundamentalPrinciplesOfGo"},"tags":[],"next_moves":[{"placement":"Q16","category":"IDEAL","variation_label":"5","node_id":"29425"},{"placement":"pass","category":"IDEAL","variation_label":"8","node_id":"29533"},{"placement":"O17","category":"IDEAL","variation_label":"3","node_id":"29291"},{"placement":"P17","category":"IDEAL","variation_label":"1","node_id":"24146"},{"placement":"P16","category":"IDEAL","variation_label":"2","node_id":"26969"},{"placement":"O16","category":"IDEAL","variation_label":"4","node_id":"29238"}],"child_count":7562
+        {
+            "description":"## 3-4 Point\n\nAKA komoku. The 3-4 point favors territory. In this regard, its efficiency is between that of the star and the 3-3 point. Its effectiveness is maximized when the focus is on the corner. Since the 3-4 point is often considered to be the best play for a steady approach to the game, the 3-4 point has been favored by professionals (and AI) over the years. Even so, it lacks the star point's potential for influence and rapid center development. (pp. 6; see also Ishigure Ikuro—In the Beginning, p. 11.)",
+            "variation_label":"2","category":"IDEAL","joseki_source_id":130,"marks":"[]",
+            "placement":"R16","play":".root.R16",
+            "contributor":412892,"node_id":"24140","comment_count":1,
+            "db_locked_down":false,
+            "parent":
+                {"placement":"root","category":"IDEAL","variation_label":"_","node_id":"15081"},
+            "joseki_source":{"id":130,"description":"Yilun Yang—Fundamental Principles of Go","url":"https://senseis.xmp.net/?FundamentalPrinciplesOfGo"},
+            "tags":[],"next_moves":[{"placement":"Q16","category":"IDEAL","variation_label":"5","node_id":"29425"},{"placement":"pass","category":"IDEAL","variation_label":"8","node_id":"29533"},{"placement":"O17","category":"IDEAL","variation_label":"3","node_id":"29291"},{"placement":"P17","category":"IDEAL","variation_label":"1","node_id":"24146"},{"placement":"P16","category":"IDEAL","variation_label":"2","node_id":"26969"},{"placement":"O16","category":"IDEAL","variation_label":"4","node_id":"29238"}
+            ],"child_count":7562
         },
-        {"description":"## 3-3 Point\n\nAKA san san. A 3-3 stone takes the corner completely in one move, although it is low and has diminished mobility. It is most often used by players who are territorially oriented and prepared for long drawn-out battles. It is often used by White. (p. 7.) \n\nThere's no the rush to play an enclosure or approach as with a stone on the 3-4 point. Rather, both players can bide their time until developments elsewhere make an approach or enclosure appropriate. (Ishigure Ikuro—In the Beginning, pp. 12-13.)","variation_label":"3","category":"IDEAL","joseki_source_id":130,"marks":"[]","placement":"R17","play":".root.R17","contributor":499745,"node_id":"31230","comment_count":0,"db_locked_down":false,"parent":{"placement":"root","category":"IDEAL","variation_label":"_","node_id":"15081"},"joseki_source":{"id":130,"description":"Yilun Yang—Fundamental Principles of Go","url":"https://senseis.xmp.net/?FundamentalPrinciplesOfGo"},"tags":[],"next_moves":[{"placement":"pass","category":"IDEAL","variation_label":"5","node_id":"31371"},{"placement":"R14","category":"IDEAL","variation_label":"1","node_id":"31350"},{"placement":"Q14","category":"IDEAL","variation_label":"3","node_id":"31333"},{"placement":"R15","category":"IDEAL","variation_label":"4","node_id":"31361"},{"placement":"Q16","category":"IDEAL","variation_label":"2","node_id":"31231"}],"child_count":154
+        {
+            "description":"## 3-3 Point\n\nAKA san san. A 3-3 stone takes the corner completely in one move, although it is low and has diminished mobility. It is most often used by players who are territorially oriented and prepared for long drawn-out battles. It is often used by White. (p. 7.) \n\nThere's no the rush to play an enclosure or approach as with a stone on the 3-4 point. Rather, both players can bide their time until developments elsewhere make an approach or enclosure appropriate. (Ishigure Ikuro—In the Beginning, pp. 12-13.)",
+            "variation_label":"3","category":"IDEAL","joseki_source_id":130,"marks":"[]",
+            "placement":"R17","play":".root.R17","contributor":499745,"node_id":"31230","comment_count":0,
+            "db_locked_down":false,"parent":{"placement":"root","category":"IDEAL","variation_label":"_","node_id":"15081"},
+            "joseki_source":{"id":130,"description":"Yilun Yang—Fundamental Principles of Go","url":"https://senseis.xmp.net/?FundamentalPrinciplesOfGo"},
+            "tags":[],"next_moves":[{"placement":"pass","category":"IDEAL","variation_label":"5","node_id":"31371"},{"placement":"R14","category":"IDEAL","variation_label":"1","node_id":"31350"},{"placement":"Q14","category":"IDEAL","variation_label":"3","node_id":"31333"},{"placement":"R15","category":"IDEAL","variation_label":"4","node_id":"31361"},{"placement":"Q16","category":"IDEAL","variation_label":"2","node_id":"31231"}
+            ]
+            ,"child_count":154
         },
-        {"description":"## Tengen\nDwyrin's favourite!\n\nPossible when Black intends to play mirror go. Also note that Black will now win most of corner ladder fights. \n\n\n[Video: Park Jungwhan takes on Tengen](http://www.dwyrin.tv/park-jungwhan-takes-on-tengen)","variation_label":"_","category":"GOOD","marks":"[]","placement":"K10","play":".root.K10","contributor":412892,"node_id":"31381","comment_count":0,"db_locked_down":false,"parent":{"placement":"root","category":"IDEAL","variation_label":"_","node_id":"15081"},"joseki_source":null,"tags":[],"next_moves":[],"child_count":13
-        },{"description":"##2-2 Point\n\nA weird move. Tenuki is always a best option for White.","variation_label":"_","category":"TRICK","joseki_source_id":78,"marks":"[]","placement":"S18","play":".root.S18","contributor":412892,"node_id":"32221","comment_count":0,"db_locked_down":false,"parent":{"placement":"root","category":"IDEAL","variation_label":"_","node_id":"15081"},"joseki_source":{"id":78,"description":"Kogo's Joseki Dictionary","url":"https://waterfire.us/joseki.htm"},"tags":[{"id":43,"description":"Black gets the corner","group":1,"seq":0},{"id":70,"description":"White gets sente","group":3,"seq":1}],"next_moves":[],"child_count":57
+        {
+            "description":"## Tengen\nDwyrin's favourite!\n\nPossible when Black intends to play mirror go. Also note that Black will now win most of corner ladder fights. \n\n\n[Video: Park Jungwhan takes on Tengen](http://www.dwyrin.tv/park-jungwhan-takes-on-tengen)",
+            "variation_label":"_","category":"GOOD","marks":"[]","placement":"K10","play":".root.K10",
+            "contributor":412892,"node_id":"31381","comment_count":0,"db_locked_down":false,
+            "parent":{"placement":"root","category":"IDEAL","variation_label":"_","node_id":"15081"},
+            "joseki_source":null,"tags":[],"next_moves":[],"child_count":13
+        },{
+            "description":"##2-2 Point\n\nA weird move. Tenuki is always a best option for White.","variation_label":"_","category":"TRICK","joseki_source_id":78,"marks":"[]","placement":"S18","play":".root.S18","contributor":412892,"node_id":"32221","comment_count":0,"db_locked_down":false,"parent":{"placement":"root","category":"IDEAL","variation_label":"_","node_id":"15081"},"joseki_source":{"id":78,"description":"Kogo's Joseki Dictionary","url":"https://waterfire.us/joseki.htm"},"tags":[{"id":43,"description":"Black gets the corner","group":1,"seq":0},{"id":70,"description":"White gets sente","group":3,"seq":1}],"next_moves":[],"child_count":57
         },
         {"description":"## 3-6 Point\n\nAKA oomokuhuzashi. This point invites White to take the corner. Its popular usage has not stood the test of time, given the modern emphasis on occupying the corners. It may be considered a remnant of the New Fuseki movement in Japan in the 1930s. ","variation_label":"_","category":"GOOD","joseki_source_id":78,"marks":"[]","placement":"R14","play":".root.R14","contributor":64817,"node_id":"15287","comment_count":0,"db_locked_down":false,"parent":{"placement":"root","category":"IDEAL","variation_label":"_","node_id":"15081"},"joseki_source":{"id":78,"description":"Kogo's Joseki Dictionary","url":"https://waterfire.us/joseki.htm"},"tags":[],"next_moves":[],"child_count":2
         },
@@ -43,7 +76,11 @@ const joseki_positions_calls = {
 };
 const joseki_position_calls = {
     "15081" : {
-        "description":"## Empty Goban\n\nInfinite possibilities await!","variation_label":"_","category":"IDEAL","marks":null,"placement":"root","play":".root","contributor":1,"node_id":"15081","comment_count":21,"db_locked_down":false,"parent":{"placement":"root","category":"IDEAL","variation_label":"_","node_id":"15081"},"joseki_source":null,"tags":[],
+        "description":"## Empty Goban\n\nInfinite possibilities await!",
+        "variation_label":"_",
+        "category":"IDEAL",
+        "marks":null,
+        "placement":"root","play":".root","contributor":1,"node_id":"15081","comment_count":21,"db_locked_down":false,"parent":{"placement":"root","category":"IDEAL","variation_label":"_","node_id":"15081"},"joseki_source":null,"tags":[],
         "next_moves":[
             {"placement":"Q15","category":"IDEAL","variation_label":"5","node_id":"30712"},
             {"placement":"Q14","category":"IDEAL","variation_label":"6","node_id":"15290"},
@@ -54,7 +91,23 @@ const joseki_position_calls = {
         ],"child_count":19011
     },
     "24140" : {
-        "description":"## 3-4 Point\n\nAKA komoku. The 3-4 point favors territory. In this regard, its efficiency is between that of the star and the 3-3 point. Its effectiveness is maximized when the focus is on the corner. Since the 3-4 point is often considered to be the best play for a steady approach to the game, the 3-4 point has been favored by professionals (and AI) over the years. Even so, it lacks the star point's potential for influence and rapid center development. (pp. 6; see also Ishigure Ikuro—In the Beginning, p. 11.)","variation_label":"2","category":"IDEAL","joseki_source_id":130,"marks":"[]","placement":"R16","play":".root.R16","contributor":412892,"node_id":"24140","comment_count":1,"db_locked_down":false,"parent":{"placement":"root","category":"IDEAL","variation_label":"_","node_id":"15081"},"joseki_source":{"id":130,"description":"Yilun Yang—Fundamental Principles of Go","url":"https://senseis.xmp.net/?FundamentalPrinciplesOfGo"},"tags":[],
+        "description":"## 3-4 Point\n\nAKA komoku. The 3-4 point favors territory. In this regard, its efficiency is between that of the star and the 3-3 point. Its effectiveness is maximized when the focus is on the corner. Since the 3-4 point is often considered to be the best play for a steady approach to the game, the 3-4 point has been favored by professionals (and AI) over the years. Even so, it lacks the star point's potential for influence and rapid center development. (pp. 6; see also Ishigure Ikuro—In the Beginning, p. 11.)",
+        "variation_label":"2",
+        "category":"IDEAL",
+        "joseki_source_id":130,
+        "marks":"[]",
+        "placement":"R16",
+        "play":".root.R16",
+        "contributor":412892,
+        "node_id":"24140",
+        "comment_count":1,
+        "db_locked_down":false,
+        "parent":{"placement":"root","category":"IDEAL","variation_label":"_","node_id":"15081"},
+        "joseki_source":
+            {
+                "id":130,"description":"Yilun Yang—Fundamental Principles of Go","url":"https://senseis.xmp.net/?FundamentalPrinciplesOfGo"
+            },
+        "tags":[],
         "next_moves":[
             {"placement":"Q16","category":"IDEAL","variation_label":"5","node_id":"29425"},
             {"placement":"pass","category":"IDEAL","variation_label":"8","node_id":"29533"},
@@ -66,8 +119,8 @@ const joseki_position_calls = {
     }
 };
 
-getPosition = (id) => {joseki_position_calls.properties(id)};
-getPositions = (id) => {joseki_positions_calls.properties(id)};
+getPosition = (id) => joseki_position_calls[id];
+getPositions = (id) => joseki_positions_calls[id];
 
 module.exports = {
   //getOrders:  getOrders,

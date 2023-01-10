@@ -6,7 +6,7 @@ getPosition = (id) => {
     var options = {
         host: 'https://online-go.com',
         port: 80,
-        path: '/oje/positions?id='+id+'&tfilterid=37&mode=0'',
+        path: '/oje/positions?id='+id+'&tfilterid=37&mode=0',
         method: 'GET',
         headers: {
             'accept': 'application/json, text/javascript, */*; q=0.01',
@@ -44,10 +44,9 @@ curl 'https://online-go.com/oje/positions?id=24140&tfilterid=37&mode=0' \
   --
   */
 
-getPositions = (id) => {joseki_positions_calls.properties(id)};
+//getPositions = (id) => {joseki_positions_calls.properties(id)};
 
 module.exports = {
-  //getOrders:  getOrders,
   getPosition:  getPosition,
-  getPositions:  getPositions
+  //getPositions:  getPositions
 }

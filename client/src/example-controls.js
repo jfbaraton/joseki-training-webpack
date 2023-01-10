@@ -754,7 +754,10 @@ const ExampleGameControls = function(element, game) {
             //console.log('getVariationSGF:', '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc];W[qc];B[qd];W[pc]BM[1])');
             //controls.postNewJosekiSGF('');
             //sgfutils.cleanPassForShow(collection.gameTrees[0]);
-            sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
+
+            //sgfutils.download("fixed.sgf",sgf.generate(sgfutils.cleanSGF(collection)));
+
+
             //sgf.generate(sgfutils.cleanSGF(collection));
 
             //sgfutils.cleanSGF(collection);
@@ -762,6 +765,16 @@ const ExampleGameControls = function(element, game) {
             //learning.test();
             // reset stats
             //localStorage.setItem("localStats", null);
+
+            axios
+                .get("/api/suck")
+                .then(function (response) {
+                    console.log('GET response',response);
+                    controls.getLatestSGF();
+                })
+                .catch(function (error) {
+                    console.log('GET error',error);
+                });
         });
 
         resetButton.addEventListener("click", this.reset);

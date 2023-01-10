@@ -6,6 +6,10 @@ var  bodyParser = require('body-parser');
 var  cors = require('cors');
 var  app = express();
 var  router = express.Router();
+var sgf = require('smartgame');
+var sgfutils  = require('./utils');
+
+
 
 app.use(bodyParser.urlencoded({ extended:  true }));
 app.use(bodyParser.json());
@@ -33,8 +37,9 @@ router.route('/players').get((req, res) => {
 })
 
 router.route('/suck').get((req, res) => {
-    const title = req.query.title;
-
+    //const title = req.query.title;
+    console.log('sucking ... ');
+    const title = "";
     Db.getJoseki(title, 1000, (err, data) => {
         if (err) {
             res.status(500).send({
@@ -42,7 +47,13 @@ router.route('/suck').get((req, res) => {
                 err.message || "Some error occurred while retrieving players."
             });
         } else {
-            res.send(data);
+            const mocked = ogsMock.getPosition("15081");
+            console.log('sucked ' ,JSON.stringify(mocked));
+            const emptySGF = sgfutils.getEmptySGF();
+            let currentNode = emptySGF.gameTrees[0];
+            let currentIdx = 0;
+            currentNode.nodes.push(sgfutils.makeNodeFromOGS(mocked))
+            res.send(sgf.generate(emptySGF));
         }
     });
 })

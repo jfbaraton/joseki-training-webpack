@@ -1,5 +1,6 @@
 // server.js
 var  Db = require('./dboperations');
+var  ogsMock = require('./OGSMock');
 var  express = require('express');
 var  bodyParser = require('body-parser');
 var  cors = require('cors');
@@ -30,6 +31,22 @@ router.route('/players').get((req, res) => {
     else res.send(data);
   });
 })
+
+router.route('/suck').get((req, res) => {
+    const title = req.query.title;
+
+    Db.getJoseki(title, 1000, (err, data) => {
+        if (err) {
+            res.status(500).send({
+                message:
+                err.message || "Some error occurred while retrieving players."
+            });
+        } else {
+            res.send(data);
+        }
+    });
+})
+
 
 router.route('/joseki/:id?').get((req, res) => {
   const title = req.query.id;

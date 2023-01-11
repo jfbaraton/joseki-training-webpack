@@ -1,6 +1,7 @@
 // server.js
 var  Db = require('./dboperations');
 var  ogsMock = require('./OGSMock');
+var  ogsAPI = require('./OGSAPI');
 var  express = require('express');
 var  bodyParser = require('body-parser');
 var  cors = require('cors');
@@ -47,13 +48,23 @@ router.route('/suck').get((req, res) => {
                 err.message || "Some error occurred while retrieving players."
             });
         } else {
-            const mocked = ogsMock.getPosition("15081");
+            /*const mocked = ogsMock.getPosition("15081");
             console.log('sucked ' ,JSON.stringify(mocked));
             const emptySGF = sgfutils.getEmptySGF();
             let currentNode = emptySGF.gameTrees[0];
             let currentIdx = 0;
             currentNode.nodes.push(sgfutils.makeNodeFromOGS(mocked))
-            res.send(sgf.generate(emptySGF));
+            res.send(sgf.generate(emptySGF));*/
+            //const mocked = ogsMock.getPosition("15081");
+            ogsAPI.getPosition("15081", (mocked) => {
+                //console.log('sucked ' ,JSON.stringify(mocked));
+                const emptySGF = sgfutils.getEmptySGF();
+                let currentNode = emptySGF.gameTrees[0];
+                let currentIdx = 0;
+                currentNode.nodes.push(sgfutils.makeNodeFromOGS(mocked))
+                res.send(sgf.generate(emptySGF));
+
+            });
         }
     });
 })

@@ -53,4 +53,19 @@ INSERT INTO `sgfs` (`id`, `recordtime`, `tags`, `milestone`, `SGF`) VALUES
 
 INSERT INTO `sgfs` (`id`, `recordtime`, `tags`, `milestone`, `SGF`) VALUES ('1', '20210207232424', 'joseki', 'init', LOAD_FILE('C:/Users/yamak/Documents/joseki-training-webpack/client/src/test/eidogo_joseki.sgf')),
 (2, 20210207232425, 'alphago', NULL, '');
+
+
+
+DROP TABLE IF EXISTS `OGS`;
+CREATE TABLE IF NOT EXISTS `OGS` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `joseki_id` int NOT NULL,
+    `endpoint` varchar(100) NOT NULL,
+    `SGF` LONGBLOB NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `OGS_cache` (`joseki_id`,`endpoint`),
+    KEY `OGS_joseki_id` (`joseki_id`),
+    KEY `OGS_endpoint` (`endpoint`)
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 COMMIT;

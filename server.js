@@ -37,36 +37,122 @@ router.route('/players').get((req, res) => {
   });
 })
 
+const suck = (joseki_id, emptySGF, current_node, req, res, isLast) => {
+    const saveAndGetPositions = (OGSNode, joseki_id, emptySGF, current_node, req, res, isLast) => {
+        currentNode.nodes.push(sgfutils.makeNodeFromOGS(cachedSGF));
+        if(isLast) {
+            res.send(sgf.generate(emptySGF));
+            return;
+        }
+        Db.getOGSJoseki(joseki_id, 'Positions', (err, data) => {
+            if (err) {
+                res.status(500).send({
+                    message:
+                        err.message || "Some error occurred while retrieving players."
+                });
+                return;
+            } else {
+                if(data && data.length === 1) {
+                    console.log('found cached Positions for '+joseki_id);
+                    console.log('found cached data type '+typeof data[0]);
+                    console.log('found cached data type '+JSON.stringify(data[0]));
+                    console.log('found cached type '+typeof data[0].SGF);
+                    console.log('cached SGF ###'+sgfutils.bin2String(data[0].SGF)+'###');
+                    const cachedSGF = JSON.parse(sgfutils.bin2String(data[0].SGF));
+                    console.log('Position  '+cachedSGF.description);
+                    savePositionsAndContinue(cachedSGF, joseki_id, emptySGF, current_node, req, res, isLast);
+                } else {
+                    console.log('NO CACHED Position for '+joseki_id);
+                    ogsAPI.getPositions( joseki_id, (queried) => {
+                        //console.log('sucked ' , JSON.stringify(queried));
+                        console.log('sucked ');
+                        //const emptySGF = sgfutils.getEmptySGF();
+                        //let currentNode = emptySGF.gameTrees[0];
+                        if(queried.see_also) {
+                            delete queried.see_also;
+                        }
+                        Db.setOGSJoseki(joseki_id, 'Positions', JSON.stringify(queried), (err, data) => {
+                            console.log('stored ');
+                            //Db.getJoseki(null, null, (err, data) => {
+                            if (err)
+                                res.status(500).send({
+                                    message:
+                                        err.message || "Some error occurred while posting joseki."
+                                });
+                            else {
+                                //res.status(201).json(data);
+                                /*currentNode.nodes.push(sgfutils.makeNodeFromOGS(queried))
+                                if (isLast) {
+                                    res.send(sgf.generate(emptySGF));
+                                    return;
+                                }*/
+                                savePositionsAndContinue(queried, joseki_id, emptySGF, current_node, req, res, isLast);
+                            }
+                        });
+                    });
+                }
+            }
+        });
+    };
+    Db.getOGSJoseki(joseki_id, 'Position', (err, data) => {
+        if (err) {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while retrieving players."
+            });
+            return;
+        } else {
+            if(data && data.length === 1) {
+                console.log('found cached Position for '+joseki_id);
+                console.log('found cached data type '+typeof data[0]);
+                console.log('found cached data type '+JSON.stringify(data[0]));
+                console.log('found cached type '+typeof data[0].SGF);
+                console.log('cached SGF ###'+sgfutils.bin2String(data[0].SGF)+'###');
+                const cachedSGF = JSON.parse(sgfutils.bin2String(data[0].SGF));
+                console.log('Position  '+cachedSGF.description);
+                saveAndGetPositions(cachedSGF, joseki_id, emptySGF, current_node, req, res, isLast);
+            } else {
+                console.log('NO CACHED Position for '+joseki_id);
+                ogsAPI.getPosition( joseki_id, (queried) => {
+                    //console.log('sucked ' , JSON.stringify(queried));
+                    console.log('sucked ');
+                    //const emptySGF = sgfutils.getEmptySGF();
+                    //let currentNode = emptySGF.gameTrees[0];
+                    if(queried.see_also) {
+                        delete queried.see_also;
+                    }
+                    Db.setOGSJoseki(joseki_id, 'Position', JSON.stringify(queried), (err, data) => {
+                        console.log('stored ');
+                        //Db.getJoseki(null, null, (err, data) => {
+                        if (err)
+                            res.status(500).send({
+                                message:
+                                    err.message || "Some error occurred while posting joseki."
+                            });
+                        else {
+                            //res.status(201).json(data);
+                            /*currentNode.nodes.push(sgfutils.makeNodeFromOGS(queried))
+                            if (isLast) {
+                                res.send(sgf.generate(emptySGF));
+                                return;
+                            }*/
+                            saveAndGetPositions(queried, joseki_id, emptySGF, current_node, req, res, isLast);
+                        }
+                    });
+                });
+            }
+        }
+    });
+};
+
 router.route('/suck').get((req, res) => {
     //const title = req.query.title;
     console.log('sucking ... ');
     const title = "";
-    Db.getJoseki(title, 1000, (err, data) => {
-        if (err) {
-            res.status(500).send({
-                message:
-                err.message || "Some error occurred while retrieving players."
-            });
-        } else {
-            /*const mocked = ogsMock.getPosition("15081");
-            console.log('sucked ' ,JSON.stringify(mocked));
-            const emptySGF = sgfutils.getEmptySGF();
-            let currentNode = emptySGF.gameTrees[0];
-            let currentIdx = 0;
-            currentNode.nodes.push(sgfutils.makeNodeFromOGS(mocked))
-            res.send(sgf.generate(emptySGF));*/
-            //const mocked = ogsMock.getPosition("15081");
-            ogsAPI.getPosition("15081", (mocked) => {
-                //console.log('sucked ' ,JSON.stringify(mocked));
-                const emptySGF = sgfutils.getEmptySGF();
-                let currentNode = emptySGF.gameTrees[0];
-                let currentIdx = 0;
-                currentNode.nodes.push(sgfutils.makeNodeFromOGS(mocked))
-                res.send(sgf.generate(emptySGF));
-
-            });
-        }
-    });
+    const joseki_id = 15081;
+    const emptySGF = sgfutils.getEmptySGF();
+    let currentNode = emptySGF.gameTrees[0];
+    suck(joseki_id, emptySGF, currentNode, req, res);
 })
 
 

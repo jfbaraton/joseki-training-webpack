@@ -34,6 +34,38 @@ getPosition = (id, callback) => {
         console.log('ERROR ',err);
     }).end();
 };
+getPositions = (id, callback) => {
+    /*var options = {
+        host: 'https://online-go.com',
+        port: 80,
+        path: '/oje/positions?id='+id+'&tfilterid=37&mode=0',
+        method: 'GET',
+        headers: {
+            'accept': 'application/json, text/javascript; q=0.01',
+
+        }
+    };*/
+    var options = new URL('https://online-go.com/oje/positions?id='+id+'&tfilterid=37&mode=0');
+    const responseData = []
+    https.request(options, function(res) {
+          console.log('STATUS: ' + res.statusCode);
+          console.log('HEADERS: ' + JSON.stringify(res.headers));
+          res.setEncoding('utf8');
+          res.on('data', function (chunk) {
+              //console.log('BODY: ' + chunk);
+              console.log('BODY ');
+              responseData.push(chunk);
+              //callback(chunk)
+          });
+        res.on('end', function () {
+            console.log('END');
+            callback(JSON.parse(responseData.join('')));
+        });
+    }).on('error', function(err) {
+        // Handle error
+        console.log('ERROR ',err);
+    }).end();
+};
 /*
 curl 'https://online-go.com/oje/positions?id=24140&tfilterid=37&mode=0' \
   -H 'authority: online-go.com' \
@@ -59,5 +91,5 @@ curl 'https://online-go.com/oje/positions?id=24140&tfilterid=37&mode=0' \
 
 module.exports = {
   getPosition:  getPosition,
-  //getPositions:  getPositions
+  getPositions:  getPositions
 }

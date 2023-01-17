@@ -11,13 +11,21 @@ module.exports = {
 
     makeNodeFromOGS: function(ogsMove, BorW) {
         let result = {
-            C:ogsMove.description+(ogsMove.category? ogsMove.category : "")
+            //C:ogsMove.description+(ogsMove.category? ogsMove.category : "")
+            C: (ogsMove.description || "").replaceAll('[','(').replaceAll(']',')')/*+(ogsMove.category? ogsMove.category : "")*/
         };
-
-        if (BorW === 'B') {
-            result.B = this.humanToSgfCoord(ogsMove.placement);
-        } else if (BorW === 'W') {
-            result.W = this.humanToSgfCoord(ogsMove.placement);
+        if(!result.C) delete C;
+        //console.log('converting '+ogsMove.placement+ " for "+BorW)
+        if(ogsMove.placement && ogsMove.placement !== "root") {
+            //console.log('converting to #'+this.humanToSgfCoord(ogsMove.placement)+'#')
+            if (BorW === 'B') {
+                result.B = this.humanToSgfCoord(ogsMove.placement);
+            } else if (BorW === 'W') {
+                result.W = this.humanToSgfCoord(ogsMove.placement);
+            }
+        } else if (result.C){
+            result.GC = result.C;
+            delete result.C
         }
 
         return result;
@@ -40,10 +48,12 @@ module.exports = {
 
     // human to sgfCoord
     humanToSgfCoord: function coordinatesFor(moveHumanString) {
+        if(!moveHumanString || typeof moveHumanString !== "string" || moveHumanString === "root") return null;
+        if(moveHumanString === "pass") return "";
         let x = moveHumanString.substring(0,1).charCodeAt(0)-'A'.charCodeAt(0);
         if(x>=8) x--; // letter 'i' is skipped
         const y = 19-parseInt(moveHumanString.substring(1));
-        return {y: y, x:x};
+        return this.pointToSgfCoord({y: y, x:x});
     },
 
     sgfCoordToPoint:function(_18a){
@@ -55,7 +65,7 @@ module.exports = {
     },
 
     pointToSgfCoord:function(pt){
-        if(!pt||(this.board&&!this.boundsCheck(pt.x,pt.y,[0,this.board.boardSize-1]))){
+        if(!pt || pt.x === null || pt.y === null || pt.x <0 || pt.y <0){
             return "";
         }
         let pts={0:"a",1:"b",2:"c",3:"d",4:"e",5:"f",6:"g",7:"h",8:"i",9:"j",10:"k",11:"l",12:"m",13:"n",14:"o",15:"p",16:"q",17:"r",18:"s"};
@@ -875,5 +885,142 @@ module.exports = {
                 }
             }
         }
+    },
+
+
+    savePositionsAndContinue : function(OGSPositions, joseki_id, emptySGF, current_node, req, res, isLast) {
+
+        if(OGSPositions) {
+            const OGSNode = OGSPositions.filter(oneOGSmove => oneOGSmove.placement !== "root" && oneOGSmove.category && (oneOGSmove.category === "IDEAL" || oneOGSmove.category === "GOOD" ));
+            if(OGSNode.length>1) {
+                if(!current_node.sequences) {
+                    current_node.sequences = [];
+                }
+                OGSNode.forEach(oneOGSmove => {
+                    var newNode = { nodes : [], parent:current_node, sequences:[]};
+                    if(isLast) newNode.nodes.push(sgfutils.makeNodeFromOGS(oneOGSmove));
+                    else this.suck(oneOGSmove.node_id, emptySGF, newNode, req, res);
+                });
+            } else if(OGSNode.length === 1){
+                const oneOGSmove = OGSNode[0];
+                var newNode = current_node;
+                if(isLast) newNode.nodes.push(sgfutils.makeNodeFromOGS(oneOGSmove));
+                else this.suck(oneOGSmove.node_id, emptySGF, newNode, req, res);
+            }
+        }
+        if(isLast) {
+            res.send(sgf.generate(emptySGF));
+            return;
+        }
+    },
+
+    saveAndGetPositions : function(OGSNode, joseki_id, emptySGF, current_node, req, res, isLast) {
+        currentNode.nodes.push(sgfutils.makeNodeFromOGS(cachedSGF));
+        if(isLast) {
+            res.send(sgf.generate(emptySGF));
+            return;
+        }
+        Db.getOGSJoseki(joseki_id, 'Positions', (err, data) => {
+            if (err) {
+                res.status(500).send({
+                    message:
+                        err.message || "Some error occurred while retrieving players."
+                });
+                return;
+            } else {
+                if(data && data.length === 1) {
+                    console.log('found cached Positions for '+joseki_id);
+                    console.log('found cached data type '+typeof data[0]);
+                    console.log('found cached data type '+JSON.stringify(data[0]));
+                    console.log('found cached type '+typeof data[0].SGF);
+                    console.log('cached SGF ###'+sgfutils.bin2String(data[0].SGF)+'###');
+                    const cachedSGF = JSON.parse(sgfutils.bin2String(data[0].SGF));
+                    console.log('Position  '+cachedSGF.description);
+                    this.savePositionsAndContinue(cachedSGF, joseki_id, emptySGF, current_node, req, res, true);
+                } else {
+                    console.log('NO CACHED Position for '+joseki_id);
+                    ogsAPI.getPositions( joseki_id, (queried) => {
+                        //console.log('sucked ' , JSON.stringify(queried));
+                        console.log('sucked ');
+                        //const emptySGF = sgfutils.getEmptySGF();
+                        //let currentNode = emptySGF.gameTrees[0];
+                        if(queried.see_also) {
+                            delete queried.see_also;
+                        }
+                        Db.setOGSJoseki(joseki_id, 'Positions', JSON.stringify(queried), (err, data) => {
+                            console.log('stored ');
+                            //Db.getJoseki(null, null, (err, data) => {
+                            if (err)
+                                res.status(500).send({
+                                    message:
+                                        err.message || "Some error occurred while posting joseki."
+                                });
+                            else {
+                                //res.status(201).json(data);
+                                /*currentNode.nodes.push(sgfutils.makeNodeFromOGS(queried))
+                                if (isLast) {
+                                    res.send(sgf.generate(emptySGF));
+                                    return;
+                                }*/
+                                this.savePositionsAndContinue(queried, joseki_id, emptySGF, current_node, req, res, true);
+                            }
+                        });
+                    });
+                }
+            }
+        });
+    },
+
+    suck : function(joseki_id, emptySGF, current_node, req, res, isLast) {
+
+        Db.getOGSJoseki(joseki_id, 'Position', (err, data) => {
+            if (err) {
+                res.status(500).send({
+                    message:
+                        err.message || "Some error occurred while retrieving players."
+                });
+                return;
+            } else {
+                if(data && data.length === 1) {
+                    console.log('found cached Position for '+joseki_id);
+                    console.log('found cached data type '+typeof data[0]);
+                    console.log('found cached data type '+JSON.stringify(data[0]));
+                    console.log('found cached type '+typeof data[0].SGF);
+                    console.log('cached SGF ###'+sgfutils.bin2String(data[0].SGF)+'###');
+                    const cachedSGF = JSON.parse(sgfutils.bin2String(data[0].SGF));
+                    console.log('Position  '+cachedSGF.description);
+                    this.saveAndGetPositions(cachedSGF, joseki_id, emptySGF, current_node, req, res, isLast);
+                } else {
+                    console.log('NO CACHED Position for '+joseki_id);
+                    ogsAPI.getPosition( joseki_id, (queried) => {
+                        //console.log('sucked ' , JSON.stringify(queried));
+                        console.log('sucked ');
+                        //const emptySGF = sgfutils.getEmptySGF();
+                        //let currentNode = emptySGF.gameTrees[0];
+                        if(queried.see_also) {
+                            delete queried.see_also;
+                        }
+                        Db.setOGSJoseki(joseki_id, 'Position', JSON.stringify(queried), (err, data) => {
+                            console.log('stored ');
+                            //Db.getJoseki(null, null, (err, data) => {
+                            if (err)
+                                res.status(500).send({
+                                    message:
+                                        err.message || "Some error occurred while posting joseki."
+                                });
+                            else {
+                                //res.status(201).json(data);
+                                /*currentNode.nodes.push(sgfutils.makeNodeFromOGS(queried))
+                                if (isLast) {
+                                    res.send(sgf.generate(emptySGF));
+                                    return;
+                                }*/
+                                this.saveAndGetPositions(queried, joseki_id, emptySGF, current_node, req, res, isLast);
+                            }
+                        });
+                    });
+                }
+            }
+        });
     }
 };

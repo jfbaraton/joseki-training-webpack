@@ -42,14 +42,7 @@ getJoseki = (title, id,  result) => {
 };
 
 getOGSJoseki = (joseki_id, endpoint,  result) => {
-    var idFilter = "";
-    try{
-        if(joseki_id && joseki_id == parseInt(joseki_id)) {
-            idFilter = "joseki_id = "+id+" AND ";
-        }
-    } catch (error) {
-
-    }
+    var idFilter = "joseki_id = "+parseInt(joseki_id)+" AND ";
     //select id from sgfs where id >= (select max(id) from sgfs where milestone is not null and tags like '%joseki%' );
     let query = "SELECT SGF FROM OGS where "+idFilter+"endpoint = '"+endpoint+"'";
 
@@ -60,7 +53,7 @@ getOGSJoseki = (joseki_id, endpoint,  result) => {
             return;
         }
 
-        console.log("OGSjoseki: ", res.length);
+        //console.log("OGSjoseki: ", res.length);
         result(null, res);
     });
 };
@@ -81,7 +74,7 @@ setOGSJoseki = (joseki_id, endpoint, SGF,  result) => {
                 return;
             }
 
-            console.log("set OGS joseki: ", res);
+            //console.log("set OGS joseki: ", res);
             result(null, res);
         });
     } catch (error) {

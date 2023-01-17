@@ -766,11 +766,28 @@ const ExampleGameControls = function(element, game) {
             // reset stats
             //localStorage.setItem("localStats", null);
 
+            /*const emptySGF = sgfutils.getEmptySGF();
+            let currentNode = emptySGF.gameTrees[0];
+            currentNode.nodes.push({"GC":"## Start"});
+            currentNode.nodes.push({"C":"## 5-5 Point\n\nAKA gonogo. This point stresses influence at the expense of territory. The 5-5 point has not retained popularity because the 4-4 point (hoshi) strikes a better balance between influence and territory. It was experimented with briefly during the New Fuseki movement in Japan in the 1930s.\n\n\nGOOD","B":"oe"});
+
+            console.log("butt "+sgf.generate(emptySGF));*/
+
+            const emptySGF = sgfutils.getEmptySGF();
+            let currentNode = emptySGF.gameTrees[0];
+            if(!currentNode.sequences) {
+                currentNode.sequences = []
+            }
+            currentNode.nodes.push({"GC":"## Start"});
+            currentNode.nodes.push({"C":"## 5-5 Point\n\nAKA gonogo. This point stresses influence at the expense of territory. The 5-5 point has not retained popularity because the 4-4 point (hoshi) strikes a better balance between influence and territory. It was experimented with briefly during the New Fuseki movement in Japan in the 1930s.\n\n\nGOOD","B":"oe"});
+
+            console.log("butt "+sgf.generate(emptySGF));
+
             axios
                 .get("/api/suck")
                 .then(function (response) {
                     console.log('GET response',response);
-                    controls.getLatestSGF();
+                    //controls.getLatestSGF();
                 })
                 .catch(function (error) {
                     console.log('GET error',error);

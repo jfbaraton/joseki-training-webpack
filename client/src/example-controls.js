@@ -773,7 +773,7 @@ const ExampleGameControls = function(element, game) {
 
             console.log("butt "+sgf.generate(emptySGF));*/
 
-            const emptySGF = sgfutils.getEmptySGF();
+            /*const emptySGF = sgfutils.getEmptySGF();
             let currentNode = emptySGF.gameTrees[0];
             if(!currentNode.sequences) {
                 currentNode.sequences = []
@@ -791,7 +791,11 @@ const ExampleGameControls = function(element, game) {
                 })
                 .catch(function (error) {
                     console.log('GET error',error);
-                });
+                });*/
+
+
+            //controls.postEngineCmd('name\n');
+            controls.postEngineCmd('quit\n');
         });
 
         resetButton.addEventListener("click", this.reset);
@@ -1058,6 +1062,19 @@ const ExampleGameControls = function(element, game) {
             .then(function (response) {
                 console.log('POST response',response);
                 controls.getLatestSGF();
+            })
+            .catch(function (error) {
+                console.log('POST error',error);
+            });
+    }
+    this.postEngineCmd = function(cmd) {
+        axios
+            .post("/api/engine", {
+                cmd:cmd
+            })
+            .then(function (response) {
+                console.log('POST response',response);
+                //controls.getLatestSGF();
             })
             .catch(function (error) {
                 console.log('POST error',error);

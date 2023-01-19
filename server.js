@@ -11,6 +11,51 @@ var sgf = require('smartgame');
 var sgfutils  = require('./utils');
 var sucker  = require('./sucker');
 
+var exec = require('child_process').exec;
+var isEngineOn = false;
+var currentRes = null;
+var result = '';
+var child = null;
+//const engineStartCmd = 'ping google.com';
+const engineStartCmd = 'C:\\Users\\yamak\\.katrain\\katago-v1.7.0-gpu-opencl-windows-x64.exe gtp -model C:\\Users\\yamak\\.katrain\\g170-b40c256x2-s5095420928-d1229425124.bin.gz -config C:\\Users\\yamak\\.katrain\\analysis_config.cfg';
+
+const resetEngine = () => {
+    console.log('resetEngine');
+    result = '';
+    isEngineOn = true;
+    isEngineStarting = true;
+    child = exec(engineStartCmd);
+    child.stdout.on('data', function(data) {
+        result += data;
+        console.log('stdout: ',data);
+        if(currentRes)
+            currentRes.send({msg:data});
+        if(data && data.indexOf('GTP ready, beginning main protocol loop')>=0) {
+            console.log('Engine is READY')
+            isEngineStarting = false;
+        }
+    });
+    child.stderr.on('data', function(data) {
+        //result += data;
+        console.log('stderr: ',data)
+        if(data && data.indexOf('GTP ready, beginning main protocol loop')>=0) {
+            console.log('Engine is READY Err')
+            isEngineStarting = false;
+        }
+    });
+
+    child.on('close', function() {
+        console.log('Engine died');
+        console.log(result);
+        isEngineOn = false;
+        if(currentRes) {
+            currentRes.status(201).json({msg:'Engine died'});
+            currentRes = null;
+        }
+    });
+}
+
+
 
 
 app.use(bodyParser.urlencoded({ extended:  true }));
@@ -97,6 +142,40 @@ router.route('/joseki').post((req, res) => {
       });
     else res.status(201).json(data);
   });
+})
+
+router.route('/engine').post((req, res) => {
+  //const title = req.query.id;
+  //const id = req.params.id;
+  const body = { ...req.body};
+
+  //console.log('POST engine '+JSON.stringify(body.cmd));
+  /*Db.setJoseki(body.SGF, (err, data) => {
+  //Db.getJoseki(null, null, (err, data) => {
+    if (err)
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while posting joseki."
+      });
+    else res.status(201).json(data);
+  });*/
+    if(!isEngineOn) {
+        console.log('Need to start engine, go');
+        resetEngine();
+    } else if (isEngineOn && child && child.stdin) {
+        console.log('send cmd to engine: #', body.cmd, "#");
+        currentRes = res;
+        child.stdin.write(body.cmd);
+    } else {
+        console.log('but engine was dead ', isEngineOn, !!child );
+    }
+
+    /*while(isEngineOn && isEngineStarting) {
+
+    }*/
+
+
+
 })
 
 /*

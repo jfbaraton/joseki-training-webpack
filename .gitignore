@@ -4,3 +4,5 @@ dist
 **/dist/
 dbconfig.js
 /client/sansan_merged.sgf
+**/gtp_logs/
+/gtp_logs/

@@ -2,6 +2,7 @@ import App from './App';
 import tenuki from 'tenuki';
 
 import ExampleGameControls from './example-controls';
+import OverlayControl from './overlay-control';
 
 
 var boardElement = document.querySelector(".tenuki-board");
@@ -13,6 +14,8 @@ var game = new tenuki.Game({ element: boardElement }, localStorage);
 
 var controlElement = document.querySelector(".controls");
 var controls = new ExampleGameControls(controlElement, game);
+var overlayControls = new OverlayControl();
+overlayControls.setup(boardElement);
 controls.setup();
 controls.setAutoplay(localStorage.getItem("autoplay") || "black"); // AI is white
 

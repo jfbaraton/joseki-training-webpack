@@ -795,7 +795,7 @@ const ExampleGameControls = function(element, game) {
 
 
             //controls.postEngineCmd('name\n');
-            controls.postEngineCmd('quit\n');
+            //controls.postEngineCmd('quit\n');
         });
 
         resetButton.addEventListener("click", this.reset);

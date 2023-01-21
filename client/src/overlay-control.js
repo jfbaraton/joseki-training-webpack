@@ -7,6 +7,9 @@ var sgf = require('smartgame');
 let isResizing = false;
 let isDragAllowed = false;
 
+var canvas = document.getElementById('myCanvas');
+var context = canvas.getContext('2d');
+
 
 
 
@@ -17,20 +20,7 @@ function extend(destination, source) {
       destination[property] = source[property];
     return destination;
 }
-function drawCircle(gridX, gridY, context, centerX, centerY, radius, color, txt){
-    context.beginPath();
-    //context.arc(100, 75, 50, 0, 2 * Math.PI);
-    context.arc(centerX+((2*gridX-18)*(radius*1.11)), centerY+((2*gridY-18)*(radius*1.11)), radius, 0, 2 * Math.PI);
-    context.lineWidth = 2;
-    context.strokeStyle = color;
-    context.stroke();
 
-    context.font = Math.round(radius/1.15)+"px Arial";
-    context.fillStyle = color;
-    context.textAlign = "center";
-    //context.fillText(txt,centerX+((2*gridX-18)*(radius*1.11))-Math.round(radius/2.1),centerY+((2*gridY-18)*(radius*1.11))+Math.round(radius/7.1));
-    context.fillText(txt,centerX+((2*gridX-18)*(radius*1.11)),centerY+((2*gridY-18)*(radius*1.11))+Math.round(radius/4.1));
-}
 
 // An example setup showing how buttons could be set to board/game functionality.
 const OverlayControl = function(element, game) {
@@ -69,8 +59,8 @@ const OverlayControl = function(element, game) {
         el.style.width = (localStorage && localStorage.getItem("overlayWidth")) || "100px";
 
 
-        const canvas = document.getElementById('myCanvas');
-        const context = canvas.getContext('2d');
+        canvas = document.getElementById('myCanvas');
+        context = canvas.getContext('2d');
 
         console.log('board ',el.style.width, el.style.height);
         console.log('canvas ',canvas.width, canvas.height);
@@ -221,39 +211,41 @@ const OverlayControl = function(element, game) {
                 }
             }
         }
-
+/*
         testButton.addEventListener("click", function(e) {
-
-            console.log('canvas ',canvas.width, canvas.height);
-
             context.clearRect(0, 0, canvas.width-1, canvas.height-1);
             const centerX = canvas.width / 2-1;
             const centerY = canvas.height / 2-1;
             //const radius = 13;
             const radius = Math.round(canvas.width/46.5);
 
-
-            /*context.beginPath();
-            context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-            context.fillStyle = 'green';
-            context.fill();
-            context.lineWidth = 5;
-            context.strokeStyle = '#000033';
-            context.stroke();*/
-            /*context.beginPath();
-            //context.arc(100, 75, 50, 0, 2 * Math.PI);
-            console.log('context.arc('+centerX+' ,'+ centerY+', '+radius)
-            context.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-            context.lineWidth = 2;
-            context.strokeStyle = '#4444FF';
-            context.stroke();*/
-
             for(var gridX = 0; gridX <19; gridX++) {
                 for(var gridY = 0; gridY <19; gridY++) {
-                    drawCircle(gridX, gridY, context, centerX, centerY, radius, '#4444FF', "-3.2");
+                    drawCircleInternal(gridX, gridY, context, centerX, centerY, radius, '#4444FF', "-3.2");
                 }
             }
-        });
+        });*/
+    }
+
+    this.drawCircle = function(gridX, gridY, color, txt){
+        const centerX = canvas.width / 2-1;
+        const centerY = canvas.height / 2-1;
+        const radius = Math.round(canvas.width/46.5);
+        return this.drawCircleInternal(gridX, gridY, context, centerX, centerY, radius, color, txt);
+    }
+    this.drawCircleInternal = function(gridX, gridY, context, centerX, centerY, radius, color, txt){
+         context.beginPath();
+         //context.arc(100, 75, 50, 0, 2 * Math.PI);
+         context.arc(centerX+((2*gridX-18)*(radius*1.11)), centerY+((2*gridY-18)*(radius*1.11)), radius, 0, 2 * Math.PI);
+         context.lineWidth = 2;
+         context.strokeStyle = color;
+         context.stroke();
+
+         context.font = Math.round(radius/1.15)+"px Arial";
+         context.fillStyle = color;
+         context.textAlign = "center";
+         //context.fillText(txt,centerX+((2*gridX-18)*(radius*1.11))-Math.round(radius/2.1),centerY+((2*gridY-18)*(radius*1.11))+Math.round(radius/7.1));
+         context.fillText(txt,centerX+((2*gridX-18)*(radius*1.11)),centerY+((2*gridY-18)*(radius*1.11))+Math.round(radius/4.1));
     }
 
 };

@@ -25,6 +25,15 @@ export default {
         return pts[pt.x]+pts[pt.y];
     },
 
+    humanToPoint: function coordinatesFor(moveHumanString) {
+        if(!moveHumanString || typeof moveHumanString !== "string" || moveHumanString === "root") return null;
+        if(moveHumanString === "pass") return "";
+        let x = moveHumanString.substring(0,1).charCodeAt(0)-'A'.charCodeAt(0);
+        if(x>=8) x--; // letter 'i' is skipped
+        const y = 19-parseInt(moveHumanString.substring(1));
+        return {y: y, x:x};
+    },
+
     getAllPossibleTransform:function(){
         // diagonal means symmetry along bot-left to top-right diagonal
         // horizontal means symmetry that transforms left to right

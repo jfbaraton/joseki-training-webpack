@@ -16,7 +16,7 @@ var controlElement = document.querySelector(".controls");
 var controls = new ExampleGameControls(controlElement, game);
 var overlayControls = new OverlayControl();
 overlayControls.setup(boardElement);
-controls.setup();
+controls.setup(overlayControls);
 controls.setAutoplay(localStorage.getItem("autoplay") || "black"); // AI is white
 
 game.callbacks.postRender = function(game) {

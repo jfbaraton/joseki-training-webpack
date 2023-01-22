@@ -16,8 +16,8 @@ var isEngineOn = false;
 var currentRes = null;
 var result = '';
 var child = null;
-//const engineStartCmd = 'ping google.com';
-const engineStartCmd = 'C:\\Users\\yamak\\.katrain\\katago-v1.7.0-gpu-opencl-windows-x64.exe gtp -model C:\\Users\\yamak\\.katrain\\g170-b40c256x2-s5095420928-d1229425124.bin.gz -config C:\\Users\\yamak\\.katrain\\analysis_config.cfg';
+// C:\Users\yamak\.katrain\katago-v1.7.0-gpu-opencl-windows-x64.exe gtp -model C:\Users\yamak\.katrain\g170-b40c256x2-s5095420928-d1229425124.bin.gz -config C:\Users\yamak\.katrain\fast_analysis_config.cfg
+const engineStartCmd = 'C:\\Users\\yamak\\.katrain\\katago-v1.7.0-gpu-opencl-windows-x64.exe gtp -model C:\\Users\\yamak\\.katrain\\g170-b40c256x2-s5095420928-d1229425124.bin.gz -config C:\\Users\\yamak\\.katrain\\fast_analysis_config.cfg';
 
 const resetEngine = () => {
     console.log('resetEngine');
@@ -26,10 +26,10 @@ const resetEngine = () => {
     isEngineStarting = true;
     child = exec(engineStartCmd);
     child.stdout.on('data', function(data) {
-        result += data;
-        console.log('stdout: ',data);
+        //result += data;
+        console.log('stdout: ',data && data.length);
         if(currentRes)
-            currentRes.send({msg:data});
+            currentRes.write(data);
         if(data && data.indexOf('GTP ready, beginning main protocol loop')>=0) {
             console.log('Engine is READY')
             isEngineStarting = false;
@@ -37,19 +37,19 @@ const resetEngine = () => {
     });
     child.stderr.on('data', function(data) {
         //result += data;
-        console.log('stderr: ',data)
+        console.log('stderr: ',data && data.length)
         if(data && data.indexOf('GTP ready, beginning main protocol loop')>=0) {
             console.log('Engine is READY Err')
             isEngineStarting = false;
         }
     });
 
-    child.on('close', function() {
-        console.log('Engine died');
-        console.log(result);
+    child.on('close', function(data) {
+        console.log('Engine died ', JSON.stringify(data));
+        //console.log(result);
         isEngineOn = false;
         if(currentRes) {
-            currentRes.status(201).json({msg:'Engine died'});
+            //currentRes.status(201).json({msg:'Engine died'});
             currentRes = null;
         }
     });

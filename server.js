@@ -16,59 +16,61 @@ var isEngineOn = false;
 var currentRes = null;
 var result = '';
 var child = null;
-//const engineStartCmd = 'ping google.com';
-const engineStartCmd = 'C:\\Users\\yamak\\.katrain\\katago-v1.7.0-gpu-opencl-windows-x64.exe gtp -model C:\\Users\\yamak\\.katrain\\g170-b40c256x2-s5095420928-d1229425124.bin.gz -config C:\\Users\\yamak\\.katrain\\analysis_config.cfg';
-
+// C:\Users\yamak\.katrain\katago-v1.7.0-gpu-opencl-windows-x64.exe gtp -model C:\Users\yamak\.katrain\g170-b40c256x2-s5095420928-d1229425124.bin.gz -config C:\Users\yamak\.katrain\fast_analysis_config.cfg
+//const engineStartCmd = 'C:\\Users\\yamak\\.katrain\\katago-v1.7.0-gpu-opencl-windows-x64.exe gtp -model C:\\Users\\yamak\\.katrain\\g170-b40c256x2-s5095420928-d1229425124.bin.gz -config C:\\Users\\yamak\\.katrain\\fast_analysis_config.cfg';
+// /Users/jeff/Documents/go/kata1-b40c256-s11840935168-d2898845681.bin.gz -config /Users/jeff/Documents/homebrew/Cellar/katago/1.11.0/share/katago/configs/gtp_example.cfg
+const engineStartCmd = '/Users/jeff/Documents/homebrew/bin/katago gtp -model /Users/jeff/Documents/go/kata1-b40c256-s11840935168-d2898845681.bin.gz -config /Users/jeff/Documents/homebrew/Cellar/katago/1.11.0/share/katago/configs/gtp_example.cfg';
+let lastCMD = new Date().getTime();
 const resetEngine = () => {
     console.log('resetEngine');
     result = '';
     isEngineOn = true;
     isEngineStarting = true;
     child = exec(engineStartCmd);
+    lastCMD = new Date().getTime();
     child.stdout.on('data', function(data) {
-        result += data;
-        console.log('stdout: ',data);
+        //result += data;
+        console.log('stdout: ',data && data.length, new Date().getTime() - lastCMD);
         if(currentRes)
-            currentRes.send({msg:data});
+            currentRes.write(data);
         if(data && data.indexOf('GTP ready, beginning main protocol loop')>=0) {
             console.log('Engine is READY')
             isEngineStarting = false;
         }
+        if(child && child.stdin && (new Date().getTime() - lastCMD) > 9000) {
+            child.stdin.write("\n");
+        }
     });
     child.stderr.on('data', function(data) {
         //result += data;
-        console.log('stderr: ',data)
+        console.log('stderr: ',data && data.length)
         if(data && data.indexOf('GTP ready, beginning main protocol loop')>=0) {
             console.log('Engine is READY Err')
             isEngineStarting = false;
         }
     });
 
-    child.on('close', function() {
-        console.log('Engine died');
-        console.log(result);
+    child.on('close', function(data) {
+        console.log('Engine died ', JSON.stringify(data));
+        //console.log(result);
         isEngineOn = false;
         if(currentRes) {
-            currentRes.status(201).json({msg:'Engine died'});
+            //currentRes.status(201).json({msg:'Engine died'});
             currentRes = null;
         }
+        resetEngine();
     });
 }
-
-
-
 
 app.use(bodyParser.urlencoded({ extended:  true }));
 app.use(bodyParser.json());
 app.use(cors());
 app.use('/api', router);
 
-
 router.use((request, response, next) => {
   console.log('middlewarez');
   next();
 });
- 
 
 router.route('/players').get((req, res) => {
   const title = req.query.title;
@@ -82,7 +84,6 @@ router.route('/players').get((req, res) => {
     else res.send(data);
   });
 })
-
 
 router.route('/suck').get((req, res) => {
     //const title = req.query.title;
@@ -109,7 +110,6 @@ router.route('/suck').get((req, res) => {
     setTimeout(checkChanges,35000);
 
 })
-
 
 router.route('/joseki/:id?').get((req, res) => {
   const title = req.query.id;
@@ -147,7 +147,7 @@ router.route('/joseki').post((req, res) => {
 router.route('/engine').post((req, res) => {
   //const title = req.query.id;
   //const id = req.params.id;
-  const body = { ...req.body};
+    const body = { ...req.body};
 
   //console.log('POST engine '+JSON.stringify(body.cmd));
   /*Db.setJoseki(body.SGF, (err, data) => {
@@ -159,13 +159,21 @@ router.route('/engine').post((req, res) => {
       });
     else res.status(201).json(data);
   });*/
+
+    req.on('close', function (err){
+        if (currentRes === res && isEngineOn && child && child.stdin) {
+            console.log('POST was closed, send cmd to engine: \\n');
+            //child.stdin.write("\n");
+        }
+    });
     if(!isEngineOn) {
         console.log('Need to start engine, go');
         resetEngine();
     } else if (isEngineOn && child && child.stdin) {
         console.log('send cmd to engine: #', body.cmd, "#");
         currentRes = res;
-        child.stdin.write(body.cmd);
+        child.stdin.write("\n"+body.cmd);
+        lastCMD = new Date().getTime();
     } else {
         console.log('but engine was dead ', isEngineOn, !!child );
     }
@@ -178,13 +186,13 @@ router.route('/engine').post((req, res) => {
 
 })
 
-/*
-router.route('/orders/:id').get((request, response) => {
-  Db.getOrder(request.params.id).then((data) => {
-    response.json(data[0]);
-  })
-})
 
+router.route('/orders/:id').get((request, response) => {
+    response.json({
+        "mock":"tail"
+    });
+})
+/*
 router.route('/orders').post((request, response) => {
   let  order = { ...request.body }
   Db.addOrder(order).then(data  => {

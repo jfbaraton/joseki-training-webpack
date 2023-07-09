@@ -62,8 +62,8 @@ const OverlayControl = function(element, game) {
         canvas = document.getElementById('myCanvas');
         context = canvas.getContext('2d');
 
-        console.log('board ',el.style.width, el.style.height);
-        console.log('canvas ',canvas.width, canvas.height);
+        //console.log('board ',el.style.width, el.style.height);
+        //console.log('canvas ',canvas.width, canvas.height);
         try {
             canvas.width = parseInt(el.style.width.substr(0, el.style.width.length-2));
             canvas.height = parseInt(el.style.height.substr(0, el.style.height.length-2));
@@ -110,7 +110,7 @@ const OverlayControl = function(element, game) {
 
         this.mousedown = function(e) {
             if(localStorage && localStorage.getItem("isDragAllowed") === "true") {
-                console.log('click on overlay')
+                //console.log('click on overlay')
                 window.addEventListener("mousemove", mousemove);
                 window.addEventListener("mouseup", mouseup);
 
@@ -157,7 +157,7 @@ const OverlayControl = function(element, game) {
 
 
         for (let resizer of resizers) {
-            console.log('setup resizer');
+            //console.log('setup resizer');
             resizer.addEventListener("mousedown", resizemousedown);
 
             function resizemousedown(e) {
@@ -227,6 +227,9 @@ const OverlayControl = function(element, game) {
         });*/
     }
 
+    this.clearCanvas = function(gridX, gridY, color, txt){
+        context.clearRect(0, 0, canvas.width-1, canvas.height-1);
+    }
     this.drawCircle = function(gridX, gridY, color, txt){
         const centerX = canvas.width / 2-1;
         const centerY = canvas.height / 2-1;

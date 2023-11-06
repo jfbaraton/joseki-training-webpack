@@ -491,7 +491,7 @@ const ExampleGameControls = function(element, game) {
 
 
     this.setup = function(overlayControls) {
-        this.overlayControls = overlayControls;
+        //this.overlayControls = overlayControls;
         var passButton = document.querySelector(".pass");
         var undoButton = document.querySelector(".undo");
         var resetButton = document.querySelector(".reset");
@@ -587,7 +587,7 @@ const ExampleGameControls = function(element, game) {
         }
         this.reset = function(e) {
             e.preventDefault();
-            controls.overlayControls.clearCanvas();
+            //controls.overlayControls.clearCanvas();
             //var startPath = JSON.parse(localStorage.getItem("startPath")) || [];
             var startPath = localStorage.getItem("startPath") || sgfutils.getEmptySGF();
 
@@ -837,7 +837,7 @@ const ExampleGameControls = function(element, game) {
             ];
 
             //controls.renderSuggestions(response[response.length-1]);
-            controls.postEngineCmd('time_settings 0 5 1\nkomi 7.5\nboardsize 19\nclear_board\nkata-analyze B 5\n', controls.renderSuggestions)
+            //controls.postEngineCmd('time_settings 0 5 1\nkomi 7.5\nboardsize 19\nclear_board\nkata-analyze B 5\n', controls.renderSuggestions)
         });
 
         resetButton.addEventListener("click", this.reset);
@@ -853,7 +853,7 @@ const ExampleGameControls = function(element, game) {
 
     this.renderSuggestions = function(response) {
         if(response && typeof response === "string" && response.indexOf('info move') >= 0) {
-            controls.overlayControls.clearCanvas();
+            //controls.overlayControls.clearCanvas();
             var lastResponse = response.split('info move ');
             lastResponse.splice(0,1);
 
@@ -888,7 +888,7 @@ const ExampleGameControls = function(element, game) {
                         }
                         var kataPoint = sgfutils.humanToPoint(kataMove);
 
-                        controls.overlayControls.drawCircle(kataPoint.x, kataPoint.y, color, scoreMean);
+                        //controls.overlayControls.drawCircle(kataPoint.x, kataPoint.y, color, scoreMean);
                     }
                 }
             }

@@ -6,7 +6,8 @@ var ProgressBar = require('progressbar.js');
 
 var sgf = require('smartgame');
 
-import file1 from '!raw-loader!./test/eidogo_joseki_no_double1.sgf';
+//import file1 from '!raw-loader!./test/eidogo_joseki_no_double1.sgf';
+import file1 from '!raw-loader!./test/eidogo_joseki_beginner.sgf';
 //import file1 from '!raw-loader!./test/eidogo_joseki_WR_clean_OLD2.sgf';
 //import file1 from '!raw-loader!./test/6_more_sansan_variations.sgf';
 //import file1 from '!raw-loader!./test/5_rest_KGD.sgf';

@@ -2,7 +2,8 @@ var sgf = require('smartgame');
 
 // how many points can you lose in one move and still consider it "joseki"?
 //const JOSEKI_MARGIN = 2.3;
-const JOSEKI_MARGIN = 4;
+//const JOSEKI_MARGIN = 4;
+const JOSEKI_MARGIN = 400; //negative means always wrong
 
 export default {
     getEmptySGF: function() {

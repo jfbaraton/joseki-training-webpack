@@ -7,7 +7,8 @@ var ProgressBar = require('progressbar.js');
 var sgf = require('smartgame');
 
 //import file1 from '!raw-loader!./test/eidogo_joseki_no_double1.sgf';
-import file1 from '!raw-loader!./test/eidogo_joseki_beginner.sgf';
+//import file1 from '!raw-loader!./test/eidogo_joseki_beginner.sgf';
+import file1 from '!raw-loader!./test/handmade_mustknow.sgf';
 //import file1 from '!raw-loader!./test/eidogo_joseki_WR_clean_OLD2.sgf';
 //import file1 from '!raw-loader!./test/6_more_sansan_variations.sgf';
 //import file1 from '!raw-loader!./test/5_rest_KGD.sgf';
@@ -839,6 +840,7 @@ const ExampleGameControls = function(element, game) {
 
             //controls.renderSuggestions(response[response.length-1]);
             //controls.postEngineCmd('time_settings 0 5 1\nkomi 7.5\nboardsize 19\nclear_board\nkata-analyze B 5\n', controls.renderSuggestions)
+            localStorage.setItem("localStats",null);
         });
 
         resetButton.addEventListener("click", this.reset);

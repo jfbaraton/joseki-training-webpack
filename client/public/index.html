@@ -7,7 +7,9 @@
 </head>
 
 <div class="example-heading">
-  <p>Need to add more joseki variations :)</p>
+  <p>Click on "Explore" to go to most common positions.</p>
+  <p>Click on "Reset" to go back to your chosen starting position.</p>
+  <p>In Settings, you can have CPU play half of the moves, and vary joseki corner/orientation</p>
 </div>
 
 <div class="tenuki-board" data-include-coordinates=true></div>
@@ -71,17 +73,19 @@
     </div>
   </div>
   <div class="Tab" id="exploreTab" style="display:none">
-    <p>Most liked 1 stone joseki starts:<br>
+    <p>Most common joseki starts:<br>
       <ul>
         <li>
-        <a class="josekiStart hoshi" href="#" title="hoshi" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd])">Hoshi</a></li><li>
-        <a class="josekiStart hoshiSanSan" href="#" title="hoshi invaded at san san" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[qc])">San San</a></li><li>
-        <a class="josekiStart komoku" href="#" title="komoku" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd])">Komoku</a></li><li>
-        <a class="josekiStart komokuHigh" href="#" title="komoku approached high and close" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[od])">Komoku approached high</a></li>
+        <!--<a class="josekiStart hoshi" href="#" title="hoshi" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd])">Hoshi</a></li><li>-->
+        <a class="josekiStart hoshi" href="#" title="hoshi" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[qf])">Hoshi approached low</a></li><li>
+        <a class="josekiStart hoshiSanSan" href="#" title="hoshi invaded at san san" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[qc])">San San invasion</a></li><li>
+        <!--<a class="josekiStart komoku" href="#" title="komoku" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd])">Komoku</a></li><li>-->
+        <a class="josekiStart komokuHigh" href="#" title="komoku approached high and close" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[od])">Komoku approached high</a></li><li>
+        <a class="josekiStart komokuLow" href="#" title="komoku approached low and close" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[oc])">Komoku approached low</a></li>
       </ul>
 
     </p>
-    <p>Most liked Shimari starts:<br>
+    <p>Approach an already extended corner:<br>
       <ul>
         <li><a class="josekiStart hoshiKeimaShimari" href="#" title="Hoshi with a keima Shimari"  data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc])">hoshi keima shimari</a></li><li>
           <a class="josekiStart hoshiOgeimaShimari" href="#" title="Hoshi with an Ogeima Shimari" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[mc])">hoshi ogeima shimari</a></li><li>

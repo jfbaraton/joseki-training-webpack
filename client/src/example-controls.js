@@ -84,7 +84,7 @@ const _getPathComment = function(game, isShowOriginalComment) {
             pathComment += "PASS - ";
         } else {
             pathComment += game.coordinatesFor(oneMove.playedPoint.y, oneMove.playedPoint.x);
-            pathComment += " (" + sgfutils.pointToSgfCoord({y:oneMove.playedPoint.y, x:oneMove.playedPoint.x}) + ")";
+            //pathComment += " (" + sgfutils.pointToSgfCoord({y:oneMove.playedPoint.y, x:oneMove.playedPoint.x}) + ")";
             pathComment += " - ";
         }
         if (isInSequence) {
@@ -113,7 +113,7 @@ const _getPathComment = function(game, isShowOriginalComment) {
             }
         }
     }
-    let result = pathComment+ "\n\n" +pathCommentExtra+ "\n\n" +(isInSequence && isShowOriginalComment ? (sgfPosition.nodes[nodeIdx].C || 'no comment') : "WROOOOOONG");
+    let result = pathComment+ "\n\n" +pathCommentExtra+ "\n\n" +(isInSequence && isShowOriginalComment ? (sgfPosition.nodes[nodeIdx].C || '') : "WROOOOOONG");
     //console.log('final pathComment ',result);
     return result;
 };
@@ -167,14 +167,14 @@ const _updateStartNodeStats = function (currentNode, controls) {
                 //console.log('re-calculating stats for move '+controls.game.currentState().moveNumber)
                 nodeStats = stats.getZeroStats();
             }
-            console.log("fetched stats ",nodeStats, "for" ,moveSignature)
+            //console.log("fetched stats ",nodeStats, "for" ,moveSignature)
             let freshStats = stats.getZeroStats();
             stats.addStats(freshStats, nodeStats);
             //let freshStats = nodeStats;
             stats.getNodeStats(currentNode.node, currentNode.nodeIdx, freshStats, localStats);
             nodeStats = freshStats;
             //console.log('calculated stats for move ' + controls.game.currentState().moveNumber, JSON.stringify(nodeStats).replaceAll(",", ",\n"))
-            console.log('calculated stats for move ' , nodeStats)
+            //console.log('calculated stats for move ' , nodeStats)
             localStorage.setItem("localStats", sgfutils.deepStringify(localStats));
         }
         if (nodeStats) {
@@ -190,9 +190,9 @@ const _updateStartNodeStats = function (currentNode, controls) {
             controls.rootSuccessBar.animate((nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) ) / controls.rootSuccessBarmax);  // Number from 0.0 to 1.0
             //console.log('start progress animate ',(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.rootProgressBarmax),(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.rootSuccessBarmax));
             //console.log('start progress animate ',controls.rootProgressBarmax,controls.rootSuccessBarmax );
-            console.log('start success animate ',nodeStats);
-            console.log('start success animate s',nodeStats.successLeafCount , (nodeStats.agg_successLeafCount|| 0) ,"f", nodeStats.failedLeafCount , (nodeStats.agg_failedLeafCount|| 0) ,"m", nodeStats.mistakeCount ,(nodeStats.agg_mistakeCount|| 0));
-            console.log('start success animate ',(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) ) ,(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) + nodeStats.failedLeafCount + (nodeStats.agg_failedLeafCount|| 0) + nodeStats.mistakeCount + (nodeStats.agg_mistakeCount|| 0)));
+            //console.log('start success animate ',nodeStats);
+            //console.log('start success animate s',nodeStats.successLeafCount , (nodeStats.agg_successLeafCount|| 0) ,"f", nodeStats.failedLeafCount , (nodeStats.agg_failedLeafCount|| 0) ,"m", nodeStats.mistakeCount ,(nodeStats.agg_mistakeCount|| 0));
+            //console.log('start success animate ',(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) ) ,(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) + nodeStats.failedLeafCount + (nodeStats.agg_failedLeafCount|| 0) + nodeStats.mistakeCount + (nodeStats.agg_mistakeCount|| 0)));
 
         }
     }
@@ -454,7 +454,7 @@ const ExampleGameControls = function(element, game) {
 
             if(currentNode) {
                 //console.log('current node: ',currentNode);
-                newGameInfo += ": Black Score "+currentNode.node.nodes[currentNode.nodeIdx].V || "??"+ " Pts";
+                //newGameInfo += ": Black Score "+currentNode.node.nodes[currentNode.nodeIdx].V || "??"+ " Pts";
                 let currentSGFVariation = [];
                 sgfutils.getVariationSGF(currentNode.node, currentNode.nodeIdx, currentSGFVariation, true);
                 const emptySGF = sgfutils.getEmptySGF();
@@ -463,7 +463,7 @@ const ExampleGameControls = function(element, game) {
                 const moveSignature = sgfutils.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
                 nodeStats = localStats.get(moveSignature);
                 //let nodeStats = addStatsForNode();
-                console.log(' stats for move ('+this.game.currentState().moveNumber+') '+moveSignature+' :',nodeStats);
+                //console.log(' stats for move ('+this.game.currentState().moveNumber+') '+moveSignature+' :',nodeStats);
                 //if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
                 if(/*!nodeStats && */this.game.currentState().moveNumber > 0) {
                     //if(this.game.currentState().moveNumber > 1 ) {
@@ -479,8 +479,8 @@ const ExampleGameControls = function(element, game) {
                     //console.log('calculated stats for move '+this.game.currentState().moveNumber, JSON.stringify(nodeStats).replaceAll(",", ",\n"))
                     localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
                 }
-                newGameInfo += "\nYou have found "+(nodeStats && ((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.leafCount + nodeStats.agg_leafCount )|| "Lots of")+" valid VARIATIONS\n";
-                newGameInfo += "\n"+(nodeStats && ((nodeStats.successLeafCount + nodeStats.agg_successLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.successLeafCount + nodeStats.agg_successLeafCount + nodeStats.failedLeafCount + nodeStats.agg_failedLeafCount + nodeStats.mistakeCount + nodeStats.agg_mistakeCount )|| 1)+" successful attempts\n";
+                //newGameInfo += "\nYou have found "+(nodeStats && ((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.leafCount + nodeStats.agg_leafCount )|| "Lots of")+" valid VARIATIONS\n";
+                //newGameInfo += "\n"+(nodeStats && ((nodeStats.successLeafCount + nodeStats.agg_successLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.successLeafCount + nodeStats.agg_successLeafCount + nodeStats.failedLeafCount + nodeStats.agg_failedLeafCount + nodeStats.mistakeCount + nodeStats.agg_mistakeCount )|| 1)+" successful attempts\n";
 
             }
         } else {
@@ -503,7 +503,7 @@ const ExampleGameControls = function(element, game) {
                 previousLeafSignature = signature;
                 nodeStats = stats.setStatsForSignature(signature, newStatToSet, localStats);
                 stats.addStats(nodeStats, newStatToAdd);
-                console.log('new stat '+signature,JSON.stringify(nodeStats));
+                //console.log('new stat '+signature,JSON.stringify(nodeStats));
 
                 newGameInfo += "\nnew Stats for "+signature+":  "+JSON.stringify(nodeStats);
                 localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
@@ -523,7 +523,7 @@ const ExampleGameControls = function(element, game) {
             controls.localSuccessBar.animate((nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0 ))/controls.localSuccessBarmax);  // Number from 0.0 to 1.0
             //console.log('progress animate ',(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.localProgressBarmax),(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.localSuccessBarmax));
             //console.log('progress animate ',nodeStats.foundLeafCount ,"+", nodeStats.agg_foundLeafCount,"   ",nodeStats.successLeafCount ,"+",nodeStats.agg_successLeafCount);
-            console.log('progress animate c',nodeStats.successLeafCount , nodeStats.agg_successLeafCount,"f", nodeStats.failedLeafCount ,nodeStats.agg_failedLeafCount,"m", nodeStats.mistakeCount ,nodeStats.agg_mistakeCount);
+            //console.log('progress animate c',nodeStats.successLeafCount , nodeStats.agg_successLeafCount,"f", nodeStats.failedLeafCount ,nodeStats.agg_failedLeafCount,"m", nodeStats.mistakeCount ,nodeStats.agg_mistakeCount);
             //console.log('progress animate ',(nodeStats.foundLeafCount + (nodeStats.agg_foundLeafCount|| 0) ),"  ",(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) ) );
             //console.log('progress animate ',(nodeStats.foundLeafCount + (nodeStats.agg_foundLeafCount || 0) ),"/",controls.localProgressBarmax,(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0 ) ),"/",controls.localSuccessBarmax );
             //newGameInfo += '\nprogress animate '+controls.localProgressBarmax+" - "+controls.localSuccessBarmax ;
@@ -531,13 +531,11 @@ const ExampleGameControls = function(element, game) {
 
             _updateStartNodeStats(startPathNode, controls);
 
-        } else {
-            console.log('STILL no nodeStats ------------------');
-            newGameInfo += '\n\nSTILL no nodeStats ------------------\n\n';
         }
         //console.log('current options:',nextMoveOptions);
         newGameInfo += "\n current options: "+ (nextMoveOptions && nextMoveOptions.map(oneMove => oneMove.pass ? "Tenuki" : this.game.coordinatesFor(oneMove.y,oneMove.x)).join(" or "));
-        newGameInfo += "\n_getPathComment:\n"+_getPathComment(this.game, true);
+        //newGameInfo += "\n_getPathComment:";
+        newGameInfo += "\n"+_getPathComment(this.game, true);
         //newGameInfo += "\nEND of getPathComment \n";
 
         this.gameInfo.innerText = newGameInfo;
@@ -632,7 +630,7 @@ const ExampleGameControls = function(element, game) {
             e.preventDefault();
             let newMode = e.srcElement.id;
             if(controls.mode !== newMode) {
-                console.log('swap to ',newMode);
+                //console.log('swap to ',newMode);
                 controls.updateGUIFromState(e, newMode);
             }
         }
@@ -640,7 +638,7 @@ const ExampleGameControls = function(element, game) {
         josekiStart.forEach(oneTabHeader => oneTabHeader.onclick = (e) =>{
 
             let path = e.srcElement.getAttribute('data-sgf');
-            console.log('joseki start ', path);
+            //console.log('joseki start ', path);
             if(path) {
                 localStorage.setItem("startPath", path);
                 controls.setText("Position saved! From now on, you can click on RESET to come back to the same variation");
@@ -972,14 +970,14 @@ const ExampleGameControls = function(element, game) {
          "If you find a mistake in KJD content, please email kogo@waterfire.us.";
 
         sgfutils.cleanKatrainNode(katrainNode)
-        console.log('wholenode:'+(JSON.stringify(katrainNode) == JSON.stringify(copiedNode)),katrainNode);
-        console.log('KT:'+(katrainNode.KT === copiedNode.KT));
-        console.log('C:'+(katrainNode.C === copiedNode.C));
-        console.log('cleaned:'+katrainNode.C.slice(0,40));
-        console.log('expected:'+copiedNode.C.slice(0,40));
-        console.log('V:'+(katrainNode.V === copiedNode.V));
-        console.log('cleaned V:'+katrainNode.V);
-        console.log('expected V:'+copiedNode.V);
+        //console.log('wholenode:'+(JSON.stringify(katrainNode) == JSON.stringify(copiedNode)),katrainNode);
+        //console.log('KT:'+(katrainNode.KT === copiedNode.KT));
+        //console.log('C:'+(katrainNode.C === copiedNode.C));
+        //console.log('cleaned:'+katrainNode.C.slice(0,40));
+        //console.log('expected:'+copiedNode.C.slice(0,40));
+        //console.log('V:'+(katrainNode.V === copiedNode.V));
+        //console.log('cleaned V:'+katrainNode.V);
+        //console.log('expected V:'+copiedNode.V);
     }
 
     this.renderPropertyChanges = function(nodeProperties) {

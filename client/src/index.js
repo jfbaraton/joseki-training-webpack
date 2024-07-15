@@ -22,11 +22,13 @@ game.callbacks.postRender = function(game) {
 };
 
 document.addEventListener("keydown",  function (e) {
-      //if (e.keyCode == 82) { // r pressed
-      if (e.keyCode == 69) { // e pressed
-        controls.reset(e);
-      }
-      else if (e.keyCode == 27) { // enter pressed
-        controls.reset(e);
+        console.log("keydown ",e);
+        //if (e.keyCode == 82) { // r pressed
+        if ('r' === e.key) { // e pressed
+            controls.reset(e);
+        } else if ('u' === e.key) { // e pressed
+            controls.game.undo(e);
+        } else if (e.keyCode == 27) { // enter pressed
+            controls.reset(e);
       }
    }, false);

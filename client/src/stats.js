@@ -4,8 +4,10 @@ export default {
     // node is an sgf node to start from
     // stats should be an object with {leafCount}
     // localStats is a Map<signature,{leafCount: 0, failedLeafCount:0, foundLeafCount:0, successLeafCount:0}>
-    getNodeStats: function(node, nodeIdx, stats, localStats) {
-        //console.log('START getNodeStats ',sgfutils.copyNode(node.nodes[nodeIdx], true),JSON.stringify(stats),"-----------------------------------------------------");
+    getNodeStats: function(node, nodeIdx, stats, localStats, isDebug) {
+        isDebug && console.log('START getNodeStats ',
+            sgfutils.getPrintablePath(sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:node.nodes.length-1})),
+            JSON.stringify(stats),"-----------------------------------------------------");
         //let mistakeIndex = doubleMoveIdx < (node.nodes.length -1) && !sgfutils.isAcceptableMove(node.nodes[doubleMoveIdx+1], (nodeIdx >0 ? node.nodes[nodeIdx-1] : node.parent.nodes[node.parent.length-1])) ? doubleMoveIdx +1 : -1// we stop if a same player plays 2 times in a row (exists in some SGFs as example of continuation after tenuki...)
         let mistakeIndex = node.nodes.findIndex((oneNode, oneNodeIdx) => {
             return oneNodeIdx<node.nodes.length-1 && !sgfutils.isAcceptableMoveIdx(node,oneNodeIdx+1);
@@ -40,13 +42,21 @@ export default {
                 isAtLeastOneSeqValid = true;
                 //const signature = this.getNodeSeparatedSGF({node:oneChild, nodeIdx:0});
                 childStats =  this.getZeroStats();
-                this.getNodeStats(oneChild, 0, childStats, localStats);
+                isDebug && console.log('getNodeStats valid seq ',
+                    //sgfutils.copyNode(node.nodes[node.nodes.length-1], true),
+                    sgfutils.getPrintablePath(sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:node.nodes.length-1})),
+                    JSON.stringify(stats));
+                this.getNodeStats(oneChild, 0, childStats, localStats, isDebug);
                 //localStats.set(signature, childStats);
                 //let leafLocalStat = this.setStatsForNode({node:oneChild, nodeIdx:0},childStats,localStats);
                 this.aggregateStats(stats, childStats);
+
+                isDebug && console.log('getNodeStats valid seq ',
+                    //sgfutils.copyNode(node.nodes[node.nodes.length-1], true),
+                    sgfutils.getPrintablePath(sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:node.nodes.length-1})),
+                    JSON.stringify(stats),JSON.stringify(childStats));
             }
 
-            //console.log('END getNodeStats seq ',sgfutils.copyNode(node.nodes[node.nodes.length-1], true),JSON.stringify(stats),JSON.stringify(childStats));
         }
 
         if(!isAtLeastOneSeqValid) {
@@ -54,21 +64,23 @@ export default {
             let leafLocalStat = this.setStatsForNode({node:node, nodeIdx:node.nodes.length-1},{leafCount:1},localStats);
             this.aggregateStats(stats, leafLocalStat);
             let nodeAggIdx = node.nodes.length-2;
-            while (nodeAggIdx > nodeIdx) {
+            while (nodeAggIdx >= nodeIdx) {
                 const moveSignature = sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:nodeAggIdx});
                 this.aggregateStats(stats, localStats.get(moveSignature));
-                //console.log("YYY - ", sgfutils.copyNode(node.nodes[nodeAggIdx], true),JSON.stringify(stats), localStats.get(moveSignature))
+                isDebug && console.log("YYY - ", sgfutils.copyNode(node.nodes[nodeAggIdx], true),JSON.stringify(stats), localStats.get(moveSignature))
                 nodeAggIdx--;
             }
-            //console.log('END getNodeStats NO seq after',sgfutils.copyNode(node.nodes[node.nodes.length-1], true),JSON.stringify(stats),JSON.stringify(leafLocalStat));
+            isDebug && console.log('END getNodeStats NO seq after',
+                sgfutils.getPrintablePath(sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:node.nodes.length-1})),
+                JSON.stringify(stats),JSON.stringify(leafLocalStat));
             return;
         }
         //console.log("getNodeStats - Last case (nodes array is valid)")
         let nodeAggIdx = node.nodes.length-1;
-        while (nodeAggIdx > nodeIdx) {
+        while (nodeAggIdx >= nodeIdx) {
             const moveSignature = sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:nodeAggIdx});
             this.aggregateStats(stats, localStats.get(moveSignature));
-            //console.log("XXX - ", JSON.stringify(stats), localStats.get(moveSignature))
+            isDebug && console.log("1XXX - "+sgfutils.getPrintablePath(moveSignature), JSON.stringify(stats), localStats.get(moveSignature))
             nodeAggIdx--;
         }
     },

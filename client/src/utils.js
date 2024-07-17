@@ -26,13 +26,42 @@ export default {
         return pts[pt.x]+pts[pt.y];
     },
 
-    humanToPoint: function coordinatesFor(moveHumanString) {
+    yCoordinateFor: function yCoordinateFor(y) {
+        return 19 - y;
+    },
+
+    xCoordinateFor: function xCoordinateFor(x) {
+        var letters = ["A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+
+        return letters[x];
+    },
+
+    // x, y to human
+    coordinatesFor: function coordinatesFor(y, x) {
+        return this.xCoordinateFor(x) + this.yCoordinateFor(y);
+    },
+
+    humanToPoint: function(moveHumanString) {
         if(!moveHumanString || typeof moveHumanString !== "string" || moveHumanString === "root") return null;
         if(moveHumanString === "pass") return "";
         let x = moveHumanString.substring(0,1).charCodeAt(0)-'A'.charCodeAt(0);
         if(x>=8) x--; // letter 'i' is skipped
         const y = 19-parseInt(moveHumanString.substring(1));
         return {y: y, x:x};
+    },
+
+    getPrintablePath: function(moveSignature) {
+        let resultArray = moveSignature.split(";")/*.splice(0,1)*/;
+        resultArray.splice(0,2);
+
+        return resultArray.map(oneMove => {
+            const regex = /[BW]\[[a-z][a-z]\]/g;
+            if (oneMove && oneMove.match(regex)) {
+                let resultCoord = this.sgfCoordToPoint(oneMove.split("]")[0].split("[").pop());
+                return this.coordinatesFor(resultCoord.y,resultCoord.x);
+            }
+            return oneMove;
+        }).join(";");
     },
 
     getAllPossibleTransform:function(){

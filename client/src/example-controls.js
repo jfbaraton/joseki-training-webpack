@@ -151,7 +151,7 @@ const _updateStartNodeStats = function (currentNode, controls) {
         sgfutils.getVariationSGF(currentNode.node, currentNode.nodeIdx, currentSGFVariation, true);
         const emptySGF = sgfutils.getEmptySGF();
         currentSGFVariation.forEach(node => emptySGF.gameTrees[0].nodes.push(node));
-        //console.log('current path: ',sgf.generate(emptySGF));
+        console.log('_updateStartNodeStats current path: ',sgf.generate(emptySGF));
         const moveSignature = sgfutils.getNodeSeparatedSGF({
             node: currentNode.node,
             nodeIdx: currentNode.nodeIdx
@@ -171,7 +171,7 @@ const _updateStartNodeStats = function (currentNode, controls) {
             let freshStats = stats.getZeroStats();
             stats.addStats(freshStats, nodeStats);
             //let freshStats = nodeStats;
-            stats.getNodeStats(currentNode.node, currentNode.nodeIdx, freshStats, localStats);
+            stats.getNodeStats(currentNode.node, currentNode.nodeIdx, freshStats, localStats, false);
             nodeStats = freshStats;
             //console.log('calculated stats for move ' + controls.game.currentState().moveNumber, JSON.stringify(nodeStats).replaceAll(",", ",\n"))
             //console.log('calculated stats for move ' , nodeStats)
@@ -191,7 +191,7 @@ const _updateStartNodeStats = function (currentNode, controls) {
             //console.log('start progress animate ',(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.rootProgressBarmax),(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.rootSuccessBarmax));
             //console.log('start progress animate ',controls.rootProgressBarmax,controls.rootSuccessBarmax );
             //console.log('start success animate ',nodeStats);
-            //console.log('start success animate s',nodeStats.successLeafCount , (nodeStats.agg_successLeafCount|| 0) ,"f", nodeStats.failedLeafCount , (nodeStats.agg_failedLeafCount|| 0) ,"m", nodeStats.mistakeCount ,(nodeStats.agg_mistakeCount|| 0));
+            console.log('start success animate s',nodeStats.successLeafCount , (nodeStats.agg_successLeafCount|| 0) ,"f", nodeStats.failedLeafCount , (nodeStats.agg_failedLeafCount|| 0) ,"m", nodeStats.mistakeCount ,(nodeStats.agg_mistakeCount|| 0));
             //console.log('start success animate ',(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) ) ,(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) + nodeStats.failedLeafCount + (nodeStats.agg_failedLeafCount|| 0) + nodeStats.mistakeCount + (nodeStats.agg_mistakeCount|| 0)));
 
         }
@@ -463,7 +463,7 @@ const ExampleGameControls = function(element, game) {
                 const moveSignature = sgfutils.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
                 nodeStats = localStats.get(moveSignature);
                 //let nodeStats = addStatsForNode();
-                //console.log(' stats for move ('+this.game.currentState().moveNumber+') '+moveSignature+' :',nodeStats);
+                //console.log(' stats for move '+sgfutils.getPrintablePath(moveSignature)+' :',nodeStats);
                 //if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
                 if(/*!nodeStats && */this.game.currentState().moveNumber > 0) {
                     //if(this.game.currentState().moveNumber > 1 ) {
@@ -507,6 +507,8 @@ const ExampleGameControls = function(element, game) {
 
                 newGameInfo += "\nnew Stats for "+signature+":  "+JSON.stringify(nodeStats);
                 localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
+
+                _updateStartNodeStats(startPathNode, controls);
             } /*else {
                 console.log('same signature as previous ', previousLeafSignature, signature)
             }*/
@@ -527,9 +529,6 @@ const ExampleGameControls = function(element, game) {
             //console.log('progress animate ',(nodeStats.foundLeafCount + (nodeStats.agg_foundLeafCount|| 0) ),"  ",(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) ) );
             //console.log('progress animate ',(nodeStats.foundLeafCount + (nodeStats.agg_foundLeafCount || 0) ),"/",controls.localProgressBarmax,(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0 ) ),"/",controls.localSuccessBarmax );
             //newGameInfo += '\nprogress animate '+controls.localProgressBarmax+" - "+controls.localSuccessBarmax ;
-
-
-            _updateStartNodeStats(startPathNode, controls);
 
         }
         //console.log('current options:',nextMoveOptions);

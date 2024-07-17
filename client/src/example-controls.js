@@ -157,22 +157,13 @@ const _updateStartNodeStats = function (currentNode, controls) {
             nodeIdx: currentNode.nodeIdx
         });
         let localStats = sgfutils.deepParse(localStorage.getItem("localStats")) || new Map();
-        let nodeStats = localStats.get(moveSignature);
+        let nodeStats = stats.getZeroStats();
         //let nodeStats = addStatsForNode();
         //console.log(' stats for move (' + controls.game.currentState().moveNumber + ') ' + moveSignature + ' :', nodeStats);
         //if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
         if (/*!nodeStats && */controls.game.currentState().moveNumber >= 0) {
-            //if(controls.game.currentState().moveNumber > 1 ) {
-            if (!nodeStats) {
-                //console.log('re-calculating stats for move '+controls.game.currentState().moveNumber)
-                nodeStats = stats.getZeroStats();
-            }
-            //console.log("fetched stats ",nodeStats, "for" ,moveSignature)
-            let freshStats = stats.getZeroStats();
-            stats.addStats(freshStats, nodeStats);
-            //let freshStats = nodeStats;
-            stats.getNodeStats(currentNode.node, currentNode.nodeIdx, freshStats, localStats, false);
-            nodeStats = freshStats;
+            // nodeStats = stats.getZeroStats();
+            stats.getNodeStats(currentNode.node, currentNode.nodeIdx, nodeStats, localStats, false);
             //console.log('calculated stats for move ' + controls.game.currentState().moveNumber, JSON.stringify(nodeStats).replaceAll(",", ",\n"))
             //console.log('calculated stats for move ' , nodeStats)
             localStorage.setItem("localStats", sgfutils.deepStringify(localStats));
@@ -460,22 +451,14 @@ const ExampleGameControls = function(element, game) {
                 const emptySGF = sgfutils.getEmptySGF();
                 currentSGFVariation.forEach(node => emptySGF.gameTrees[0].nodes.push(node));
                 //console.log('current path: ',sgf.generate(emptySGF));
-                const moveSignature = sgfutils.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
-                nodeStats = localStats.get(moveSignature);
+                nodeStats = stats.getZeroStats();
                 //let nodeStats = addStatsForNode();
                 //console.log(' stats for move '+sgfutils.getPrintablePath(moveSignature)+' :',nodeStats);
                 //if(/*!nodeStats && */this.game.currentState().moveNumber > 1) {
                 if(/*!nodeStats && */this.game.currentState().moveNumber > 0) {
                     //if(this.game.currentState().moveNumber > 1 ) {
-                    if(!nodeStats) {
-                        //console.log('re-calculating stats for move '+this.game.currentState().moveNumber)
-                        nodeStats = stats.getZeroStats();
-                    }
-                    let freshStats = stats.getZeroStats();
-                    stats.addStats(freshStats,nodeStats);
                     //let freshStats = nodeStats;
-                    stats.getNodeStats( currentNode.node, currentNode.nodeIdx, freshStats, localStats);
-                    nodeStats = freshStats;
+                    stats.getNodeStats( currentNode.node, currentNode.nodeIdx, nodeStats, localStats,false);
                     //console.log('calculated stats for move '+this.game.currentState().moveNumber, JSON.stringify(nodeStats).replaceAll(",", ",\n"))
                     localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
                 }
@@ -525,7 +508,7 @@ const ExampleGameControls = function(element, game) {
             controls.localSuccessBar.animate((nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0 ))/controls.localSuccessBarmax);  // Number from 0.0 to 1.0
             //console.log('progress animate ',(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.localProgressBarmax),(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.localSuccessBarmax));
             //console.log('progress animate ',nodeStats.foundLeafCount ,"+", nodeStats.agg_foundLeafCount,"   ",nodeStats.successLeafCount ,"+",nodeStats.agg_successLeafCount);
-            //console.log('progress animate c',nodeStats.successLeafCount , nodeStats.agg_successLeafCount,"f", nodeStats.failedLeafCount ,nodeStats.agg_failedLeafCount,"m", nodeStats.mistakeCount ,nodeStats.agg_mistakeCount);
+            console.log('progress animate c',nodeStats.successLeafCount , nodeStats.agg_successLeafCount,"f", nodeStats.failedLeafCount ,nodeStats.agg_failedLeafCount,"m", nodeStats.mistakeCount ,nodeStats.agg_mistakeCount);
             //console.log('progress animate ',(nodeStats.foundLeafCount + (nodeStats.agg_foundLeafCount|| 0) ),"  ",(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) ) );
             //console.log('progress animate ',(nodeStats.foundLeafCount + (nodeStats.agg_foundLeafCount || 0) ),"/",controls.localProgressBarmax,(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0 ) ),"/",controls.localSuccessBarmax );
             //newGameInfo += '\nprogress animate '+controls.localProgressBarmax+" - "+controls.localSuccessBarmax ;

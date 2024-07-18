@@ -2,8 +2,8 @@ import sgfutils from "./utils";
 
 export default {
     // node is an sgf node to start from
-    // stats should be an object with {leafCount}
-    // localStats is a Map<signature,{leafCount: 0, failedLeafCount:0, foundLeafCount:0, successLeafCount:0}>
+    // stats should be an object without {leafCount}
+    // localStats is a Map<signature,{ failedLeafCount:0, foundLeafCount:0, successLeafCount:0}>
     getNodeStats: function(node, nodeIdx, stats, localStats, isDebug) {
         isDebug && console.log('START getNodeStats ',
             sgfutils.getPrintablePath(sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:node.nodes.length-1})),
@@ -19,8 +19,7 @@ export default {
 
             let leafLocalStat = null;
             if (mistakeIndex>nodeIdx) { // mistake at mistakeIndex AND leaf at mistakeIndex-1
-                leafLocalStat = this.setStatsForNode({node:node, nodeIdx:mistakeIndex-1},{leafCount:1},localStats);
-                this.aggregateStats(stats, leafLocalStat);
+                this.aggregateStatsForNode(stats,{node:node, nodeIdx:mistakeIndex-1},{leafCount:1},localStats);
                 let nodeAggIdx = mistakeIndex-2;
                 while (nodeAggIdx-- >= 0) {
                     const moveSignature = sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:nodeAggIdx});
@@ -61,8 +60,7 @@ export default {
 
         if(!isAtLeastOneSeqValid) {
             //console.log("getNodeStats - NO valid Seq !isAtLeastOneSeqValid")
-            let leafLocalStat = this.setStatsForNode({node:node, nodeIdx:node.nodes.length-1},{leafCount:1},localStats);
-            this.aggregateStats(stats, leafLocalStat);
+            let leafLocalStat = this.aggregateStatsForNode(stats,{node:node, nodeIdx:node.nodes.length-1},{leafCount:1},localStats);
             let nodeAggIdx = node.nodes.length-2;
             while (nodeAggIdx >= nodeIdx) {
                 const moveSignature = sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:nodeAggIdx});
@@ -103,12 +101,12 @@ export default {
         return nodeStats;
     },
 
-    aggregateStatsForNode: function(currentNode, stats, pLocalStats) {
-        const moveSignature = this.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
-        return this.aggregateStatsForSignature(moveSignature, stats, pLocalStats);
+    aggregateStatsForNode: function(targetStats, currentNode, stats, pLocalStats) {
+        const moveSignature = sgfutils.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
+        return this.aggregateStatsForSignature(targetStats, moveSignature, stats, pLocalStats);
     },
 
-    aggregateStatsForSignature: function(moveSignature, stats, pLocalStats) {
+    aggregateStatsForSignature: function(targetStats, moveSignature, stats, pLocalStats) {
         let localStats = pLocalStats || sgfutils.deepParse(localStorage.getItem("localStats")) || new Map();
         let nodeStats = localStats.get(moveSignature);
         if(!nodeStats) {
@@ -117,12 +115,13 @@ export default {
             pLocalStats.set(moveSignature, nodeStats);
         }
 
-        this.aggregateStats(nodeStats, stats);
+        this.aggregateStats(targetStats, stats);
+        this.aggregateStats(targetStats, nodeStats);
         return nodeStats;
     },
 
     addStatsForNode: function(currentNode, stats, pLocalStats) {
-        const moveSignature = this.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
+        const moveSignature = sgfutils.getNodeSeparatedSGF({node:currentNode.node, nodeIdx:currentNode.nodeIdx});
         return this.addStatsForSignature(moveSignature, stats, pLocalStats);
     },
 
@@ -194,7 +193,6 @@ export default {
 
     getZeroStats: function() {
         return {
-            leafCount: 0,
             failedLeafCount:0,
             mistakeCount:0,
             foundLeafCount:0,

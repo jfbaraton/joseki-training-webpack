@@ -18,7 +18,8 @@ import file1 from '!raw-loader!./test/handmade_mustknow.sgf';
 //import file2 from '!raw-loader!./test/4_komoku_KGD_WR_clean.sgf';
 //import file3 from '!raw-loader!./test/5_rest_KGD_WR_clean.sgf';
 
-var collection = sgf.parse(file1.toString());
+var loadedSGF = localStorage.getItem("loadedSGF")
+var collection = sgf.parse(loadedSGF || file1.toString());
 //sgfutils.merge(collection.gameTrees[0], sgf.parse(file2.toString()).gameTrees[0], 1, 1);
 //sgfutils.merge(collection.gameTrees[0], sgf.parse(file3.toString()).gameTrees[0], 1, 1);
 var previousLeafSignature = "";
@@ -170,7 +171,7 @@ const _updateStartNodeStats = function (currentNode, controls) {
         }
         if (nodeStats) {
             //newGameInfo += JSON.stringify(nodeStats).replaceAll(",", ",\n");
-            controls.rootProgressBarmax = (nodeStats.leafCount + (nodeStats.agg_leafCount|| 0)) || 1;
+            controls.rootProgressBarmax = (nodeStats.leafCount || 0+ (nodeStats.agg_leafCount|| 0)) || 1;
             controls.rootSuccessBarmax = (nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) + nodeStats.failedLeafCount + (nodeStats.agg_failedLeafCount|| 0) + nodeStats.mistakeCount + (nodeStats.agg_mistakeCount|| 0)) || 1;
             if(controls.rootStatsRow.style.display === "none") {
                 controls.progressContainer.style.display = "none";
@@ -458,11 +459,11 @@ const ExampleGameControls = function(element, game) {
                 if(/*!nodeStats && */this.game.currentState().moveNumber > 0) {
                     //if(this.game.currentState().moveNumber > 1 ) {
                     //let freshStats = nodeStats;
-                    stats.getNodeStats( currentNode.node, currentNode.nodeIdx, nodeStats, localStats,false);
+                    stats.getNodeStats( currentNode.node, currentNode.nodeIdx, nodeStats, localStats,true);
                     //console.log('calculated stats for move '+this.game.currentState().moveNumber, JSON.stringify(nodeStats).replaceAll(",", ",\n"))
                     localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
                 }
-                //newGameInfo += "\nYou have found "+(nodeStats && ((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.leafCount + nodeStats.agg_leafCount )|| "Lots of")+" valid VARIATIONS\n";
+                //newGameInfo += "\nYou have found "+(nodeStats && ((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.leafCount|| 0 + nodeStats.agg_leafCount )|| "Lots of")+" valid VARIATIONS\n";
                 //newGameInfo += "\n"+(nodeStats && ((nodeStats.successLeafCount + nodeStats.agg_successLeafCount )+" / ")|| "Lots of")+(nodeStats && (nodeStats.successLeafCount + nodeStats.agg_successLeafCount + nodeStats.failedLeafCount + nodeStats.agg_failedLeafCount + nodeStats.mistakeCount + nodeStats.agg_mistakeCount )|| 1)+" successful attempts\n";
 
             }
@@ -482,7 +483,7 @@ const ExampleGameControls = function(element, game) {
                 newStatToAdd = {successLeafCount:1};
                 newStatToSet = {foundLeafCount:1};
             }
-            if(signature && previousLeafSignature !== signature) {
+            if(signature/* && previousLeafSignature !== signature*/) {
                 previousLeafSignature = signature;
                 nodeStats = stats.setStatsForSignature(signature, newStatToSet, localStats);
                 stats.addStats(nodeStats, newStatToAdd);
@@ -501,14 +502,14 @@ const ExampleGameControls = function(element, game) {
 
         if(nodeStats) {
             //newGameInfo += JSON.stringify(nodeStats).replaceAll(",", ",\n");
-            controls.localProgressBarmax = (nodeStats.leafCount + nodeStats.agg_leafCount )|| 1 ;
+            controls.localProgressBarmax = (nodeStats.leafCount|| 0 + nodeStats.agg_leafCount )|| 1 ;
             controls.localSuccessBarmax = (nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0 ) + nodeStats.failedLeafCount + (nodeStats.agg_failedLeafCount|| 0 ) + nodeStats.mistakeCount + (nodeStats.agg_mistakeCount|| 0 ) )|| 1;
             controls.progressContainer.style.display = "block";
             controls.localProgressBar.animate((nodeStats.foundLeafCount + (nodeStats.agg_foundLeafCount|| 0 ) )/controls.localProgressBarmax);  // Number from 0.0 to 1.0
             controls.localSuccessBar.animate((nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0 ))/controls.localSuccessBarmax);  // Number from 0.0 to 1.0
             //console.log('progress animate ',(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.localProgressBarmax),(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.localSuccessBarmax));
             //console.log('progress animate ',nodeStats.foundLeafCount ,"+", nodeStats.agg_foundLeafCount,"   ",nodeStats.successLeafCount ,"+",nodeStats.agg_successLeafCount);
-            console.log('progress animate c',nodeStats.successLeafCount , nodeStats.agg_successLeafCount,"f", nodeStats.failedLeafCount ,nodeStats.agg_failedLeafCount,"m", nodeStats.mistakeCount ,nodeStats.agg_mistakeCount);
+            console.log('progress animate s',nodeStats.successLeafCount , nodeStats.agg_successLeafCount,"f", nodeStats.failedLeafCount ,nodeStats.agg_failedLeafCount,"m", nodeStats.mistakeCount ,nodeStats.agg_mistakeCount);
             //console.log('progress animate ',(nodeStats.foundLeafCount + (nodeStats.agg_foundLeafCount|| 0) ),"  ",(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) ) );
             //console.log('progress animate ',(nodeStats.foundLeafCount + (nodeStats.agg_foundLeafCount || 0) ),"/",controls.localProgressBarmax,(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0 ) ),"/",controls.localSuccessBarmax );
             //newGameInfo += '\nprogress animate '+controls.localProgressBarmax+" - "+controls.localSuccessBarmax ;
@@ -548,6 +549,7 @@ const ExampleGameControls = function(element, game) {
         var undoButton = document.querySelector(".undo");
         var resetButton = document.querySelector(".reset");
         var mistakeButton = document.querySelector(".mistake");
+        var downloadButton = document.querySelector(".download");
         var josekiButton = document.querySelector(".joseki");
         var setPathButton = document.querySelector(".setPath");
         var testButton = document.querySelector(".test");
@@ -628,7 +630,30 @@ const ExampleGameControls = function(element, game) {
             }
         });
         //console.log('tabHeaders ', allTabHeaders);
-
+        const fileSelector = document.getElementById('file-selector');
+        fileSelector.addEventListener('change', (changeevent) => {
+            const fileList = changeevent.target.files;
+            console.log("fileSelector - ",fileList);
+            const reader = new FileReader();
+            reader.addEventListener('load', (loadevent) => {
+                //console.log("fileload - ",loadevent.target.result)
+                //img.src = loadevent.target.result;
+                try {
+                    controls.reset()
+                    collection = sgf.parse(loadevent.target.result);
+                    localStorage.setItem("loadedSGF",loadevent.target.result)
+                    controls.updateStats();
+                } catch( e) {
+                    alert("error parsing the file, if it SGF?"+e)
+                }
+            });
+            reader.readAsText(fileList[0]);
+        });
+        this.downloadCurrentSGF = function(e) {
+            e.preventDefault();
+            //controls.updateMoveWithConfirm({BM:'1', DM:''});
+            sgfutils.download("latest.sgf", sgf.generate(collection))
+        }
         this.declareMistake = function(e) {
             e.preventDefault();
             controls.updateMoveWithConfirm({BM:'1', DM:''});
@@ -638,7 +663,9 @@ const ExampleGameControls = function(element, game) {
             controls.updateMoveWithConfirm({BM:'',UC:'', DM:'2', GW:'', GB:''});
         }
         this.reset = function(e) {
-            e.preventDefault();
+            if(e) {
+                e.preventDefault();
+            }
             //controls.overlayControls.clearCanvas();
             //var startPath = JSON.parse(localStorage.getItem("startPath")) || [];
             var startPath = localStorage.getItem("startPath") || sgfutils.getEmptySGF();
@@ -765,6 +792,7 @@ const ExampleGameControls = function(element, game) {
         });
 
         resetButton.addEventListener("click", this.reset);
+        downloadButton.addEventListener("click", this.downloadCurrentSGF);
         mistakeButton.addEventListener("click", this.declareMistake);
         josekiButton.addEventListener("click", this.declareJoseki);
 
@@ -1015,6 +1043,8 @@ const ExampleGameControls = function(element, game) {
             let newSGF = controls.getVariationSGF(nodeProperties);
             // cleanSGF
             //controls.postNewJosekiSGF(newSGF);
+            sgfutils.merge(collection.gameTrees[0], sgf.parse(newSGF).gameTrees[0], 1, 1);
+            localStorage.setItem("loadedSGF",sgf.generate(collection))
         }
     }
 

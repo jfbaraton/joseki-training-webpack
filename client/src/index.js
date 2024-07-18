@@ -20,6 +20,7 @@ controls.setAutoplay(localStorage.getItem("autoplay") || "black"); // AI is whit
 game.callbacks.postRender = function(game) {
   controls.updateStats();
 };
+controls.updateStats();
 
 document.addEventListener("keydown",  function (e) {
         console.log("keydown ",e);

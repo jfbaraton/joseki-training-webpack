@@ -459,7 +459,7 @@ const ExampleGameControls = function(element, game) {
                 if(/*!nodeStats && */this.game.currentState().moveNumber > 0) {
                     //if(this.game.currentState().moveNumber > 1 ) {
                     //let freshStats = nodeStats;
-                    stats.getNodeStats( currentNode.node, currentNode.nodeIdx, nodeStats, localStats,true);
+                    stats.getNodeStats( currentNode.node, currentNode.nodeIdx, nodeStats, localStats,false);
                     //console.log('calculated stats for move '+this.game.currentState().moveNumber, JSON.stringify(nodeStats).replaceAll(",", ",\n"))
                     localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
                 }
@@ -548,7 +548,7 @@ const ExampleGameControls = function(element, game) {
         var passButton = document.querySelector(".pass");
         var undoButton = document.querySelector(".undo");
         var resetButton = document.querySelector(".reset");
-        var mistakeButton = document.querySelector(".mistake");
+        //var mistakeButton = document.querySelector(".mistake");
         var downloadButton = document.querySelector(".download");
         var josekiButton = document.querySelector(".joseki");
         var setPathButton = document.querySelector(".setPath");
@@ -793,7 +793,7 @@ const ExampleGameControls = function(element, game) {
 
         resetButton.addEventListener("click", this.reset);
         downloadButton.addEventListener("click", this.downloadCurrentSGF);
-        mistakeButton.addEventListener("click", this.declareMistake);
+        //mistakeButton.addEventListener("click", this.declareMistake);
         josekiButton.addEventListener("click", this.declareJoseki);
 
         localStorage.setItem("knownVersions", JSON.stringify([]));

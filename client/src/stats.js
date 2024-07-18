@@ -59,26 +59,13 @@ export default {
         }
 
         if(!isAtLeastOneSeqValid) {
-            //console.log("getNodeStats - NO valid Seq !isAtLeastOneSeqValid")
-            let leafLocalStat = this.aggregateStatsForNode(stats,{node:node, nodeIdx:node.nodes.length-1},{leafCount:1},localStats);
-            let nodeAggIdx = node.nodes.length-2;
-            while (nodeAggIdx >= nodeIdx) {
-                const moveSignature = sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:nodeAggIdx});
-                this.aggregateStats(stats, localStats.get(moveSignature));
-                isDebug && console.log("YYY - ", sgfutils.copyNode(node.nodes[nodeAggIdx], true),JSON.stringify(stats), localStats.get(moveSignature))
-                nodeAggIdx--;
-            }
-            isDebug && console.log('END getNodeStats NO seq after',
-                sgfutils.getPrintablePath(sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:node.nodes.length-1})),
-                JSON.stringify(stats),JSON.stringify(leafLocalStat));
-            return;
+            this.aggregateStats(stats, {leafCount:1});
         }
         //console.log("getNodeStats - Last case (nodes array is valid)")
         let nodeAggIdx = node.nodes.length-1;
         while (nodeAggIdx >= nodeIdx) {
-            const moveSignature = sgfutils.getNodeSeparatedSGF({node:node, nodeIdx:nodeAggIdx});
-            this.aggregateStats(stats, localStats.get(moveSignature));
-            isDebug && console.log("1XXX - "+sgfutils.getPrintablePath(moveSignature), JSON.stringify(stats), localStats.get(moveSignature))
+            this.aggregateStatsForNode(stats,{node:node, nodeIdx:nodeAggIdx},{},localStats);
+            //isDebug && console.log("1XXX - "+sgfutils.getPrintablePath(moveSignature), JSON.stringify(stats), localStats.get(moveSignature))
             nodeAggIdx--;
         }
     },

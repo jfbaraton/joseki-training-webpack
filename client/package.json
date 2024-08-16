@@ -42,6 +42,12 @@
     "webpack-dev-server": "^4.11.1"
   },
   "dependencies": {
+    "react-icons": "^5.2.1",
+    "react-scripts": "^5.0.1",
     "smartgame": "^0.1.5"
-  }
+  },
+  "presets": [
+    "@babel/preset-env",
+    ["@babel/preset-react", {"runtime": "automatic"}]
+  ]
 }

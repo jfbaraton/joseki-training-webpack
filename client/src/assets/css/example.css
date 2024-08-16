@@ -143,3 +143,9 @@ bottom: -1px;
 right: -1px;
 cursor: se-resize;
 }
+
+.ExploreLinksApp {
+  font-family: sans-serif;
+  text-align: center;
+}
+

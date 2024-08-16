@@ -711,6 +711,8 @@ export default {
 
     },
 
+    // Start file download.
+    //download("hello.txt","This is the content of my file :)");
     download: function(filename, text) {
       var element = document.createElement('a');
       element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
@@ -724,8 +726,110 @@ export default {
       document.body.removeChild(element);
     },
 
-    // Start file download.
-    //download("hello.txt","This is the content of my file :)");
+    /*
+     transforms Base64 encoded JSON object into HTML links to board positions
+     input:
+     [
+        {
+            "title":"Most common joseki starts:"
+            "links":[
+                {
+                    "name":"Hoshi"
+                    "sgf":"(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd])"
+                },{
+                    "name":"Hoshi approached low"
+                    "sgf":"(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[qf])"
+                },{
+                    "name":"San San invasion"
+                    "sgf":"(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[qc])"
+                },{
+                    "name":"Komoku approached high"
+                    "sgf":"(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[od])"
+                },{
+                    "name":"Komoku approached low"
+                    "sgf":"(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[oc])"
+                }
+            ]
+        },{
+            "title":"Approach an already extended corner:"
+            "links":[
+                {
+                    "name":"hoshi keima shimari"
+                    "sgf":"(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc])"
+                },{
+                    "name":"hoshi ogeima shimari"
+                    "sgf":"(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[mc])"
+                },{
+                    "name":"komoku keima shimari"
+                    "sgf":"(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[];B[oc])"
+                },{
+                    "name":"komoku ogeima shimari"
+                    "sgf":"(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[];B[nc])"
+                },{
+                    "name":"komoku ikentobi shimari"
+                    "sgf":"(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[];B[nd])"
+                }
+            ]
+        }
+     ]
+
+     result:
+     <p>Most common joseki starts:<br>
+      <ul>
+        <li>
+        <!--<a class="josekiStart hoshi" href="#" title="hoshi" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd])">Hoshi</a></li><li>-->
+        <a class="josekiStart hoshi" href="#" title="hoshi" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[qf])">Hoshi approached low</a></li><li>
+        <a class="josekiStart hoshiSanSan" href="#" title="hoshi invaded at san san" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[qc])">San San invasion</a></li><li>
+        <!--<a class="josekiStart komoku" href="#" title="komoku" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd])">Komoku</a></li><li>-->
+        <a class="josekiStart komokuHigh" href="#" title="komoku approached high and close" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[od])">Komoku approached high</a></li><li>
+        <a class="josekiStart komokuLow" href="#" title="komoku approached low and close" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[oc])">Komoku approached low</a></li>
+      </ul>
+
+    </p>
+    <p>Approach an already extended corner:<br>
+      <ul>
+        <li><a class="josekiStart hoshiKeimaShimari" href="#" title="Hoshi with a keima Shimari"  data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[nc])">hoshi keima shimari</a></li><li>
+          <a class="josekiStart hoshiOgeimaShimari" href="#" title="Hoshi with an Ogeima Shimari" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[];B[mc])">hoshi ogeima shimari</a></li><li>
+          <a class="josekiStart komokuKeimaShimari" href="#" title="komoku with a keima shimari" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[];B[oc])">komoku keima shimari</a></li><li>
+          <a class="josekiStart komokuOgeimaShimari" href="#" title="komoku with an ogeima shimari" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[];B[nc])">komoku ogeima shimari</a></li><li>
+          <a class="josekiStart komokuIkentobiShimari" href="#" title="komoku with an ikentobi shimari" data-sgf="(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[];B[nd])">komoku ikentobi shimari</a></li>
+      </ul>
+
+    </p>
+     */
+    makeExploreLinks: function(base64JSONlinks) {
+        let result = "";
+        try {
+            let jsonLinks = new TextDecoder().decode(this.base64ToBytes(base64JSONlinks));
+            jsonLinks.forEach(linkBlock => {
+                result += "<p>"+linkBlock.title+"<br><ul>\n";
+                linkBlock.links.forEach(oneLink => {
+                    result += "<li><a class=\"josekiStart\" href=\"#\" title=\""+oneLink.name+"\" data-sgf=\""+oneLink.sgf+"\">"+oneLink.name+"</a></li><li>"
+                })
+
+                result += "</ul></p>\n";
+            });
+        } catch (e) {
+
+        }
+        return result;
+    },
+
+
+    // Usage
+    //bytesToBase64(new TextEncoder().encode("a Ā 𐀀 文 🦄")); // "YSDEgCDwkICAIOaWhyDwn6aE"
+    //new TextDecoder().decode(base64ToBytes("YSDEgCDwkICAIOaWhyDwn6aE")); // "a Ā 𐀀 文 🦄"
+    base64ToBytes: function (base64) {
+        const binString = atob(base64);
+        return Uint8Array.from(binString, (m) => m.codePointAt(0));
+    },
+
+    bytesToBase64: function (bytes) {
+        const binString = Array.from(bytes, (byte) =>
+            String.fromCodePoint(byte),
+        ).join("");
+        return btoa(binString);
+    },
 
 
     // everything from addedTree that is not already defined in masterTree will be added to masterTree

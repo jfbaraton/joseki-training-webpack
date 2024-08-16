@@ -1,6 +1,8 @@
 import App from './App';
+import ExploreLinksApp from "./ExploreLinksApp";
 import tenuki from 'tenuki';
-
+import { StrictMode } from "react";
+import { createRoot } from 'react-dom/client';
 import ExampleGameControls from './example-controls';
 
 var boardElement = document.querySelector(".tenuki-board");
@@ -14,6 +16,8 @@ var controlElement = document.querySelector(".controls");
 var controls = new ExampleGameControls(controlElement, game);
 //var overlayControls = new OverlayControl();
 //overlayControls.setup(boardElement);
+
+
 controls.setup();
 controls.setAutoplay(localStorage.getItem("autoplay") || "black"); // AI is white
 
@@ -22,8 +26,19 @@ game.callbacks.postRender = function(game) {
 };
 controls.updateStats();
 
+
+
+const rootElement = document.getElementById("folderRoot");
+const root = createRoot(rootElement);
+root.render(
+    <StrictMode>
+        <ExploreLinksApp onLinkClick={controls.reset}/>
+    </StrictMode>,
+    rootElement
+);
+
 document.addEventListener("keydown",  function (e) {
-        console.log("keydown ",e);
+        //console.log("keydown ",e);
         //if (e.keyCode == 82) { // r pressed
         if ('r' === e.key) { // e pressed
             controls.reset(e);

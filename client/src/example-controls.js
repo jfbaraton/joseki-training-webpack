@@ -566,7 +566,7 @@ const ExampleGameControls = function(element, game) {
 
         var allTabHeaders = document. querySelectorAll(".tabHeader");
         var allTabs = document. querySelectorAll(".Tab");
-        var josekiStart = document. querySelectorAll(".josekiStart");
+        this.setupExploreLinks();
         this.updateGUIFromState = function(e, swapMode) {
             // tabs
             if(swapMode) {
@@ -619,16 +619,6 @@ const ExampleGameControls = function(element, game) {
             }
         }
         allTabHeaders.forEach(oneTabHeader => oneTabHeader.onclick = this.swapMode);
-        josekiStart.forEach(oneTabHeader => oneTabHeader.onclick = (e) =>{
-
-            let path = e.srcElement.getAttribute('data-sgf');
-            //console.log('joseki start ', path);
-            if(path) {
-                localStorage.setItem("startPath", path);
-                controls.setText("Position saved! From now on, you can click on RESET to come back to the same variation");
-                controls.reset(e);
-            }
-        });
         //console.log('tabHeaders ', allTabHeaders);
         const fileSelector = document.getElementById('file-selector');
         fileSelector.addEventListener('change', (changeevent) => {
@@ -789,6 +779,48 @@ const ExampleGameControls = function(element, game) {
 
             localStorage.setItem("localStats",null);
             //_updateStartNodeStats(startPathNode, controls);
+            /*const explorer2 = {
+                "title": "",
+                "links": [
+                    {
+                        "title": "Most common joseki starts:",
+                        "links": [
+                            {
+                                "name": "Hoshi",
+                                "sgf": "(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd])"
+                            }, {
+                                "name": "Hoshi approached low",
+                                "sgf": "(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[qf])"
+                            }
+                        ]
+                    }, {
+                        "title": "Approach an already extended corner:",
+                        "links": [
+                            {
+                                "name": "komoku ogeima shimari",
+                                "sgf": "(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[];B[nc])"
+                            }, {
+                                "name": "komoku ikentobi shimari",
+                                "sgf": "(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[];B[nd])"
+                            }
+                        ]
+                    }, {
+                        "title": "Approach an already extended corner:",
+                        "links": [
+                            {
+                                "name": "komoku ogeima shimari",
+                                "sgf": "(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[];B[nc])"
+                            }, {
+                                "name": "komoku ikentobi shimari",
+                                "sgf": "(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[qd];W[];B[nd])"
+                            }
+                        ]
+                    }
+                ]
+            };
+            document.dispatchEvent(
+                new CustomEvent('setReactState', { detail: explorer2 })
+            );*/
         });
 
         resetButton.addEventListener("click", this.reset);
@@ -800,7 +832,20 @@ const ExampleGameControls = function(element, game) {
         // LAST getLatestSGF
         //setTimeout(this.getLatestSGF,200);
         setTimeout(this.updateGUIFromState,200);
+    }
 
+    this.setupExploreLinks = function() {
+        var josekiStart = document. querySelectorAll(".josekiStart");
+        josekiStart.forEach(oneTabHeader => oneTabHeader.onclick = (e) =>{
+
+            let path = e.srcElement.getAttribute('data-sgf');
+            //console.log('joseki start ', path);
+            if(path) {
+                localStorage.setItem("startPath", path);
+                controls.setText("Position saved! From now on, you can click on RESET to come back to the same variation");
+                controls.reset(e);
+            }
+        });
     }
 
     this.renderSuggestions = function(response) {

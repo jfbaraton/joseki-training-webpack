@@ -27,7 +27,7 @@ const Folder = ({ explorer, onLinkClick }) => {
                     {explorer.links.map((exp, idx) => {
                         return (
                             <>
-                                <Folder key={idx} explorer={exp} onLinkClick={onLinkClick}/>
+                                <Folder key={explorer.title+idx} explorer={exp} onLinkClick={onLinkClick}/>
                             </>
                         );
                     })}

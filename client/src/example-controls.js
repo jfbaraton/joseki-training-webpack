@@ -152,7 +152,7 @@ const _updateStartNodeStats = function (currentNode, controls) {
         sgfutils.getVariationSGF(currentNode.node, currentNode.nodeIdx, currentSGFVariation, true);
         const emptySGF = sgfutils.getEmptySGF();
         currentSGFVariation.forEach(node => emptySGF.gameTrees[0].nodes.push(node));
-        console.log('_updateStartNodeStats current path: ',sgf.generate(emptySGF));
+        //console.log('_updateStartNodeStats current path: ',sgf.generate(emptySGF));
         const moveSignature = sgfutils.getNodeSeparatedSGF({
             node: currentNode.node,
             nodeIdx: currentNode.nodeIdx
@@ -183,7 +183,7 @@ const _updateStartNodeStats = function (currentNode, controls) {
             //console.log('start progress animate ',(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.rootProgressBarmax),(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.rootSuccessBarmax));
             //console.log('start progress animate ',controls.rootProgressBarmax,controls.rootSuccessBarmax );
             //console.log('start success animate ',nodeStats);
-            console.log('start success animate s',nodeStats.successLeafCount , (nodeStats.agg_successLeafCount|| 0) ,"f", nodeStats.failedLeafCount , (nodeStats.agg_failedLeafCount|| 0) ,"m", nodeStats.mistakeCount ,(nodeStats.agg_mistakeCount|| 0));
+            //console.log('start success animate s',nodeStats.successLeafCount , (nodeStats.agg_successLeafCount|| 0) ,"f", nodeStats.failedLeafCount , (nodeStats.agg_failedLeafCount|| 0) ,"m", nodeStats.mistakeCount ,(nodeStats.agg_mistakeCount|| 0));
             //console.log('start success animate ',(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) ) ,(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) + nodeStats.failedLeafCount + (nodeStats.agg_failedLeafCount|| 0) + nodeStats.mistakeCount + (nodeStats.agg_mistakeCount|| 0)));
 
         }
@@ -653,12 +653,15 @@ const ExampleGameControls = function(element, game) {
             controls.updateMoveWithConfirm({BM:'',UC:'', DM:'2', GW:'', GB:''});
         }
         this.reset = function(e) {
-            if(e) {
+            if(e && e.preventDefault) {
                 e.preventDefault();
+            }
+            if(e && e.nodeData && e.nodeData.sgf) {
+                localStorage.setItem("startPath", e.nodeData.sgf);
             }
             //controls.overlayControls.clearCanvas();
             //var startPath = JSON.parse(localStorage.getItem("startPath")) || [];
-            var startPath = localStorage.getItem("startPath") || sgfutils.getEmptySGF();
+            var startPath = localStorage.getItem("startPath") || sgfutils.getEmptyPath();
 
             const autoPlayValue = controls.isAutoplay;
             controls.isAutoplay = null;
@@ -777,7 +780,7 @@ const ExampleGameControls = function(element, game) {
         });
         testButton.addEventListener("click", function(e) {
 
-            localStorage.setItem("localStats",null);
+            //localStorage.setItem("localStats",null);
             //_updateStartNodeStats(startPathNode, controls);
             /*const explorer2 = {
                 "title": "",
@@ -817,10 +820,10 @@ const ExampleGameControls = function(element, game) {
                         ]
                     }
                 ]
-            };
+            };*/
             document.dispatchEvent(
-                new CustomEvent('setReactState', { detail: explorer2 })
-            );*/
+                new CustomEvent('setReactState', { isEdited: false })
+            );
         });
 
         resetButton.addEventListener("click", this.reset);
@@ -1095,7 +1098,7 @@ const ExampleGameControls = function(element, game) {
 
     this.autoPlay = function(game) {
         //let startPath = JSON.parse(localStorage && localStorage.getItem("startPath") || "[]");
-        var startPath = localStorage.getItem("startPath") || sgfutils.getEmptySGF();
+        var startPath = localStorage.getItem("startPath") || sgfutils.getEmptyPath();
         var startPathMoves = sgf.parse(startPath).gameTrees[0].nodes.length-1;
         //console.log('autoPlay startPath:', startPath);
         //console.log('autoPlay ? this.isAutoplay:', controls.isAutoplay);

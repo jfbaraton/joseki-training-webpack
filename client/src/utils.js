@@ -6,8 +6,11 @@ var sgf = require('smartgame');
 const JOSEKI_MARGIN = 400; //negative means always wrong
 
 export default {
+    getEmptyPath: function() {
+        return '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])';
+    },
     getEmptySGF: function() {
-        return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])');
+        return sgf.parse(this.getEmptyPath());
     },
 
     sgfCoordToPoint:function(_18a){

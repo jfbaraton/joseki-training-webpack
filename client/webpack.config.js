@@ -10,6 +10,10 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         filename: 'main.js'
     },
+    resolve: {
+        // our code can resolve 'xxx' instead of writing 'xxx.jsx'
+        extensions: ['*', '.js', '.jsx'],
+    },
     module: {
         rules: [
             {
@@ -64,6 +68,10 @@ module.exports = {
         new HtmlWebPackPlugin({
             template: "./public/index.html",
             filename: "./index.html"
+        }),
+        new HtmlWebPackPlugin({
+            template: "./public/index2.html",
+            filename: "./index2.html"
         }),
         new HtmlWebPackPlugin({
             template: "./public/miniBoard.html",

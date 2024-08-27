@@ -102,9 +102,16 @@ const explorer = {
 
 export default function ExploreLinksApp( {onLinkClick}) {
     const [fileStructure, setFileStructure] = useState(explorer);
+    const [isEdited, setIsEdited] = useState(true);
 
     useEffect(() => {
-        const handleEvent = e => setFileStructure(e.detail);
+        const handleEvent = e => {
+            if (e.detail) {
+                setFileStructure(e.detail);
+            } else {
+                setIsEdited(e.isEdited)
+            }
+        }
 
         document.addEventListener('setReactState', handleEvent);
         return () => {
@@ -112,5 +119,5 @@ export default function ExploreLinksApp( {onLinkClick}) {
         }
     }, []);
 
-    return <Folder explorer={fileStructure} onLinkClick={onLinkClick} />;
+    return <Folder explorer={fileStructure} onLinkClick={onLinkClick} isEdited={isEdited}/>;
 }

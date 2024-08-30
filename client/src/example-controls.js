@@ -1129,7 +1129,7 @@ const ExampleGameControls = function(element, game) {
         //console.log('getVariationSGF currentSelectedTransform : ', currentSelectedTransform);
         for (let moveIdx = 0 ; moveIdx < game._moves.length-skippedLastMoves ; moveIdx++) {
             let oneMove =  game._moves[moveIdx];
-            const node = moveIdx === game._moves.length-1 ? nodeProperties : {};
+            const node = moveIdx === (nodeProperties && game._moves.length-1) ? nodeProperties : {};
             const sgfCoords = oneMove.pass ? "" : sgfutils.pointToSgfCoord( sgfutils.revertMove({y:oneMove.playedPoint.y, x:oneMove.playedPoint.x}, currentSelectedTransform));
             //console.log('getVariationSGF original coords : ',(oneMove.pass ? "PASS" : {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x}), oneMove.pass ? "" : sgfutils.pointToSgfCoord( {y:oneMove.playedPoint.y, x:oneMove.playedPoint.x}));
             //console.log('getVariationSGF sgfCoords : ', sgfCoords);

@@ -16,6 +16,7 @@ import {
   AiOutlineFolderAdd,
   AiOutlineCheck,
 } from 'react-icons/ai';
+import { FaDirections } from "react-icons/fa";
 
 import CheckBox from '../CheckBox/CheckBox';
 import ConfigContext from '../FolderTree/context';
@@ -48,6 +49,7 @@ const TreeNode = ({
     iconComponents,
     indentPixels,
     onNameClick,
+    getCurrentLinkSGF,
     showCheckbox,
     readOnly,
   } = useContext(ConfigContext);
@@ -66,6 +68,7 @@ const TreeNode = ({
     FolderIcon = getDefaultIcon(AiOutlineFolder),
     FolderOpenIcon = getDefaultIcon(AiOutlineFolderOpen),
     EditIcon = getDefaultIcon(AiOutlineEdit),
+    LinkIcon = getDefaultIcon(FaDirections),
     DeleteIcon = getDefaultIcon(AiOutlineDelete),
     CancelIcon = getDefaultIcon(AiOutlineClose),
     AddFileIcon = getDefaultIcon(AiOutlineFileAdd),
@@ -110,12 +113,22 @@ const TreeNode = ({
   const deleteMe = () => handleDelete(path);
 
   const addFile = () => handleAddNode(path, false);
+  const setLink = () => handleSetLink(path);
   const addFolder = () => handleAddNode(path, true);
 
   const handleNameClick = () => {
     const defaultOnClick = selectMe;
     if (onNameClick && typeof onNameClick === 'function') {
       !isEditing && onNameClick({ defaultOnClick, nodeData });
+    } else {
+      defaultOnClick();
+    }
+  };
+  const handleSetLink = () => {
+    const defaultOnClick = selectMe;
+    if (getCurrentLinkSGF && typeof getCurrentLinkSGF === 'function') {
+      const currentSGF = getCurrentLinkSGF();
+      nodeData.sgf = currentSGF;
     } else {
       defaultOnClick();
     }
@@ -128,6 +141,18 @@ const TreeNode = ({
         onClick={ editMe }
         nodeData={ nodeData }
       />
+      {
+          !isFolder && (
+              <>
+                <LinkIcon
+                    className={ iconClassName('LinkIcon') }
+                    onClick={ setLink }
+                    nodeData={ nodeData }
+                    title='make this link point to current board position'
+                />
+              </>
+          )
+      }
       <DeleteIcon
         className={ iconClassName('DeleteIcon') }
         onClick={ deleteMe }

@@ -21,6 +21,7 @@ const FolderTree = ({
   showCheckbox = true,
   indentPixels = 30,
   onNameClick = null,
+  getCurrentLinkSGF = null,
   readOnly = false
 }) => {
   const options = {
@@ -45,6 +46,7 @@ const FolderTree = ({
     handleAddNode: addNode,
     handleToggleOpen: toggleOpen,
     onNameClick,
+    getCurrentLinkSGF,
 
     iconComponents,
     indentPixels,
@@ -91,6 +93,7 @@ FolderTree.propTypes = {
   }),
   indentPixels: PropTypes.number,
   onNameClick: PropTypes.func,
+  getCurrentLinkSGF: PropTypes.func,
   showCheckbox: PropTypes.bool,
   readOnly: PropTypes.bool,
 };

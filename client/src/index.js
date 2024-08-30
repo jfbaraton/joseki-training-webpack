@@ -52,7 +52,7 @@ const root = createRoot(rootElement);
 );*/
 root.render(
     <StrictMode>
-        <ExploreLinksApp2 onLinkClick={controls ? controls.reset:null}/>
+        <ExploreLinksApp2 onLinkClick={controls ? controls.reset:null} getCurrentLinkSGF={controls ? controls.getVariationSGF:null}/>
     </StrictMode>,
     rootElement
 );

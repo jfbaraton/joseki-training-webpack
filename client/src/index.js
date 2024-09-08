@@ -56,3 +56,5 @@ root.render(
     </StrictMode>,
     rootElement
 );
+
+controls && controls.setupExploreLinks();

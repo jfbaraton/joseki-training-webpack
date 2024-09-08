@@ -566,7 +566,7 @@ const ExampleGameControls = function(element, game) {
 
         var allTabHeaders = document. querySelectorAll(".tabHeader");
         var allTabs = document. querySelectorAll(".Tab");
-        this.setupExploreLinks();
+        //this.setupExploreLinks();
         this.updateGUIFromState = function(e, swapMode) {
             // tabs
             if(swapMode) {
@@ -838,6 +838,31 @@ const ExampleGameControls = function(element, game) {
     }
 
     this.setupExploreLinks = function() {
+        if (collection && collection.gameTrees && collection.gameTrees[0].GC) {
+            try {
+                let jsonLinks = new TextDecoder().decode(sgfutils.base64ToBytes(collection.gameTrees[0].GC));
+                document.dispatchEvent(
+                    new CustomEvent('setReactState', {detail: jsonLinks})
+                );
+            } catch (oneError) {
+                alert(oneError);
+            }
+        }
+    }
+
+    this.storeExploreLinks = function(jsonLinks) {
+        if (collection && collection.gameTrees && collection.gameTrees[0].GC) {
+            try {
+                collection.gameTrees[0].GC = sgfutils.bytesToBase64(new TextEncoder().encode(JSON.stringify(jsonLinks)));
+            } catch (oneError) {
+                alert(oneError);
+            }
+        }
+    }
+
+
+
+    this.setupExploreLinksOLD = function() {
         var josekiStart = document. querySelectorAll(".josekiStart");
         josekiStart.forEach(oneTabHeader => oneTabHeader.onclick = (e) =>{
 

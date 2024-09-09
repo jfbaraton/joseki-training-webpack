@@ -27,18 +27,6 @@ if(boardElement) {
     };
     controls.updateStats();
 
-
-    document.addEventListener("keydown",  function (e) {
-        //console.log("keydown ",e);
-        //if (e.keyCode == 82) { // r pressed
-        if ('r' === e.key) { // e pressed
-            controls.reset(e);
-        } else if ('u' === e.key) { // e pressed
-            controls.game.undo(e);
-        } else if (e.keyCode == 27) { // enter pressed
-            controls.reset(e);
-        }
-    }, false);
 }
 
 
@@ -53,11 +41,12 @@ const root = createRoot(rootElement);
 root.render(
     <StrictMode>
         <ExploreLinksApp2 
-		data ={ explorer }
-			onLinkClick={controls ? controls.reset:null} 
-			onChange={controls ? controls.storeExploreLinks:null} 
-			getCurrentLinkSGF={controls ? controls.getVariationSGF:null}/>
+            data ={ explorer }
+            onLinkClick={controls ? controls.reset:null}
+            onChange={controls ? controls.storeExploreLinks:null}
+            getCurrentLinkSGF={controls ? controls.getVariationSGF:null}
+        />
     </StrictMode>
 );
 
-//controls && setTimeout(controls.setupExploreLinks,2000);
+controls && setTimeout(controls.setupExploreLinks,500);

@@ -5,12 +5,14 @@ import {useEffect, useState} from "react";
 
 export default function ExploreLinksApp2({data, onLinkClick, getCurrentLinkSGF, onChange}) {
     const [fileStructure, setFileStructure] = useState(data);
+    const [randomKey, setRandomKey] = useState(new Date().getTime());
     const [isEdited, setIsEdited] = useState(true);
 
     useEffect(() => {
         const handleEvent = e => {
             if (e.detail) {
                 setFileStructure(e.detail);
+                setRandomKey(new Date().getTime())
             } else {
                 setIsEdited(e.isEdited)
             }
@@ -25,6 +27,7 @@ export default function ExploreLinksApp2({data, onLinkClick, getCurrentLinkSGF, 
     return (
         <FolderTree
             data={ fileStructure }
+            key={ randomKey }
             onChange={ onChange }
             onNameClick={onLinkClick}
             getCurrentLinkSGF={getCurrentLinkSGF}

@@ -408,6 +408,20 @@ const ExampleGameControls = function(element, game) {
     //this.localProgressBar.animate(1.00);  // Number from 0.0 to 1.0
     //this.localSuccessBar.animate(1.00);  // Number from 0.0 to 1.0
 
+
+    const keyListener = function (e) {
+        //console.log("keydown ",e);
+        //if (e.keyCode == 82) { // r pressed
+        if ('r' === e.key) { // e pressed
+            controls.reset(e);
+        } else if ('u' === e.key) { // e pressed
+            controls.game.undo(e);
+        } else if (e.keyCode == 27) { // enter pressed
+            controls.reset(e);
+        }
+    }
+    document.addEventListener("keydown", keyListener  , false, true);
+
     this.setText = function(str) {
         this.textInfo.innerText = str;
     };
@@ -857,6 +871,9 @@ const ExampleGameControls = function(element, game) {
         if (collection && collection.gameTrees && collection.gameTrees[0].nodes) {
             try {
                 collection.gameTrees[0].nodes[0].GC = sgfutils.bytesToBase64(new TextEncoder().encode(JSON.stringify(jsonLinks)));
+
+                document.removeEventListener("keydown", keyListener);
+                console.log("removed controls key listener because someone is editing the exploration tree");
             } catch (oneError) {
                 alert(oneError);
             }

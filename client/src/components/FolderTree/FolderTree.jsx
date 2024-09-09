@@ -76,6 +76,7 @@ const FolderTree = ({
 FolderTree.propTypes = {
   data: PropTypes.object.isRequired,
   onChange: PropTypes.func,
+  keyListener: PropTypes.func,
 
   initCheckedStatus: PropTypes.string,
   initOpenStatus: PropTypes.string,

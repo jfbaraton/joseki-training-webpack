@@ -269,6 +269,7 @@ const ExampleGameControls = function(element, game) {
     this.isKnownVersionLoaded = false;
     this.isAllowDifferentCorners = !localStorage.getItem("isAllowDifferentCorners") || localStorage.getItem("isAllowDifferentCorners") === "true";
     this.isAllowSymmetry = localStorage.getItem("isAllowSymmetry") === "true";
+    this.isDisplayMoveOptions = localStorage.getItem("isDisplayMoveOptions") === "true";
     this.textInfo = element.querySelector(".text-info p");
     this.gameInfo = element.querySelector(".game-info p");
     this.branchInfo = element.querySelector(".branch-info p");
@@ -503,7 +504,7 @@ const ExampleGameControls = function(element, game) {
                 stats.addStats(nodeStats, newStatToAdd);
                 //console.log('new stat '+signature,JSON.stringify(nodeStats));
 
-                newGameInfo += "\nnew Stats for "+signature+":  "+JSON.stringify(nodeStats);
+                //newGameInfo += "\nnew Stats for "+signature+":  "+JSON.stringify(nodeStats);
                 localStorage.setItem("localStats",sgfutils.deepStringify(localStats));
 
                 _updateStartNodeStats(startPathNode, controls);
@@ -530,7 +531,9 @@ const ExampleGameControls = function(element, game) {
 
         }
         //console.log('current options:',nextMoveOptions);
-        newGameInfo += "\n current options: "+ (nextMoveOptions && nextMoveOptions.map(oneMove => oneMove.pass ? "Tenuki" : this.game.coordinatesFor(oneMove.y,oneMove.x)).join(" or "));
+        if (this.isDisplayMoveOptions) {
+            newGameInfo += "\n current options: "+ (nextMoveOptions && nextMoveOptions.map(oneMove => oneMove.pass ? "Tenuki" : this.game.coordinatesFor(oneMove.y,oneMove.x)).join(" or "));
+        }
         //newGameInfo += "\n_getPathComment:";
         newGameInfo += "\n"+_getPathComment(this.game, true);
         //newGameInfo += "\nEND of getPathComment \n";
@@ -568,6 +571,7 @@ const ExampleGameControls = function(element, game) {
         var setPathButton = document.querySelector(".setPath");
         var testButton = document.querySelector(".test");
         var playAsWhite = document.querySelector("#isPlayAsWhite");
+        var isDisplayMoveOptionsCB = document.querySelector("#isDisplayMoveOptions");
         var autoPlay = document.querySelector("#isAutoPlay");
         var allowDifferentCorners = document.querySelector("#isAllowDifferentCorners");
         var allowSymmetry = document.querySelector("#isAllowSymmetry");
@@ -622,6 +626,9 @@ const ExampleGameControls = function(element, game) {
                 playAsWhite.checked = false;
                 autoPlay.checked = false;
             }
+
+            isDisplayMoveOptionsCB.checked = controls.isDisplayMoveOptions;
+
         }
 
         this.swapMode = function(e) {
@@ -752,6 +759,16 @@ const ExampleGameControls = function(element, game) {
             } else {
                 controls.setAutoplay("black");
             }
+        };
+
+        isDisplayMoveOptionsCB.onclick = function(e) {
+            console.log('isDisplayMoveOptionsCB clicked ', this.isDisplayMoveOptions, e);
+            if(e.srcElement.checked) {
+                localStorage.setItem("isDisplayMoveOptions", "true");
+            } else {
+                localStorage.setItem("isDisplayMoveOptions", null);
+            }
+            controls.isDisplayMoveOptions = e.srcElement.checked;
         };
 
         autoPlay.onclick = function(e) {

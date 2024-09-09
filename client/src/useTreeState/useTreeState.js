@@ -11,6 +11,7 @@ import {
     toggleOpen,
     getEvent,
     initializeTreeState,
+    getCleanState,
     findTargetNode,
     findAllTargetPathByProp,
     findTargetPathByProp,
@@ -38,8 +39,8 @@ const useTreeState = ({
     }, []);
 
     useEffect(() => {
-        if (typeof onChange === 'function' && treeState && event) {
-            onChange(treeState, event);
+        if (typeof onChange === 'function' && treeState && event && event.type && event.type !== "initialization") {
+            onChange(getCleanState(treeState), event);
         }
     }, [treeState, event]);
 

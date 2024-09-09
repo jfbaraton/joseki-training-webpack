@@ -1,10 +1,10 @@
 import App from './App';
-import ExploreLinksApp from "./ExploreLinksApp";
 import ExploreLinksApp2 from "./ExploreLinksApp2";
 import tenuki from 'tenuki';
 import { StrictMode } from "react";
 import { createRoot } from 'react-dom/client';
 import ExampleGameControls from './example-controls';
+import { explorer } from './utils/testData'
 
 var boardElement = document.querySelector(".tenuki-board");
 var controls = null;
@@ -52,9 +52,12 @@ const root = createRoot(rootElement);
 );*/
 root.render(
     <StrictMode>
-        <ExploreLinksApp2 onLinkClick={controls ? controls.reset:null} getCurrentLinkSGF={controls ? controls.getVariationSGF:null}/>
-    </StrictMode>,
-    rootElement
+        <ExploreLinksApp2 
+		data ={ explorer }
+			onLinkClick={controls ? controls.reset:null} 
+			onChange={controls ? controls.storeExploreLinks:null} 
+			getCurrentLinkSGF={controls ? controls.getVariationSGF:null}/>
+    </StrictMode>
 );
 
-controls && controls.setupExploreLinks();
+//controls && setTimeout(controls.setupExploreLinks,2000);

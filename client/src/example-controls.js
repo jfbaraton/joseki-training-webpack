@@ -509,7 +509,7 @@ const ExampleGameControls = function(element, game) {
             controls.localSuccessBar.animate((nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0 ))/controls.localSuccessBarmax);  // Number from 0.0 to 1.0
             //console.log('progress animate ',(((nodeStats.foundLeafCount + nodeStats.agg_foundLeafCount ) || 0)/controls.localProgressBarmax),(((nodeStats.successLeafCount + nodeStats.agg_successLeafCount ) || 0)/controls.localSuccessBarmax));
             //console.log('progress animate ',nodeStats.foundLeafCount ,"+", nodeStats.agg_foundLeafCount,"   ",nodeStats.successLeafCount ,"+",nodeStats.agg_successLeafCount);
-            console.log('progress animate s',nodeStats.successLeafCount , nodeStats.agg_successLeafCount,"f", nodeStats.failedLeafCount ,nodeStats.agg_failedLeafCount,"m", nodeStats.mistakeCount ,nodeStats.agg_mistakeCount);
+            //console.log('progress animate s',nodeStats.successLeafCount , nodeStats.agg_successLeafCount,"f", nodeStats.failedLeafCount ,nodeStats.agg_failedLeafCount,"m", nodeStats.mistakeCount ,nodeStats.agg_mistakeCount);
             //console.log('progress animate ',(nodeStats.foundLeafCount + (nodeStats.agg_foundLeafCount|| 0) ),"  ",(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0) ) );
             //console.log('progress animate ',(nodeStats.foundLeafCount + (nodeStats.agg_foundLeafCount || 0) ),"/",controls.localProgressBarmax,(nodeStats.successLeafCount + (nodeStats.agg_successLeafCount|| 0 ) ),"/",controls.localSuccessBarmax );
             //newGameInfo += '\nprogress animate '+controls.localProgressBarmax+" - "+controls.localSuccessBarmax ;
@@ -632,6 +632,7 @@ const ExampleGameControls = function(element, game) {
                     controls.reset()
                     collection = sgf.parse(loadevent.target.result);
                     localStorage.setItem("loadedSGF",loadevent.target.result)
+					controls.setupExploreLinks();
                     controls.updateStats();
                 } catch( e) {
                     alert("error parsing the file, if it SGF?"+e)
@@ -652,6 +653,7 @@ const ExampleGameControls = function(element, game) {
             e.preventDefault();
             controls.updateMoveWithConfirm({BM:'',UC:'', DM:'2', GW:'', GB:''});
         }
+		
         this.reset = function(e) {
             if(e && e.preventDefault) {
                 e.preventDefault();
@@ -821,9 +823,10 @@ const ExampleGameControls = function(element, game) {
                     }
                 ]
             };*/
-            document.dispatchEvent(
+            /*document.dispatchEvent(
                 new CustomEvent('setReactState', { isEdited: false })
-            );
+            );*/
+			controls.setupExploreLinks();
         });
 
         resetButton.addEventListener("click", this.reset);
@@ -838,11 +841,11 @@ const ExampleGameControls = function(element, game) {
     }
 
     this.setupExploreLinks = function() {
-        if (collection && collection.gameTrees && collection.gameTrees[0].GC) {
+        if (collection && collection.gameTrees && collection.gameTrees[0].nodes && collection.gameTrees[0].nodes[0].GC) {
             try {
-                let jsonLinks = new TextDecoder().decode(sgfutils.base64ToBytes(collection.gameTrees[0].GC));
+                let jsonLinks = new TextDecoder().decode(sgfutils.base64ToBytes(collection.gameTrees[0].nodes[0].GC));
                 document.dispatchEvent(
-                    new CustomEvent('setReactState', {detail: jsonLinks})
+                    new CustomEvent('setReactState', {detail: JSON.parse(jsonLinks)})
                 );
             } catch (oneError) {
                 alert(oneError);
@@ -851,9 +854,9 @@ const ExampleGameControls = function(element, game) {
     }
 
     this.storeExploreLinks = function(jsonLinks) {
-        if (collection && collection.gameTrees && collection.gameTrees[0].GC) {
+        if (collection && collection.gameTrees && collection.gameTrees[0].nodes) {
             try {
-                collection.gameTrees[0].GC = sgfutils.bytesToBase64(new TextEncoder().encode(JSON.stringify(jsonLinks)));
+                collection.gameTrees[0].nodes[0].GC = sgfutils.bytesToBase64(new TextEncoder().encode(JSON.stringify(jsonLinks)));
             } catch (oneError) {
                 alert(oneError);
             }

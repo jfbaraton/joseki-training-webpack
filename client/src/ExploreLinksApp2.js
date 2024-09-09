@@ -1,10 +1,10 @@
-import { testData, explorer } from './utils/testData';
+;
 import FolderTree from './components/FolderTree/FolderTree';
 import {useEffect, useState} from "react";
 //import 'react-folder-tree/dist/style.css';
 
-export default function ExploreLinksApp2({onLinkClick, getCurrentLinkSGF}) {
-    const [fileStructure, setFileStructure] = useState(explorer);
+export default function ExploreLinksApp2({data, onLinkClick, getCurrentLinkSGF, onChange}) {
+    const [fileStructure, setFileStructure] = useState(data);
     const [isEdited, setIsEdited] = useState(true);
 
     useEffect(() => {
@@ -25,6 +25,7 @@ export default function ExploreLinksApp2({onLinkClick, getCurrentLinkSGF}) {
     return (
         <FolderTree
             data={ fileStructure }
+            onChange={ onChange }
             onNameClick={onLinkClick}
             getCurrentLinkSGF={getCurrentLinkSGF}
             readOnly={!isEdited}

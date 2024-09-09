@@ -53,7 +53,7 @@
     </div>
   </div>
 
-  <div class="Tab" id="learnTab" style="display:block">
+  <div class="Tab" id="learnTab" style="display:none">
     <div id="progress_container" style="display:none">
       <table>
         <tr><th></th><th>variations found</th><th>success</th></tr>
@@ -65,7 +65,6 @@
   </div>
 
   <div class="Tab" id="otherTab" style="display:none">
-    <input type="file" id="file-selector" accept=".sgf, .rsgf">
     <div class="buttons">
       <a class="download" href="#" title="donwload current SGF">Download Current SGF</a>
     </div>
@@ -77,9 +76,10 @@
       <a class="joseki" href="#" title="This move should be considered a joseki (this can also be for outdated joseki that dont have a clear refutation, and for joseki that are only good enough for amateur players)">Joseki !</a>
     </div>
   </div>
-  <div class="Tab" id="exploreTab" style="display:none">
+  <div class="Tab" id="exploreTab" style="display:block">
     <!-- load content from .GC if exists -->
     <div id="folderRoot"></div>
+    <input type="file" id="file-selector" accept=".sgf, .rsgf">
 
   </div>
   <div class="branch-info" style="width:600px;"><p>&nbsp;</p></div>

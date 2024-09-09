@@ -43,6 +43,25 @@ export const initStateWithUniqIds = rootNode => {
     return _addId(deepClone(rootNode));
 };
 
+// returns a minimal size tree (for storing), with only name, sgf and children properties 
+export const getCleanState = rootNode => {
+    const _getMinimal = (node,result) => {
+		result.name = node.name;
+		result.sgf = node.sgf;
+        const { children } = node;
+        if (children) {
+			result.children = [];
+            for (const child of children) {
+                result.children.push(_getMinimal(child, {}));
+            }
+        }
+
+        return result;
+    };
+
+    return _getMinimal(rootNode, {});
+};
+
 // recursively set status for this node and all children, in place
 const setStatusDown = (node, status) => {
     node.checked = status;  // eslint-disable-line

@@ -1,5 +1,7 @@
 var sgf = require('smartgame');
 
+var WGo = require('wgo');
+
 // how many points can you lose in one move and still consider it "joseki"?
 //const JOSEKI_MARGIN = 2.3;
 const JOSEKI_MARGIN = 4;
@@ -7,6 +9,12 @@ const JOSEKI_MARGIN = 4;
 module.exports = {
     getEmptySGF: function() {
         return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])');
+    },
+    get2MoveSGF: function() {
+        return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[pd];W[dp])');
+    },
+    get8MoveSGF: function() {
+        return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[pd];W[dp];B[qf];W[dn];B[em];W[dm];B[ek];W[jj])');
     },
 
     makeNodeFromOGS: function(ogsMove, BorW) {
@@ -70,6 +78,34 @@ module.exports = {
         }
         let pts={0:"a",1:"b",2:"c",3:"d",4:"e",5:"f",6:"g",7:"h",8:"i",9:"j",10:"k",11:"l",12:"m",13:"n",14:"o",15:"p",16:"q",17:"r",18:"s"};
         return pts[pt.x]+pts[pt.y];
+    },
+
+    // B."pd" -> "B Q16"
+    SGFToHuman: function (sgfNode) {
+        if(!sgfNode || (typeof sgfNode.B === "undefined" && typeof sgfNode.W === "undefined" )) return "";
+        let result = "play "+ (typeof sgfNode.B === "undefined" ? "W " : "B ");
+        const SGFmoveString = typeof sgfNode.B === "undefined" ? sgfNode.W : sgfNode.B;
+        const movePoint = this.sgfCoordToPoint(SGFmoveString);
+
+        result += this.pointToHuman(movePoint);
+        return result;
+    },
+
+    pointToHuman:function(pt){
+        if(!pt || pt.pass){
+            return "PASS";
+        }
+        const pts={0:"A",1:"B",2:"C",3:"D",4:"E",5:"F",6:"G",7:"H",8:"J",9:"K",10:"L",11:"M",12:"N",13:"O",14:"P",15:"Q",16:"R",17:"S",18:"T"};
+        return pts[pt.x]+(19-pt.y);
+    },
+
+    humanToPoint: function (moveHumanString) {
+        if(!moveHumanString || typeof moveHumanString !== "string" || moveHumanString === "root") return null;
+        if(moveHumanString === "pass") return "";
+        let x = moveHumanString.substring(0,1).charCodeAt(0)-'A'.charCodeAt(0);
+        if(x>=8) x--; // letter 'i' is skipped
+        const y = 19-parseInt(moveHumanString.substring(1));
+        return {y: y, x:x};
     },
 
     getAllPossibleTransform:function(){
@@ -1022,5 +1058,427 @@ module.exports = {
                 }
             }
         });
+    },
+
+
+    getBoardState :function (boardCanvasCtx, rect)  {
+        //console.log(canvas.toDataURL());
+        const width = rect[1][1][0]- rect[0][1][0];
+        const height = rect[0][0][1]-rect[0][1][1];
+        const origX = rect[0][1][0]+width/20;
+        const origY = rect[0][1][1]+height/20;
+        //const origX = rect[0][1][0];
+        //const origY = rect[0][1][1];
+        const gridSizeX = width/21;
+        const gridSizeY = height/21;
+        /*const gridOffset = 3;
+        const isBoardEmpty = true;
+        const lastMove :object = null;*/
+        const boardState = [];
+        const result = {};
+        for (let idx = 0;idx<19;idx++) {
+            boardState.push([]);
+            for (let idy = 0;idy<19;idy++) {
+                const imageData = boardCanvasCtx.getImageData(origX+idx*gridSizeX, origY+idy*gridSizeY, gridSizeX, gridSizeY);
+                const avgPxl = this.getAvgPixel(imageData);
+                const crossline = this.getPhotoPixelTypeAsObject(avgPxl);
+                if( idx <= 19 ) {
+                    //boardCanvasCtx.putImageData(imageData, 350+idx*(gridSizeX+gridOffset), 0+idy*(gridSizeY+gridOffset));
+                    console.log("read "+crossline.color+" ",origX+idx*gridSizeX, origY+idy*gridSizeY, gridSizeX, gridSizeY, avgPxl, JSON.stringify(imageData.data))
+                    boardCanvasCtx.putImageData(imageData, idx*(gridSizeX+2), 200+idy*(gridSizeY+2));
+                    /*this.drawCircleInternal(idx,idy,boardCanvasCtx,
+                        origX+idx*gridSizeX+gridSizeX/2,
+                        origY+idy*gridSizeY+gridSizeY/2,
+                        gridSizeX/2, "blue", crossline.color === "Board" ? "0" : crossline.color);*/
+                }
+                crossline.x = idx;
+                crossline.y = idy;
+                boardState[idx].push(crossline);
+                if (crossline.isLast) {
+                    result.hasLast = crossline.isLast;
+                    result.lastMove = crossline;
+                }
+                //boardCanvasCtx.putImageData(imageData, 430, 50);
+                //boardCanvasCtx.putImageData(imageData, 500, 100);
+            }
+        }
+        console.log(result);
+        result.boardState = boardState;
+        return result;
+    },
+
+
+    getAvgPixel : function (oneIMG) {
+        const pix = oneIMG.data;
+
+        const avgPix = [pix[0],pix[1],pix[2],pix[3]];
+        let cpt = 1;
+        for(let i=4;i<pix.length;i+=4) {
+            avgPix[0] = avgPix[0]*(cpt/(cpt+1)) + pix[i]/(cpt+1);
+            avgPix[1] = avgPix[1]*(cpt/(cpt+1)) + pix[i+1]/(cpt+1);
+            avgPix[2] = avgPix[2]*(cpt/(cpt+1)) + pix[i+2]/(cpt+1);
+            avgPix[3] = avgPix[3]*(cpt/(cpt+1)) + pix[i+3]/(cpt+1);
+            cpt++;
+        }
+        return avgPix;
+    },
+    getPixelTypeAsString : function (avgPix, p_thresholds)  {
+        const thresholds = p_thresholds || [125,50,145,125,125]
+        if(avgPix[3] < thresholds[0]) {
+            return "Board";
+        }
+        if(avgPix[0] < thresholds[1]) {
+            return "Black";
+        }
+        if(avgPix[0] > thresholds[2]) {
+            return "White";
+        }
+        if(avgPix[0] > thresholds[3]) {
+            console.log("WL ",avgPix)
+            return "White Last";
+        }
+        if(avgPix[0] < thresholds[4]) {
+            console.log("BL ",avgPix)
+            return "Black Last";
+        }
+    },
+    getPhotoPixelTypeAsString : function (avgPix, p_thresholds)  {
+        const thresholds = p_thresholds || [150,150,200,125,125]
+        if(avgPix[2] < thresholds[0] && avgPix[0] > thresholds[0]) {
+            return "Board";
+        }
+        if(avgPix[0] < thresholds[0] && avgPix[2] < thresholds[0]) {
+            return "Black";
+        }
+        if(avgPix[0] > thresholds[0] && avgPix[2] > thresholds[0]) {
+            return "White";
+        }
+        if(avgPix[0] > thresholds[3]) {
+            //console.log("WL ",avgPix)
+            return "White Last";
+        }
+        if(avgPix[0] < thresholds[4]) {
+            //console.log("BL ",avgPix)
+            return "Black Last";
+        }
+        console.log("NULL ",avgPix, thresholds, avgPix[2] < thresholds[0] , avgPix[1] > thresholds[1],avgPix[2] < thresholds[0],avgPix[0] > thresholds[2])
+    },
+    getPixelTypeAsObject : function (avgPix)  {
+        const type = this.getPixelTypeAsString(avgPix);
+        const result = {
+            color : type === "Board" ? null : type.indexOf("White") === 0 ? "W" : "B",
+            isBoard : type === "Board",
+            isLast : type.indexOf("Last") > 0
+        };
+        return result;
+    },
+    getPhotoPixelTypeAsObject : function (avgPix)  {
+        const type = this.getPhotoPixelTypeAsString(avgPix);
+        const result = {
+            color : type === "Board" ? null : type.indexOf("White") === 0 ? "W" : "B",
+            isBoard : type === "Board",
+            isLast : type.indexOf("Last") > 0
+        };
+        return result;
+    },
+
+    getAnalyzeAllowClause : function(color, candidateMoves) {
+        if(!candidateMoves) return "";
+        //allow PLAYER VERTEX,VERTEX,... UNTILDEPTH
+        return " allow "+color+" "+candidateMoves.join(",")+" 1";
+    },
+
+    // currentMove is a string like "Move 10"
+    getGTPCommand: function(SGFString, currentMove, candidateMoves, isFirstCommand, pAnalyzeColor) {
+        let currentMoveNumber = 10000;
+        if(currentMove) {
+            try{
+                currentMoveNumber = parseInt(currentMove.split(" ")[1]);
+                //console.log("will limit to currentMoveNumber");
+            } catch(e) {
+                //console.log("could not parse move currentMoveNumber")
+            }
+        }
+        const SGFgame = sgf.parse(SGFString);
+        let initCMD = "time_settings 0 5 1\nkomi 7.5\nboardsize 19\nclear_board\n";
+        let nodeIdx= 0;
+        let nodeParent = SGFgame.gameTrees[0]
+        let nodes = nodeParent.nodes;
+        let lastNode = null;
+        let cursorMoveNumber = 0;
+        //console.log("game tree ",SGFgame.gameTrees[0])
+        while (nodeIdx < nodes.length && cursorMoveNumber <= currentMoveNumber) {
+            cursorMoveNumber++;
+            //console.log("nodes.length ",nodes.length, nodes)
+            lastNode = nodes[nodeIdx];
+            initCMD += this.SGFToHuman(lastNode)+"\n";
+            nodeIdx++;
+            if(nodeIdx >= nodes.length && nodeParent.sequences && nodeParent.sequences.length && nodeParent.sequences[0].nodes) {
+                nodeIdx = 0;
+                nodeParent = nodeParent.sequences[0]
+                nodes = nodeParent.nodes;
+            }
+
+        }
+        //console.log("genmove after ",cursorMoveNumber, typeof lastNode.W !== "undefined", lastNode)
+        const analyzeColor = pAnalyzeColor ? pAnalyzeColor : ((cursorMoveNumber<=1 || !lastNode || typeof lastNode.W !== "undefined")? "B" : "W" );
+        if(!isFirstCommand) {
+            initCMD = "";
+        }
+        const fullCmdWithAnalize = initCMD+"kata-analyze "+analyzeColor+" 60";
+        console.log("genmove after ",fullCmdWithAnalize)
+        return fullCmdWithAnalize+this.getAnalyzeAllowClause(analyzeColor, candidateMoves)+"\n";
+    },
+
+    //plays main variation until the end in WGo, and gets teh boardPosition
+    getBoardFromSGF : function (parsedSGF)  {
+        let game = new WGo.Game();
+        //console.log(game)
+        //game.play(4,4)
+        //console.log(game.positionStack[game.positionStack.length-1].grid)
+        let node = parsedSGF.gameTrees[0];
+        let nodeIdx = 1;
+        while(node && node.nodes.length>nodeIdx) {
+            const moveColor = typeof node.nodes[nodeIdx].B === "string" ? "B": "W";
+            const moveCoords = this.sgfCoordToPoint(node.nodes[nodeIdx][moveColor])
+            if (moveCoords && typeof moveCoords.x !== "undefined") {
+                //console.log('playing ',moveCoords, 'from', node.nodes[nodeIdx], ' or '+moveColor+ ' in ', node.nodes[nodeIdx][moveColor]);
+                game.play(moveCoords.x,moveCoords.y/*, moveColor === "B" ? WGo.B: WGo.W*/);
+            } else {
+                game.pass();
+            }
+
+            nodeIdx++;
+            if(node.nodes.length>nodeIdx && node.sequences) {
+                node = node.sequences[0];
+                nodeIdx = 0;
+            }
+        }
+
+        return game;
+    },
+
+    getBoardPositionFromSGF : function (parsedSGF)  {
+        const game = this.getBoardFromSGF(parsedSGF)
+        return game.positionStack[game.positionStack.length-1].grid;
+    },
+
+    getVisibleMovesFromGrid : function (grid) {
+        const result = {
+            B:[],
+            W:[]
+        }
+        grid.forEach((value, index) => {
+            if(value === WGo.Color.B) {
+                result.B.push(this.coordinatesFor(index % 19, (index-index%19)/19 ))
+            } else if(value === WGo.Color.W) {
+                result.W.push(this.coordinatesFor(index % 19, (index-index%19)/19 ))
+            }
+        })
+        return result;
+    },
+
+    getSGFFromVisibleMoves : async function (visibleMoves, pEngine)  {
+        const engine = (!pEngine || !pEngine.isEngineOn()) ? null: pEngine;
+        let result = '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19]';
+        let blackMoves = visibleMoves.B;
+        let whiteMoves = visibleMoves.W;
+        const amountOfBlackMoves = blackMoves.length;
+        const amountOfWhiteMoves = whiteMoves.length;
+        const moveStatArchives = {};
+        for (let movIdx = 0; movIdx < amountOfBlackMoves || movIdx < amountOfWhiteMoves; movIdx++) {
+            if(movIdx < amountOfBlackMoves) {
+                let chosenMove = await this.chooseMoveAmong(result+")", blackMoves, "B", moveStatArchives, movIdx, engine);
+                result += ";B["+this.humanToSgfCoord(chosenMove)+"]";
+                if(engine && engine.isEngineOn()) {
+                    await this.getRespFromEngine(engine, "play B "+chosenMove+"\n", 50);
+
+                }
+            }
+            if(movIdx < amountOfWhiteMoves) {
+                let chosenMove = await this.chooseMoveAmong(result+")", whiteMoves, "W", moveStatArchives, movIdx, engine);
+                result += ";W["+this.humanToSgfCoord(chosenMove)+"]";
+                if(engine && engine.isEngineOn()) {
+                    await this.getRespFromEngine(engine, "play W "+chosenMove+"\n", 50);
+                }
+            }
+        }
+        console.log('RETURN SGF!!!!!!!!!!!!!!!!!!!');
+        return result+")";
+    },
+
+    /*
+    avoidMoves (list of dicts): Optional. Prohibit the search from exploring the specified moves for the specified player, until a certain number of ply deep in the search. Each dict must contain these fields:
+        player - the player to prohibit, "B" or "W".
+        moves - an array of move locations to prohibit, such as ["C3","Q4","pass"]
+        untilDepth - a positive integer, indicating the ply such that moves are prohibited before that ply.
+    Multiple dicts can specify different untilDepth for different sets of moves. The behavior is unspecified if a move is specified more than once with different untilDepth.
+
+    allowMoves (list of dicts): Optional. Same as avoidMoves except prohibits all moves EXCEPT the moves specified. Currently, the list of dicts must also be length 1.
+
+    allow PLAYER VERTEX,VERTEX,... UNTILDEPTH
+
+    kata-analyze B 70 allow B Q16,Q17 1
+     */
+    chooseMoveAmong : async function (SGFBeforeMove, candidateMoves, color, moveStatArchives, movIdx, engine)  {
+        console.log('chooseMoveAmong START '+color);
+        let chosenMoveIdx = movIdx;
+        if (engine && engine.isEngineOn()) {
+            console.log('chooseMoveAmong ENGINE OK ',candidateMoves, engine.isFirstCommand);
+            await this.getRespFromEngine(engine,this.getGTPCommand(SGFBeforeMove, null, candidateMoves, engine.isFirstCommand))
+            console.log('chooseMoveAmong engine RESPONDED ', engine.isFirstCommand/*,engine.engineResHolder[0]*/);
+            // choose move
+            const evaluations = this.parseSuggestions(engine.engineResHolder[0], candidateMoves, color)
+            console.log('chooseMoveAmong engine Evaluated ',evaluations);
+            chosenMoveIdx = this.getChosenMoveIdx(evaluations, candidateMoves);
+
+        } else {
+            console.log('chooseMoveAmong NO ENGINE !!!!!!!!! ',engine);
+        }
+        console.log('chooseMoveAmong END '+color, chosenMoveIdx);
+        return candidateMoves[chosenMoveIdx];
+    },
+
+    getRespFromEngineAfter2Seconds : function (engine, delay, cmd) {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                engine.getStdin().write("\n");
+
+                console.log('done getRespFromEngineAfter', delay || 2000, cmd);
+                resolve(engine.engineResHolder[0]);
+            }, delay || 2000);
+        });
+    },
+
+    getRespFromEngine : async function (engine, cmd, delay) {
+        console.log('calling ', cmd);
+        engine.engineResHolder[0] = '';
+        engine.getStdin().write(cmd);
+        engine.engineResHolder[0] = '';
+        console.log('CLEAR resp buffer after calling ', cmd);
+        engine.isFirstCommand = false;
+        const result = await this.getRespFromEngineAfter2Seconds(engine, delay, cmd);
+        console.log(result);
+        // Expected output: "resolved"
+    },
+
+    getChosenMoveIdx : function (evaluations, candidateMoves, defaultResult) {
+        let result = typeof defaultResult === "undefined" ? -1 : defaultResult;
+        evaluations.possibleMoves.forEach(oneEval => {
+            if(result === -1 || evaluations.moveScores[oneEval]>evaluations.moveScores[candidateMoves[result]]) {
+                console.log(evaluations.moveScores[oneEval]+ " better than "+evaluations.moveScores[candidateMoves[result]]);
+                console.log(oneEval+ " better than "+(result === -1  ? -1 : candidateMoves[result]));
+                result = candidateMoves.indexOf(oneEval);
+            }
+        });
+        return result;
+    },
+
+    parseSuggestions : function (response, candidateMoves, color) {
+        const result = {
+            bestMoveScore : -1000,
+            possibleMoves : [],
+            moveScores : {}
+        };
+        if(response && typeof response === "string" && response.indexOf('info move') >= 0) {
+            //console.log("renderSuggestions");
+            //overlay_goban.clearCanvas();
+            const lastResponse = response.split('info move ');
+            lastResponse.splice(0,1);
+
+            //console.log('response[0]' , response[0]);
+            // console.log('lastResponse[0]' , lastResponse[0]);
+            //console.log('lastResponse[1]' , lastResponse[1]);
+            let bestMoveScore = -1000;
+            //let maxMoveSuggestions = 20;
+            let maxMoveSuggestions = 400;
+
+            //let kataMoveSet = firstResponse[firstResponse.length-1];
+            for(let moveIdx = 0; moveIdx < lastResponse.length && maxMoveSuggestions >0; moveIdx++){
+                const moveSetInfo = lastResponse[moveIdx].split(' ');
+                const kataMove = moveSetInfo[0];
+                const scoreIdx = moveSetInfo.indexOf('scoreMean');
+                if(scoreIdx > 0 && (!candidateMoves || candidateMoves.indexOf(kataMove) >-1)) {
+                    //console.log('parsing '+moveSetInfo[scoreIdx+1])
+                    const scoreMean = parseFloat(moveSetInfo[scoreIdx+1]);
+                    //console.log('move ',moveIdx, ' score at ',scoreIdx );
+                    if(bestMoveScore < scoreMean) {
+                        bestMoveScore = scoreMean;
+                    }
+
+                    if(scoreMean > bestMoveScore-4) {
+                        maxMoveSuggestions--;
+                        let color = "#6666FF"; // blue
+                        //if(scoreMean == -1 && moveIdx > 0) {
+                        if(scoreMean > bestMoveScore-2) {
+                            color = "#6666FF"; // blue
+                        } else if(scoreMean > bestMoveScore-3) {
+                            color = "#11FF11";// green
+                            //} else if(scoreMean == -2) {
+                        } else if(scoreMean > bestMoveScore-4) {
+                            color = "#AA6622";// orange
+                            //} else if(scoreMean <= -3) {
+                        } else /*if(scoreMean > bestMoveScore-4)*/ {
+                            color = "#FF3333";// red
+                        }
+                        //const kataPoint = this.humanToPoint(kataMove);
+                        //isRenderedOnce = true;
+                        //overlay_goban.drawCircle(kataPoint.x, kataPoint.y, color, scoreMean);
+                        result.bestMoveScore = bestMoveScore;
+                        if(result.possibleMoves.indexOf(kataMove) === -1) {
+                            result.possibleMoves.push(kataMove);
+                        }
+                        result.moveScores[kataMove] = scoreMean;
+                    }
+                }
+            }
+        } else {
+            //console.log('not renderable ', response);
+            console.log('not renderable');
+        }
+        return result;
+    },
+
+    getSGFFromBoard : function (boardState)  {
+        const blackMoves = [];
+        const whiteMoves = [];
+        for (let gridX = 0; gridX < 19; gridX++) {
+            for (let gridY = 0; gridY < 19; gridY++) {
+                if(gridX === 16) console.log(boardState.boardState[gridX][gridY].color, boardState.boardState[gridX][gridY].color === "W")
+                if(boardState.boardState[gridX][gridY].color && !boardState.boardState[gridX][gridY].isLast) {
+                    if(boardState.boardState[gridX][gridY].color === "W") {
+                        if(gridX === 16) console.log("is W")
+                        whiteMoves.push(this.pointToSgfCoord({x:gridX,y:gridY}));
+                    } else if(boardState.boardState[gridX][gridY].color === "B") {
+                        blackMoves.push(this.pointToSgfCoord({x:gridX,y:gridY}));
+                    } else {
+                        console.log("error ",boardState.boardState[gridX][gridY]);
+                    }
+                }
+            }
+        }
+        console.log("blackMoves.length ,whiteMoves.length" ,blackMoves.length,  whiteMoves.length)
+        let result = '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19]';
+
+        for (let movIdx = 0; movIdx < blackMoves.length || movIdx < whiteMoves.length; movIdx++) {
+            if(movIdx < blackMoves.length) {
+                result += ";B["+blackMoves[movIdx]+"]";
+            }
+            if(movIdx < whiteMoves.length) {
+                result += ";W["+whiteMoves[movIdx]+"]";
+            }
+        }
+        // add last move
+        if (boardState.lastMove) {
+            if(boardState.lastMove.color === "W") {
+                result += ";W["+this.pointToSgfCoord({x:boardState.lastMove.x,y:boardState.lastMove.y})+"]";
+            } else if(boardState.lastMove.color === "B") {
+                result += ";B["+this.pointToSgfCoord({x:boardState.lastMove.x,y:boardState.lastMove.y})+"]";
+            } else {
+                console.log("error ",boardState.lastMove);
+            }
+        }
+        return result+")";
+
     }
 };

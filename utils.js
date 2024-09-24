@@ -5,6 +5,7 @@ var WGo = require('wgo');
 // how many points can you lose in one move and still consider it "joseki"?
 //const JOSEKI_MARGIN = 2.3;
 const JOSEKI_MARGIN = 4;
+const KATA_ANALYZE_TIME_MS = 600; // multiple of 10 please
 
 module.exports = {
     getEmptySGF: function() {
@@ -1103,7 +1104,7 @@ module.exports = {
         if(!isFirstCommand) {
             initCMD = "";
         }
-        const fullCmdWithAnalize = initCMD+"kata-analyze "+analyzeColor+" 60";
+        const fullCmdWithAnalize = initCMD+"kata-analyze "+analyzeColor+" "+KATA_ANALYZE_TIME_MS/10;
         //console.log("genmove after ",fullCmdWithAnalize)
         return fullCmdWithAnalize+this.getAnalyzeAllowClause(analyzeColor, candidateMoves)+"\n";
     },
@@ -1169,7 +1170,7 @@ module.exports = {
                 let chosenMove = await this.chooseMoveAmong(result+")", blackMoves, "B", moveStatArchives, movIdx, engine);
                 result += ";B["+this.humanToSgfCoord(chosenMove)+"]";
                 if(engine && engine.isEngineOn()) {
-                    await this.getRespFromEngine(engine, "play B "+chosenMove+"\n", 50);
+                    await this.getRespFromEngine(engine, "play B "+chosenMove+"\n", 25);
 
                 }
             }
@@ -1177,7 +1178,7 @@ module.exports = {
                 let chosenMove = await this.chooseMoveAmong(result+")", whiteMoves, "W", moveStatArchives, movIdx, engine);
                 result += ";W["+this.humanToSgfCoord(chosenMove)+"]";
                 if(engine && engine.isEngineOn()) {
-                    await this.getRespFromEngine(engine, "play W "+chosenMove+"\n", 50);
+                    await this.getRespFromEngine(engine, "play W "+chosenMove+"\n", 25);
                 }
             }
         }
@@ -1203,10 +1204,10 @@ module.exports = {
         let chosenMoveIdx = movIdx;
         if (engine && engine.isEngineOn()) {
             //console.log('chooseMoveAmong ENGINE OK ',candidateMoves, engine.isFirstCommand);
-            await this.getRespFromEngine(engine,this.getGTPCommand(SGFBeforeMove, null, candidateMoves, engine.isFirstCommand))
+            const engineRest = await this.getRespFromEngine(engine,this.getGTPCommand(SGFBeforeMove, null, candidateMoves, engine.isFirstCommand))
             //console.log('chooseMoveAmong engine RESPONDED ', engine.isFirstCommand/*,engine.engineResHolder[0]*/);
             // choose move
-            const evaluations = this.parseSuggestions(engine.engineResHolder[0], candidateMoves, color)
+            const evaluations = this.parseSuggestions(engineRest, candidateMoves, color)
             //console.log('chooseMoveAmong engine Evaluated ',evaluations);
             chosenMoveIdx = this.getChosenMoveIdx(evaluations, candidateMoves);
 
@@ -1222,9 +1223,9 @@ module.exports = {
             setTimeout(() => {
                 engine.getStdin().write("\n");
 
-                //console.log('done getRespFromEngineAfter', delay || 2000, cmd);
+                //console.log('done getRespFromEngineAfter', delay || KATA_ANALYZE_TIME_MS, cmd);
                 resolve(engine.engineResHolder[0]);
-            }, delay || 2000);
+            }, delay || KATA_ANALYZE_TIME_MS+80);
         });
     },
 
@@ -1237,7 +1238,7 @@ module.exports = {
         engine.isFirstCommand = false;
         const result = await this.getRespFromEngineAfter2Seconds(engine, delay, cmd);
         //console.log(result);
-        // Expected output: "resolved"
+        return result;
     },
 
     getChosenMoveIdx : function (evaluations, candidateMoves, defaultResult) {

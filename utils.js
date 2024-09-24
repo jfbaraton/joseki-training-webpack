@@ -1060,128 +1060,6 @@ module.exports = {
         });
     },
 
-
-    getBoardState :function (boardCanvasCtx, rect)  {
-        //console.log(canvas.toDataURL());
-        const width = rect[1][1][0]- rect[0][1][0];
-        const height = rect[0][0][1]-rect[0][1][1];
-        const origX = rect[0][1][0]+width/20;
-        const origY = rect[0][1][1]+height/20;
-        //const origX = rect[0][1][0];
-        //const origY = rect[0][1][1];
-        const gridSizeX = width/21;
-        const gridSizeY = height/21;
-        /*const gridOffset = 3;
-        const isBoardEmpty = true;
-        const lastMove :object = null;*/
-        const boardState = [];
-        const result = {};
-        for (let idx = 0;idx<19;idx++) {
-            boardState.push([]);
-            for (let idy = 0;idy<19;idy++) {
-                const imageData = boardCanvasCtx.getImageData(origX+idx*gridSizeX, origY+idy*gridSizeY, gridSizeX, gridSizeY);
-                const avgPxl = this.getAvgPixel(imageData);
-                const crossline = this.getPhotoPixelTypeAsObject(avgPxl);
-                if( idx <= 19 ) {
-                    //boardCanvasCtx.putImageData(imageData, 350+idx*(gridSizeX+gridOffset), 0+idy*(gridSizeY+gridOffset));
-                    console.log("read "+crossline.color+" ",origX+idx*gridSizeX, origY+idy*gridSizeY, gridSizeX, gridSizeY, avgPxl, JSON.stringify(imageData.data))
-                    boardCanvasCtx.putImageData(imageData, idx*(gridSizeX+2), 200+idy*(gridSizeY+2));
-                    /*this.drawCircleInternal(idx,idy,boardCanvasCtx,
-                        origX+idx*gridSizeX+gridSizeX/2,
-                        origY+idy*gridSizeY+gridSizeY/2,
-                        gridSizeX/2, "blue", crossline.color === "Board" ? "0" : crossline.color);*/
-                }
-                crossline.x = idx;
-                crossline.y = idy;
-                boardState[idx].push(crossline);
-                if (crossline.isLast) {
-                    result.hasLast = crossline.isLast;
-                    result.lastMove = crossline;
-                }
-                //boardCanvasCtx.putImageData(imageData, 430, 50);
-                //boardCanvasCtx.putImageData(imageData, 500, 100);
-            }
-        }
-        console.log(result);
-        result.boardState = boardState;
-        return result;
-    },
-
-
-    getAvgPixel : function (oneIMG) {
-        const pix = oneIMG.data;
-
-        const avgPix = [pix[0],pix[1],pix[2],pix[3]];
-        let cpt = 1;
-        for(let i=4;i<pix.length;i+=4) {
-            avgPix[0] = avgPix[0]*(cpt/(cpt+1)) + pix[i]/(cpt+1);
-            avgPix[1] = avgPix[1]*(cpt/(cpt+1)) + pix[i+1]/(cpt+1);
-            avgPix[2] = avgPix[2]*(cpt/(cpt+1)) + pix[i+2]/(cpt+1);
-            avgPix[3] = avgPix[3]*(cpt/(cpt+1)) + pix[i+3]/(cpt+1);
-            cpt++;
-        }
-        return avgPix;
-    },
-    getPixelTypeAsString : function (avgPix, p_thresholds)  {
-        const thresholds = p_thresholds || [125,50,145,125,125]
-        if(avgPix[3] < thresholds[0]) {
-            return "Board";
-        }
-        if(avgPix[0] < thresholds[1]) {
-            return "Black";
-        }
-        if(avgPix[0] > thresholds[2]) {
-            return "White";
-        }
-        if(avgPix[0] > thresholds[3]) {
-            console.log("WL ",avgPix)
-            return "White Last";
-        }
-        if(avgPix[0] < thresholds[4]) {
-            console.log("BL ",avgPix)
-            return "Black Last";
-        }
-    },
-    getPhotoPixelTypeAsString : function (avgPix, p_thresholds)  {
-        const thresholds = p_thresholds || [150,150,200,125,125]
-        if(avgPix[2] < thresholds[0] && avgPix[0] > thresholds[0]) {
-            return "Board";
-        }
-        if(avgPix[0] < thresholds[0] && avgPix[2] < thresholds[0]) {
-            return "Black";
-        }
-        if(avgPix[0] > thresholds[0] && avgPix[2] > thresholds[0]) {
-            return "White";
-        }
-        if(avgPix[0] > thresholds[3]) {
-            //console.log("WL ",avgPix)
-            return "White Last";
-        }
-        if(avgPix[0] < thresholds[4]) {
-            //console.log("BL ",avgPix)
-            return "Black Last";
-        }
-        console.log("NULL ",avgPix, thresholds, avgPix[2] < thresholds[0] , avgPix[1] > thresholds[1],avgPix[2] < thresholds[0],avgPix[0] > thresholds[2])
-    },
-    getPixelTypeAsObject : function (avgPix)  {
-        const type = this.getPixelTypeAsString(avgPix);
-        const result = {
-            color : type === "Board" ? null : type.indexOf("White") === 0 ? "W" : "B",
-            isBoard : type === "Board",
-            isLast : type.indexOf("Last") > 0
-        };
-        return result;
-    },
-    getPhotoPixelTypeAsObject : function (avgPix)  {
-        const type = this.getPhotoPixelTypeAsString(avgPix);
-        const result = {
-            color : type === "Board" ? null : type.indexOf("White") === 0 ? "W" : "B",
-            isBoard : type === "Board",
-            isLast : type.indexOf("Last") > 0
-        };
-        return result;
-    },
-
     getAnalyzeAllowClause : function(color, candidateMoves) {
         if(!candidateMoves) return "";
         //allow PLAYER VERTEX,VERTEX,... UNTILDEPTH
@@ -1226,7 +1104,7 @@ module.exports = {
             initCMD = "";
         }
         const fullCmdWithAnalize = initCMD+"kata-analyze "+analyzeColor+" 60";
-        console.log("genmove after ",fullCmdWithAnalize)
+        //console.log("genmove after ",fullCmdWithAnalize)
         return fullCmdWithAnalize+this.getAnalyzeAllowClause(analyzeColor, candidateMoves)+"\n";
     },
 
@@ -1303,7 +1181,7 @@ module.exports = {
                 }
             }
         }
-        console.log('RETURN SGF!!!!!!!!!!!!!!!!!!!');
+        //console.log('RETURN SGF!!!!!!!!!!!!!!!!!!!');
         return result+")";
     },
 
@@ -1321,21 +1199,21 @@ module.exports = {
     kata-analyze B 70 allow B Q16,Q17 1
      */
     chooseMoveAmong : async function (SGFBeforeMove, candidateMoves, color, moveStatArchives, movIdx, engine)  {
-        console.log('chooseMoveAmong START '+color);
+        //console.log('chooseMoveAmong START '+color);
         let chosenMoveIdx = movIdx;
         if (engine && engine.isEngineOn()) {
-            console.log('chooseMoveAmong ENGINE OK ',candidateMoves, engine.isFirstCommand);
+            //console.log('chooseMoveAmong ENGINE OK ',candidateMoves, engine.isFirstCommand);
             await this.getRespFromEngine(engine,this.getGTPCommand(SGFBeforeMove, null, candidateMoves, engine.isFirstCommand))
-            console.log('chooseMoveAmong engine RESPONDED ', engine.isFirstCommand/*,engine.engineResHolder[0]*/);
+            //console.log('chooseMoveAmong engine RESPONDED ', engine.isFirstCommand/*,engine.engineResHolder[0]*/);
             // choose move
             const evaluations = this.parseSuggestions(engine.engineResHolder[0], candidateMoves, color)
-            console.log('chooseMoveAmong engine Evaluated ',evaluations);
+            //console.log('chooseMoveAmong engine Evaluated ',evaluations);
             chosenMoveIdx = this.getChosenMoveIdx(evaluations, candidateMoves);
 
         } else {
             console.log('chooseMoveAmong NO ENGINE !!!!!!!!! ',engine);
         }
-        console.log('chooseMoveAmong END '+color, chosenMoveIdx);
+        //console.log('chooseMoveAmong END '+color, chosenMoveIdx);
         return candidateMoves[chosenMoveIdx];
     },
 
@@ -1344,21 +1222,21 @@ module.exports = {
             setTimeout(() => {
                 engine.getStdin().write("\n");
 
-                console.log('done getRespFromEngineAfter', delay || 2000, cmd);
+                //console.log('done getRespFromEngineAfter', delay || 2000, cmd);
                 resolve(engine.engineResHolder[0]);
             }, delay || 2000);
         });
     },
 
     getRespFromEngine : async function (engine, cmd, delay) {
-        console.log('calling ', cmd);
+        //console.log('calling ', cmd);
         engine.engineResHolder[0] = '';
         engine.getStdin().write(cmd);
         engine.engineResHolder[0] = '';
-        console.log('CLEAR resp buffer after calling ', cmd);
+        //console.log('CLEAR resp buffer after calling ', cmd);
         engine.isFirstCommand = false;
         const result = await this.getRespFromEngineAfter2Seconds(engine, delay, cmd);
-        console.log(result);
+        //console.log(result);
         // Expected output: "resolved"
     },
 
@@ -1366,8 +1244,8 @@ module.exports = {
         let result = typeof defaultResult === "undefined" ? -1 : defaultResult;
         evaluations.possibleMoves.forEach(oneEval => {
             if(result === -1 || evaluations.moveScores[oneEval]>evaluations.moveScores[candidateMoves[result]]) {
-                console.log(evaluations.moveScores[oneEval]+ " better than "+evaluations.moveScores[candidateMoves[result]]);
-                console.log(oneEval+ " better than "+(result === -1  ? -1 : candidateMoves[result]));
+                //console.log(evaluations.moveScores[oneEval]+ " better than "+evaluations.moveScores[candidateMoves[result]]);
+                //console.log(oneEval+ " better than "+(result === -1  ? -1 : candidateMoves[result]));
                 result = candidateMoves.indexOf(oneEval);
             }
         });
@@ -1408,19 +1286,6 @@ module.exports = {
 
                     if(scoreMean > bestMoveScore-4) {
                         maxMoveSuggestions--;
-                        let color = "#6666FF"; // blue
-                        //if(scoreMean == -1 && moveIdx > 0) {
-                        if(scoreMean > bestMoveScore-2) {
-                            color = "#6666FF"; // blue
-                        } else if(scoreMean > bestMoveScore-3) {
-                            color = "#11FF11";// green
-                            //} else if(scoreMean == -2) {
-                        } else if(scoreMean > bestMoveScore-4) {
-                            color = "#AA6622";// orange
-                            //} else if(scoreMean <= -3) {
-                        } else /*if(scoreMean > bestMoveScore-4)*/ {
-                            color = "#FF3333";// red
-                        }
                         //const kataPoint = this.humanToPoint(kataMove);
                         //isRenderedOnce = true;
                         //overlay_goban.drawCircle(kataPoint.x, kataPoint.y, color, scoreMean);
@@ -1437,48 +1302,6 @@ module.exports = {
             console.log('not renderable');
         }
         return result;
-    },
-
-    getSGFFromBoard : function (boardState)  {
-        const blackMoves = [];
-        const whiteMoves = [];
-        for (let gridX = 0; gridX < 19; gridX++) {
-            for (let gridY = 0; gridY < 19; gridY++) {
-                if(gridX === 16) console.log(boardState.boardState[gridX][gridY].color, boardState.boardState[gridX][gridY].color === "W")
-                if(boardState.boardState[gridX][gridY].color && !boardState.boardState[gridX][gridY].isLast) {
-                    if(boardState.boardState[gridX][gridY].color === "W") {
-                        if(gridX === 16) console.log("is W")
-                        whiteMoves.push(this.pointToSgfCoord({x:gridX,y:gridY}));
-                    } else if(boardState.boardState[gridX][gridY].color === "B") {
-                        blackMoves.push(this.pointToSgfCoord({x:gridX,y:gridY}));
-                    } else {
-                        console.log("error ",boardState.boardState[gridX][gridY]);
-                    }
-                }
-            }
-        }
-        console.log("blackMoves.length ,whiteMoves.length" ,blackMoves.length,  whiteMoves.length)
-        let result = '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19]';
-
-        for (let movIdx = 0; movIdx < blackMoves.length || movIdx < whiteMoves.length; movIdx++) {
-            if(movIdx < blackMoves.length) {
-                result += ";B["+blackMoves[movIdx]+"]";
-            }
-            if(movIdx < whiteMoves.length) {
-                result += ";W["+whiteMoves[movIdx]+"]";
-            }
-        }
-        // add last move
-        if (boardState.lastMove) {
-            if(boardState.lastMove.color === "W") {
-                result += ";W["+this.pointToSgfCoord({x:boardState.lastMove.x,y:boardState.lastMove.y})+"]";
-            } else if(boardState.lastMove.color === "B") {
-                result += ";B["+this.pointToSgfCoord({x:boardState.lastMove.x,y:boardState.lastMove.y})+"]";
-            } else {
-                console.log("error ",boardState.lastMove);
-            }
-        }
-        return result+")";
-
     }
+
 };

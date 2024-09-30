@@ -14,6 +14,7 @@ var sucker  = require('./sucker');
 
 var exec = require('child_process').exec;
 var isEngineOn = false;
+var isEngineStarting = true;
 var currentRes = null;
 var result = '';
 var child = null;
@@ -49,6 +50,11 @@ const resetEngine = () => {
         if(data && data.indexOf('GTP ready, beginning main protocol loop')>=0) {
             console.log('Engine is READY Err')
             isEngineStarting = false;
+
+            if(currentRes && typeof currentRes.isFirstCommand !== "undefined") {
+                console.log("next cmd will be first cmd...");
+                currentRes.isFirstCommand = true;
+            }
         }
     });
 
@@ -58,7 +64,11 @@ const resetEngine = () => {
         isEngineOn = false;
         if(currentRes) {
             //currentRes.status(201).json({msg:'Engine died'});
-            currentRes = null;
+            //currentRes = null;
+            if(typeof currentRes.isFirstCommand !== "undefined") {
+                console.log("next cmd will be first cmd...");
+                currentRes.isFirstCommand = true;
+            }
         }
         resetEngine();
     });
@@ -93,13 +103,14 @@ const getEngineForLocalAsyncCalls = (cmd) => {
         engineResHolder : engineResHolder,
         write : (oneString) => {
             //console.log('RSP engine from local: ',oneString)
-            engineResHolder[0]=oneString;
+            engineResHolder[0]+=oneString;
             },
         getStdin : () => {
             //console.log('sending cmd to local engine')
             return child.stdin;
         },
         isEngineOn : () => isEngineOn,
+        isEngineStarting : () => isEngineOn && isEngineStarting,
         isFirstCommand : true
     }
     if(!isEngineOn) {
@@ -127,7 +138,12 @@ router.route('/SGFfromPos').get(async (req, res) => {
     // random (;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[ek];W[dm];B[em];W[dn];B[pd];W[dp];B[qf];W[jj])
     // Kata (;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[dp];B[qf];W[dn];B[em];W[dm];B[ek];W[jj])
     // real (;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[pd];W[dp];B[qf];W[dn];B[em];W[dm];B[ek];W[jj])
-    const finalBoardPosition = sgfutils.get8MoveSGF();
+    //const finalBoardPosition = sgfutils.get8MoveSGF();
+
+    // rand (;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[aq];W[ao];B[ar];W[ap];B[bk];W[bl];B[bp];W[bm];B[bq];W[bo];B[ce];W[br];B[cf];W[bs];B[cj];W[cd];B[ck];W[cn];B[cl];W[co];B[cm];W[cs];B[cp];W[dd];B[cq];W[df];B[cr];W[di];B[dg];W[dk];B[dj];W[dl];B[dm];W[dn];B[dp];W[dr];B[dq];W[eb];B[ej];W[ec];B[el];W[ek];B[eq];W[em];B[fb];W[en];B[fd];W[eo];B[fe];W[ep];B[fi];W[fk];B[fl];W[fp];B[fm];W[ge];B[fn];W[gj];B[fq];W[gk];B[fr];W[gl];B[fs];W[gp];B[gd];W[gq];B[gf];W[gr];B[gg];W[gs];B[gh];W[he];B[gn];W[hf];B[hc];W[hh];B[hg];W[hi];B[hk];W[ic];B[id];W[if];B[in];W[ig];B[jh];W[ih];B[jj];W[ip];B[jq];W[iq];B[kg];W[jc];B[ki];W[jd];B[kn];W[ji];B[ko];W[jp];B[kp];W[kh];B[kq];W[lg];B[lf];W[lh];B[ln];W[lo];B[lr];W[mc];B[mg];W[mi];B[mq];W[mj];B[nj];W[mk];B[nl];W[ml];B[nr];W[mm];B[oc];W[mp];B[ok];W[nk];B[om];W[np];B[oo];W[nq];B[op];W[oq];B[or];W[po];B[pe];W[pr];B[pf];W[qd];B[pg];W[qe];B[pp];W[qg];B[pq];W[qp];B[qb];W[qq];B[qf];W[qr];B[qh];W[rf];B[qi];W[rg];B[qn];W[rh];B[qo];W[ro];B[rn];W[rp])
+    // Kata (;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[pp];W[cd];B[dp];W[qd];B[jj];W[cn];B[cl];W[en];B[dm];W[dn];B[cp];W[fp];B[fq];W[gq];B[eq];W[gp];B[jq];W[di];B[fl];W[jp];B[kq];W[iq];B[kp];W[ip];B[kn];W[ec];B[gn];W[ep];B[fn];W[eo];B[in];W[bl];B[bk];W[bm];B[cj];W[dk];B[ck];W[bo];B[bp];W[gr];B[fr];W[dr];B[dq];W[br];B[cr];W[cs];B[cq];W[bs];B[ar];W[ap];B[aq];W[ao];B[bq];W[em];B[el];W[dl];B[dj];W[ek];B[ej];W[fk];B[cm];W[gl];B[fm];W[gj];B[hk];W[gk];B[fi];W[hi];B[gh];W[hh];B[cf];W[df];B[dg];W[gs];B[fs];W[co];B[ce];W[dd];B[gf];W[ji];B[ki];W[if];B[jh];W[hf];B[hg];W[ig];B[gg];W[ih];B[gd];W[ic];B[id];W[jd];B[hc];W[jc];B[fb];W[eb];B[oc];W[mc];B[pe];W[ge];B[fe];W[he];B[fd];W[qe];B[pf];W[qg];B[qf];W[rf];B[pg];W[rh];B[qh];W[rg];B[qi];W[qq];B[pq];W[qp];B[qo];W[pr];B[or];W[ro];B[qn];W[qr];B[rn];W[oq];B[nr];W[rp];B[qb];W[lo];B[ko];W[nq];B[mq];W[po];B[op];W[np];B[oo];W[mp];B[lr];W[mm];B[om];W[mk];B[nl];W[ml];B[ln];W[mi];B[nj];W[nk];B[ok];W[mj];B[mg];W[lh];B[kg];W[lg];B[lf];W[kh])
+    // real (;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[pp];W[cd];B[dp];W[qd];B[jj];W[cn];B[cl];W[en];B[dm];W[dn];B[cp];W[fp];B[fq];W[gq];B[eq];W[gp];B[jq];W[di];B[fl];W[jp];B[kq];W[iq];B[kp];W[ip];B[kn];W[ec];B[gn];W[ep];B[fn];W[eo];B[in];W[bl];B[bk];W[bm];B[cj];W[dk];B[ck];W[bo];B[bp];W[gr];B[fr];W[dr];B[dq];W[br];B[cr];W[cs];B[cq];W[bs];B[ar];W[ap];B[aq];W[ao];B[bq];W[em];B[el];W[dl];B[dj];W[ek];B[ej];W[fk];B[cm];W[gl];B[fm];W[gj];B[hk];W[gk];B[fi];W[hi];B[gh];W[hh];B[cf];W[df];B[dg];W[gs];B[fs];W[co];B[ce];W[dd];B[gf];W[ji];B[ki];W[if];B[jh];W[hf];B[hg];W[ig];B[gg];W[ih];B[gd];W[ic];B[id];W[jd];B[hc];W[jc];B[fb];W[eb];B[oc];W[mc];B[pe];W[ge];B[fe];W[he];B[fd];W[qe];B[pf];W[qg];B[qf];W[rf];B[pg];W[rh];B[qh];W[rg];B[qi];W[qq];B[pq];W[qp];B[qo];W[pr];B[or];W[ro];B[qn];W[qr];B[rn];W[oq];B[nr];W[rp];B[qb];W[lo];B[ko];W[nq];B[mq];W[po];B[op];W[np];B[oo];W[mp];B[lr];W[mm];B[om];W[mk];B[nl];W[ml];B[ln];W[mi];B[nj];W[nk];B[ok];W[mj];B[mg];W[lh];B[kg];W[lg];B[lf];W[kh])
+    const finalBoardPosition = sgfutils.get154MoveSGF();
 
 
     //console.log(game.position())
@@ -135,10 +151,12 @@ router.route('/SGFfromPos').get(async (req, res) => {
 
     //console.log(JSON.stringify(lastGrid))
     //res.send(sgfutils.getSGFFromBoard(boardState));
-    res.send(JSON.stringify(await sgfutils.getSGFFromVisibleMoves(
+    const result = await sgfutils.getSGFFromVisibleMoves(
         sgfutils.getVisibleMovesFromGrid(lastGrid),
         getEngineForLocalAsyncCalls("\n")
-    )));
+    )
+    //console.log('SGF: ',JSON.stringify(lastGrid))
+    res.send(JSON.stringify(result));
 })
 
 router.route('/testEvaluate').get((req, res) => {
@@ -152,6 +170,45 @@ router.route('/testEvaluate').get((req, res) => {
     console.log('evaluated ', evaluated);
     const result = sgfutils.getChosenMoveIdx(evaluated,candidateMoves,-1);
     res.send(JSON.stringify(result));
+})
+router.route('/testParseKata2').get((req, res) => {
+    //const kataResponse = "info move Q4 visits 1 edgeVisits 1 utility 0.24161 winrate 0.619628 scoreMean 0.8582 scoreStdev 16.1437 scoreLead 0.8582 scoreSelfplay 1.49706 prior 0.45925 lcb -0.630372 utilityLcb -3.25839 weight 2.18261 order 0 pv Q4 D16 Q16 D4 F17 R3 Q3 R4 Q5 S6 C14 F16 G16 info move D4 visits 401 edgeVisits 401 utility -0.243398 winrate 0.38147 scoreMean -0.872272 scoreStdev 16.2143 scoreLead -0.872272 scoreSelfplay -1.41842 prior 0.101177 lcb 0.379906 utilityLcb -0.247775 weight 878.59 isSymmetryOf Q4 order 1 pv D4 Q16 D16 Q4 O17 C3 D3 C4 D5 B6 R14 O16 N16 info move Q3 visits 269 edgeVisits 269 utility -0.251084 winrate 0.378245 scoreMean -0.913111 scoreStdev 16.1517 scoreLead -0.913111 scoreSelfplay -1.47295 prior 0.0440662 lcb 0.376267 utilityLcb -0.256625 weight 586.369 order 2 pv Q3 Q16 Q5 D4 D16 C17 C16 info move D3 visits 269 edgeVisits 269 utility -0.251084 winrate 0.378245 scoreMean -0.913111 scoreStdev 16.1517 scoreLead -0.913111 scoreSelfplay -1.47295 prior 0.0440662 lcb 0.376267 utilityLcb -0.256625 weight 586.369 isSymmetryOf Q3 order 3 pv D3 D16 D5 Q4 Q16 R17 R16 info move C4 visits 269 edgeVisits 269 utility -0.251084 winrate 0.378245 scoreMean -0.913111 scoreStdev 16.1517 scoreLead -0.913111 scoreSelfplay -1.47295 prior 0.0440662 lcb 0.376267 utilityLcb -0.256625 weight 586.369 isSymmetryOf Q3 order 4 pv C4 Q4 E4 D16 Q16 R17 Q17 info move Q15 visits 215 edgeVisits 215 utility -0.256043 winrate 0.375569 scoreMean -0.93352 scoreStdev 16.1591 scoreLead -0.93352 scoreSelfplay -1.52337 prior 0.0113559 lcb 0.373039 utilityLcb -0.263125 weight 458.282 order 5 pv Q15 Q4 D16 Q17 D4 R15 R14 R16 Q14 O17 R6 Q9 O4 P6 ";
+    const kataResponse = "info move G8 visits 303 edgeVisits 303 utility -0.395117 winrate 0.320908 scoreMean -2.8729 scoreStdev 16.2759 scoreLead -2.8729 scoreSelfplay -3.92985 prior 0.511632 lcb 0.297639 utilityLcb -0.460272 weight 267.241 order 0 pv G8 S17 S11 S10 R17 S18 P16 Q16 Q17 Q18 P18 O17 O18 O16 info move G9 visits 3 edgeVisits 3 utility -0.760805 winrate 0.165156 scoreMean -6.34305 scoreStdev 16.396 scoreLead -6.34305 scoreSelfplay -8.02743 prior 0.0694875 lcb -0.104769 utilityLcb -1.51659 weight 3.00467 order 1 pv G9 G8 H8 info move D11 visits 1 edgeVisits 1 utility -0.818647 winrate 0.119711 scoreMean -7.50348 scoreStdev 15.7992 scoreLead -7.50348 scoreSelfplay -9.40423 prior 0.00734093 lcb -1.13029 utilityLcb -4.31865 weight 1.25288 order 2 pv D11";
+
+    const blackMoves=  [
+        'A3',  'A2',  'B9',  'B4',  'B3', 'C15', 'C14', 'C10',
+        'C9',  'C8',  'C7',  'C4',  'C3', 'C2',  'D13', 'D10',
+        'D7',  'D4',  'D3',  'E10', 'E8', 'E3',  'F18', 'F16',
+        'F15', 'F11', 'F8',  'F7',  'F6', 'F3',  'F2',  'F1',
+        'G16', 'G14', 'G13', 'G12', 'G6', 'H17', 'H13', 'H9',
+        'J16', 'J6',  'K12', 'K10', 'K3', 'L13', 'L11', 'L6',
+        'L5',  'L4',  'L3',  'M14', 'M6', 'M2',  'N13', 'N3',
+        'O10', 'O8',  'O2',  'P17', 'P9', 'P7',  'P5',  'P4',
+        'P2',  'Q15', 'Q14', 'Q13', 'Q4', 'Q3',  'R18', 'R14',
+        'R12', 'R11', 'R6',  'R5',  'S6'
+    ]
+    const whiteMoves =  [
+        'A5',  'A4',  'B8',  'B7',  'B5',  'B2',  'B1',  'C16',
+        'C6',  'C5',  'C1',  'D16', 'D14', 'D11', 'D9',  'D8',
+        'D6',  'D2',  'E18', 'E17', 'E9',  'E7',  'E6',  'E5',
+        'E4',  'F9',  'F4',  'G15', 'G10', 'G9',  'G8',  'G4',
+        'G3',  'G2',  'G1',  'H15', 'H14', 'H12', 'H11', 'J17',
+        'J14', 'J13', 'J12', 'J4',  'J3',  'K17', 'K16', 'K11',
+        'K4',  'L12', 'M13', 'M12', 'M5',  'N17', 'N11', 'N10',
+        'N9',  'N8',  'N7',  'N4',  'O9',  'O4',  'O3',  'P3',
+        'Q5',  'Q2',  'R16', 'R15', 'R13', 'R4',  'R3',  'R2',
+        'S14', 'S13', 'S12', 'S5',  'S4'
+    ];
+    const candidateMoves= whiteMoves;
+    let evaluated = null;
+    let result = null;
+
+    evaluated = sgfutils.parseSuggestions(kataResponse,candidateMoves)
+    console.log('evaluated ', evaluated);
+    result = sgfutils.getChosenMoveIdx(evaluated,candidateMoves,-1);
+    console.log('chosen : ',candidateMoves[result]);
+
+    res.send(JSON.stringify(candidateMoves[result]));
 })
 router.route('/testParseKata').get((req, res) => {
     /*const kataResponse = "info move D7 visits 14266 edgeVisits 14267 utility -1.21803 winrate 0.105803 scoreMean -5.72168 scoreStdev 16.0771 scoreLead -5.72168 scoreSelfplay -8.95943 prior 8.35217e-05 lcb 0.104719 utilityLcb -1.22106 weight 34020.3 order 0 pv D7 D4 D6 Q4 K10 D16 info move D4 visits 5938 edgeVisits 5938 utility -1.25393 winrate 0.083915 scoreMean -6.39319 scoreStdev 16.466 scoreLead -6.39319 scoreSelfplay -9.80248 prior 0.473394 lcb 0.0816361 utilityLcb -1.26031 weight 14650.5 order 1 pv D4 C3 K10 D3 D7 E4 D6 Q4 info move D6 visits 9316 edgeVisits 9317 utility -1.22268 winrate 0.107404 scoreMean -5.67998 scoreStdev 16.0734 scoreLead -5.67998 scoreSelfplay -8.89945 prior 6.81684e-05 lcb 0.106253 utilityLcb -1.2259 weight 22111.7 order 2 pv D6 D4 K10 Q4 D7 D16 info move K10 visits 11041 edgeVisits 11041 utility -1.22057 winrate 0.107947 scoreMean -5.67164 scoreStdev 16.0752 scoreLead -5.67164 scoreSelfplay -8.88556 prior 1.33187e-05 lcb 0.106544 utilityLcb -1.2245 weight 26162.3 order 3 pv K10 D4 D6 Q4 D7 D16\n" +

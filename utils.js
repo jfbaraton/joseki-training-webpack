@@ -5,7 +5,7 @@ var WGo = require('wgo');
 // how many points can you lose in one move and still consider it "joseki"?
 //const JOSEKI_MARGIN = 2.3;
 const JOSEKI_MARGIN = 4;
-const KATA_ANALYZE_TIME_MS = 600; // multiple of 10 please
+const KATA_ANALYZE_TIME_MS = 1500; // multiple of 10 please
 
 module.exports = {
     getEmptySGF: function() {
@@ -16,6 +16,9 @@ module.exports = {
     },
     get8MoveSGF: function() {
         return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[pd];W[dp];B[qf];W[dn];B[em];W[dm];B[ek];W[jj])');
+    },
+    get154MoveSGF: function() {
+        return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[pp];W[cd];B[dp];W[qd];B[jj];W[cn];B[cl];W[en];B[dm];W[dn];B[cp];W[fp];B[fq];W[gq];B[eq];W[gp];B[jq];W[di];B[fl];W[jp];B[kq];W[iq];B[kp];W[ip];B[kn];W[ec];B[gn];W[ep];B[fn];W[eo];B[in];W[bl];B[bk];W[bm];B[cj];W[dk];B[ck];W[bo];B[bp];W[gr];B[fr];W[dr];B[dq];W[br];B[cr];W[cs];B[cq];W[bs];B[ar];W[ap];B[aq];W[ao];B[bq];W[em];B[el];W[dl];B[dj];W[ek];B[ej];W[fk];B[cm];W[gl];B[fm];W[gj];B[hk];W[gk];B[fi];W[hi];B[gh];W[hh];B[cf];W[df];B[dg];W[gs];B[fs];W[co];B[ce];W[dd];B[gf];W[ji];B[ki];W[if];B[jh];W[hf];B[hg];W[ig];B[gg];W[ih];B[gd];W[ic];B[id];W[jd];B[hc];W[jc];B[fb];W[eb];B[oc];W[mc];B[pe];W[ge];B[fe];W[he];B[fd];W[qe];B[pf];W[qg];B[qf];W[rf];B[pg];W[rh];B[qh];W[rg];B[qi];W[qq];B[pq];W[qp];B[qo];W[pr];B[or];W[ro];B[qn];W[qr];B[rn];W[oq];B[nr];W[rp];B[qb];W[lo];B[ko];W[nq];B[mq];W[po];B[op];W[np];B[oo];W[mp];B[lr];W[mm];B[om];W[mk];B[nl];W[ml];B[ln];W[mi];B[nj];W[nk];B[ok];W[mj];B[mg];W[lh];B[kg];W[lg];B[lf];W[kh])');
     },
 
     makeNodeFromOGS: function(ogsMove, BorW) {
@@ -1165,20 +1168,52 @@ module.exports = {
         const amountOfBlackMoves = blackMoves.length;
         const amountOfWhiteMoves = whiteMoves.length;
         const moveStatArchives = {};
-        for (let movIdx = 0; movIdx < amountOfBlackMoves || movIdx < amountOfWhiteMoves; movIdx++) {
-            if(movIdx < amountOfBlackMoves) {
-                let chosenMove = await this.chooseMoveAmong(result+")", blackMoves, "B", moveStatArchives, movIdx, engine);
-                result += ";B["+this.humanToSgfCoord(chosenMove)+"]";
-                if(engine && engine.isEngineOn()) {
-                    await this.getRespFromEngine(engine, "play B "+chosenMove+"\n", 25);
+        console.log('blackMoves: ',blackMoves);
+        console.log('whiteMoves: ',whiteMoves);
 
+        for (let movIdx = 0; movIdx < amountOfBlackMoves || movIdx < amountOfWhiteMoves; movIdx++) {
+            console.log('move pair: '+movIdx, result+")");
+            let chosenMove = "A1";
+            let blackMoveSGF = "";
+            if(movIdx < amountOfBlackMoves) {
+                chosenMove = await this.chooseMoveAmong(result + ")", blackMoves, "B", moveStatArchives, movIdx, engine);
+                if (chosenMove) {
+                    blackMoveSGF = ";B[" + this.humanToSgfCoord(chosenMove) + "]";
+                    if (engine && engine.isEngineOn()) {
+                        if (engine.isEngineStarting()) {
+                            console.log("B engine seems to be starting, lets wait ", engine.isFirstCommand);
+                            await this.getRespFromEngine(engine, "\n", 10000);
+                            console.log("B engine still starting?", engine.isEngineStarting(), " first command? ", engine.isFirstCommand);
+                            // TODO reset engine to current boardstate
+                            await this.getRespFromEngine(engine, this.getGTPCommand(result + ")", null, blackMoves, true), engine.isFirstCommand ? 10000 : null);
+                        }
+                        console.log("play B", chosenMove);
+                        await this.getRespFromEngine(engine, "play B " + chosenMove + "\n", 25);
+
+                    }
+                } else {
+                    movIdx --;
+                    engine.isFirstCommand = true;
                 }
             }
-            if(movIdx < amountOfWhiteMoves) {
-                let chosenMove = await this.chooseMoveAmong(result+")", whiteMoves, "W", moveStatArchives, movIdx, engine);
-                result += ";W["+this.humanToSgfCoord(chosenMove)+"]";
-                if(engine && engine.isEngineOn()) {
-                    await this.getRespFromEngine(engine, "play W "+chosenMove+"\n", 25);
+            if(chosenMove && movIdx < amountOfWhiteMoves) {
+                chosenMove = await this.chooseMoveAmong(result+blackMoveSGF+")", whiteMoves, "W", moveStatArchives, movIdx, engine);
+                if (chosenMove) {
+                    result += blackMoveSGF+";W[" + this.humanToSgfCoord(chosenMove) + "]";
+                    if (engine && engine.isEngineOn()) {
+                        if (engine.isEngineStarting()) {
+                            console.log("W engine seems to be starting, lets wait ", engine.isFirstCommand);
+                            await this.getRespFromEngine(engine, "\n", 10000);
+                            console.log("W engine still starting?", engine.isEngineStarting(), " first command? ", engine.isFirstCommand);
+                            // TODO reset engine to current boardstate
+                            await this.getRespFromEngine(engine, this.getGTPCommand(result + ")", null, whiteMoves, true), engine.isFirstCommand ? 10000 : null);
+                        }
+                        console.log("play W", chosenMove);
+                        await this.getRespFromEngine(engine, "play W " + chosenMove + "\n", 25);
+                    }
+                } else {
+                    movIdx --;
+                    engine.isFirstCommand = true;
                 }
             }
         }
@@ -1204,11 +1239,12 @@ module.exports = {
         let chosenMoveIdx = movIdx;
         if (engine && engine.isEngineOn()) {
             //console.log('chooseMoveAmong ENGINE OK ',candidateMoves, engine.isFirstCommand);
-            const engineRest = await this.getRespFromEngine(engine,this.getGTPCommand(SGFBeforeMove, null, candidateMoves, engine.isFirstCommand))
+            const engineRest = await this.getRespFromEngine(engine,this.getGTPCommand(SGFBeforeMove, null, candidateMoves, engine.isFirstCommand), engine.isFirstCommand ? 10000 : null)
             //console.log('chooseMoveAmong engine RESPONDED ', engine.isFirstCommand/*,engine.engineResHolder[0]*/);
             // choose move
             const evaluations = this.parseSuggestions(engineRest, candidateMoves, color)
-            //console.log('chooseMoveAmong engine Evaluated ',evaluations);
+            console.log('chooseMoveAmong engine Evaluated ',evaluations);
+            if(!evaluations || !evaluations.possibleMoves) return null;
             chosenMoveIdx = this.getChosenMoveIdx(evaluations, candidateMoves);
 
         } else {
@@ -1253,16 +1289,23 @@ module.exports = {
         return result;
     },
 
-    parseSuggestions : function (response, candidateMoves, color) {
+    parseSuggestions : function (pResponse, candidateMoves, color) {
         const result = {
             bestMoveScore : -1000,
             possibleMoves : [],
             moveScores : {}
         };
-        if(response && typeof response === "string" && response.indexOf('info move') >= 0) {
-            //console.log("renderSuggestions");
+        if(pResponse && typeof pResponse === "string" && pResponse.indexOf('info move') >= 0) {
+            let response;
+            if(pResponse.indexOf('order 0 ')>=0) {
+                response = pResponse.substring(pResponse.lastIndexOf('info move', pResponse.lastIndexOf('order 0 ')));
+            } else {
+                response = pResponse;
+            }
+            console.log("parseSuggestions ",response);
             //overlay_goban.clearCanvas();
             const lastResponse = response.split('info move ');
+            //console.log('a) ignore ', lastResponse && lastResponse[0]);
             lastResponse.splice(0,1);
 
             //console.log('response[0]' , response[0]);
@@ -1285,22 +1328,23 @@ module.exports = {
                         bestMoveScore = scoreMean;
                     }
 
-                    if(scoreMean > bestMoveScore-4) {
-                        maxMoveSuggestions--;
-                        //const kataPoint = this.humanToPoint(kataMove);
-                        //isRenderedOnce = true;
-                        //overlay_goban.drawCircle(kataPoint.x, kataPoint.y, color, scoreMean);
-                        result.bestMoveScore = bestMoveScore;
-                        if(result.possibleMoves.indexOf(kataMove) === -1) {
-                            result.possibleMoves.push(kataMove);
-                        }
-                        result.moveScores[kataMove] = scoreMean;
+                    maxMoveSuggestions--;
+                    //const kataPoint = this.humanToPoint(kataMove);
+                    //isRenderedOnce = true;
+                    //overlay_goban.drawCircle(kataPoint.x, kataPoint.y, color, scoreMean);
+                    result.bestMoveScore = bestMoveScore;
+                    if(result.possibleMoves.indexOf(kataMove) === -1) {
+                        result.possibleMoves.push(kataMove);
                     }
+                    result.moveScores[kataMove] = scoreMean;
+
+                } else {
+                    console.log('B) ignore ', moveSetInfo);
                 }
             }
         } else {
             //console.log('not renderable ', response);
-            console.log('not renderable');
+            console.log('not renderable ',pResponse);
         }
         return result;
     }

@@ -152,7 +152,37 @@ router.route('/SGFfromPos').get(async (req, res) => {
     //console.log(JSON.stringify(lastGrid))
     //res.send(sgfutils.getSGFFromBoard(boardState));
     const result = await sgfutils.getSGFFromVisibleMoves(
+        null,
         sgfutils.getVisibleMovesFromGrid(lastGrid),
+        getEngineForLocalAsyncCalls("\n")
+    )
+    //console.log('SGF: ',JSON.stringify(lastGrid))
+    res.send(JSON.stringify(result));
+})
+router.route('/SGFfromDelta').get(async (req, res) => {
+    let startAtMove = 4;
+    // from one final position, make SGF
+    //const finalBoardPosition = sgfutils.get2MoveSGF();
+    // rand (;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[dp];B[qf];W[dn];B[ek];W[dm];B[em];W[jj])
+    // Kata (;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19];B[pd];W[dp];B[qf];W[dn];B[em];W[dm];B[ek];W[jj])
+    // real (;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[pd];W[dp];B[qf];W[dn];B[em];W[dm];B[ek];W[jj])
+    const finalBoardPosition = sgfutils.get8MoveSGF();
+    const startSGF = sgfutils.getNodeSeparatedSGF(
+        {
+            node: finalBoardPosition.gameTrees[0],
+            nodeIdx :startAtMove
+        }, startAtMove);
+
+    //console.log(game.position())
+    console.log("startSGF ",startSGF);
+    const startGrid = sgfutils.getBoardPositionFromSGF(finalBoardPosition, startAtMove);
+    const lastGrid = sgfutils.getBoardPositionFromSGF(finalBoardPosition);
+
+    //console.log(JSON.stringify(lastGrid))
+    //res.send(sgfutils.getSGFFromBoard(boardState));
+    const result = await sgfutils.getSGFFromVisibleMoves(
+        startSGF,
+        sgfutils.getVisibleMovesFromGrid(lastGrid, startGrid),
         getEngineForLocalAsyncCalls("\n")
     )
     //console.log('SGF: ',JSON.stringify(lastGrid))

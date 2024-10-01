@@ -318,11 +318,11 @@ module.exports = {
         return false;
     },
 
-    getNodeSeparatedSGF: function(currentNode) {
+    getNodeSeparatedSGF: function(currentNode, untilMove) {
         let currentSGFVariation = [];
         this.getVariationSGF(currentNode.node, currentNode.nodeIdx, currentSGFVariation, true);
         const emptySGF = this.getEmptySGF();
-        currentSGFVariation.filter(node => !!node).forEach(node => emptySGF.gameTrees[0].nodes.push(node));
+        currentSGFVariation.filter(node => !!node).filter((value, index) => !untilMove || index < untilMove).forEach(node => emptySGF.gameTrees[0].nodes.push(node));
         return sgf.generate(emptySGF);
     },
 
@@ -1113,14 +1113,15 @@ module.exports = {
     },
 
     //plays main variation until the end in WGo, and gets teh boardPosition
-    getBoardFromSGF : function (parsedSGF)  {
+    getBoardFromSGF : function (parsedSGF, pUntilMove)  {
         let game = new WGo.Game();
+        let untilMove = pUntilMove ? pUntilMove : 1000;
         //console.log(game)
         //game.play(4,4)
         //console.log(game.positionStack[game.positionStack.length-1].grid)
         let node = parsedSGF.gameTrees[0];
         let nodeIdx = 1;
-        while(node && node.nodes.length>nodeIdx) {
+        while(node && node.nodes.length>nodeIdx && untilMove) {
             const moveColor = typeof node.nodes[nodeIdx].B === "string" ? "B": "W";
             const moveCoords = this.sgfCoordToPoint(node.nodes[nodeIdx][moveColor])
             if (moveCoords && typeof moveCoords.x !== "undefined") {
@@ -1135,34 +1136,41 @@ module.exports = {
                 node = node.sequences[0];
                 nodeIdx = 0;
             }
+            untilMove --;
         }
 
         return game;
     },
 
-    getBoardPositionFromSGF : function (parsedSGF)  {
-        const game = this.getBoardFromSGF(parsedSGF)
+    getBoardPositionFromSGF : function (parsedSGF, untilMove)  {
+        const game = this.getBoardFromSGF(parsedSGF, untilMove)
         return game.positionStack[game.positionStack.length-1].grid;
     },
 
-    getVisibleMovesFromGrid : function (grid) {
+    getVisibleMovesFromGrid : function (grid, fromGrid) {
         const result = {
             B:[],
             W:[]
         }
         grid.forEach((value, index) => {
-            if(value === WGo.Color.B) {
-                result.B.push(this.coordinatesFor(index % 19, (index-index%19)/19 ))
-            } else if(value === WGo.Color.W) {
-                result.W.push(this.coordinatesFor(index % 19, (index-index%19)/19 ))
+            if(!fromGrid || value !== fromGrid[index]) {
+                if (value === WGo.Color.B) {
+                    result.B.push(this.coordinatesFor(index % 19, (index - index % 19) / 19))
+                } else if (value === WGo.Color.W) {
+                    result.W.push(this.coordinatesFor(index % 19, (index - index % 19) / 19))
+                } else {
+                    // TODO handle stones that disappeared
+                    // they can have been played also
+                }
             }
         })
         return result;
     },
 
-    getSGFFromVisibleMoves : async function (visibleMoves, pEngine)  {
+    getSGFFromVisibleMoves : async function (startSGF, visibleMoves, pEngine)  {
         const engine = (!pEngine || !pEngine.isEngineOn()) ? null: pEngine;
-        let result = '(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19]';
+        let result = startSGF ? startSGF :'(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])';
+        result = result.slice(0, -1); // loose the closing ")"
         let blackMoves = visibleMoves.B;
         let whiteMoves = visibleMoves.W;
         const amountOfBlackMoves = blackMoves.length;

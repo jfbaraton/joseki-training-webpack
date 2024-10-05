@@ -165,11 +165,11 @@ router.route('/squareError').get(async (req, res) => {
 
     const blackMovesSqareErrors = {
         possibleMoves: [],
-        squareErros: {}
+        squareErrors: {}
     };
     const whiteMovesSqareErrors = {
         possibleMoves: [],
-        squareErros: {}
+        squareErrors: {}
     };
 
     const evaluations = [
@@ -192,9 +192,23 @@ router.route('/squareError').get(async (req, res) => {
         }
     ];
     evaluations.forEach((oneEval, index) => {
-        let moveSquareErrors = blackMovesSqareErrors;
-
+        let moveSquareErrors = (index %2) ? whiteMovesSqareErrors: blackMovesSqareErrors;
+		oneEval.possibleMoves.forEach(oneEvaluatedMove => {
+			if(!moveSquareErrors.squareErrors[oneEvaluatedMove]) {
+				moveSquareErrors.possibleMoves.push(oneEvaluatedMove);
+				moveSquareErrors.squareErrors[oneEvaluatedMove] = [];
+			}
+			moveSquareErrors.squareErrors[oneEvaluatedMove].push(
+				(oneEval.bestMoveScore-oneEval.moveScores[oneEvaluatedMove])*(oneEval.bestMoveScore-oneEval.moveScores[oneEvaluatedMove])
+			);
+		});
     });
+	
+	
+    res.send(JSON.stringify(/*{
+		blackMovesSqareErrors:*/blackMovesSqareErrors/*,
+	whiteMovesSqareErrors:whiteMovesSqareErrors}*/
+	).replaceAll(",", ",\n").replaceAll(":", ":\n"));
 })
 
 router.route('/SGFfromDelta').get(async (req, res) => {

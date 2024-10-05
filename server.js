@@ -159,6 +159,44 @@ router.route('/SGFfromPos').get(async (req, res) => {
     //console.log('SGF: ',JSON.stringify(lastGrid))
     res.send(JSON.stringify(result));
 })
+router.route('/squareError').get(async (req, res) => {
+    const blackMoves =  [ 'E9', 'E7' ];
+    const whiteMoves =  [ 'D7', 'K10' ];
+
+    const blackMovesSqareErrors = {
+        possibleMoves: [],
+        squareErros: {}
+    };
+    const whiteMovesSqareErrors = {
+        possibleMoves: [],
+        squareErros: {}
+    };
+
+    const evaluations = [
+        {
+            bestMoveScore: 0.164888,
+            possibleMoves: [ 'E9', 'E7' ],
+            moveScores: { E9: 0.164888, E7: 0.116354 }
+        },{
+            bestMoveScore: -11.3662,
+            possibleMoves: [ 'D7', 'K10' ],
+            moveScores: { D7: -11.3662, K10: -11.9449 }
+        },{
+            bestMoveScore: 9.48913,
+            possibleMoves: [ 'E7' ],
+            moveScores: { E7: 9.48913 }
+        },{
+            bestMoveScore: -12.4475,
+            possibleMoves: [ 'K10' ],
+            moveScores: { K10: -12.4475 }
+        }
+    ];
+    evaluations.forEach((oneEval, index) => {
+        let moveSquareErrors = blackMovesSqareErrors;
+
+    });
+})
+
 router.route('/SGFfromDelta').get(async (req, res) => {
     let startAtMove = 4;
     // from one final position, make SGF

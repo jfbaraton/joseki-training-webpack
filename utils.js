@@ -18,7 +18,16 @@ module.exports = {
         return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[pd];W[dp];B[qf];W[dn];B[em];W[dm];B[ek];W[jj])');
     },
     get9HSGF: function() {
-        return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[dp];W[];B[pp];W[];B[dd];W[];B[pd];W[];B[jj];W[];B[dj];W[];B[jd];W[];B[pj];W[];B[jp])');
+        return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[dp];W[];B[pp];W[];B[dd];W[];B[pd];W[];B[jp];W[];B[dj];W[];B[jd];W[];B[pj];W[];B[jj])');
+    },
+    get9H_4shimarisSGF: function() {
+        return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[dd];W[];B[pp];W[];B[cf];W[];B[qn];W[];B[pd];W[];B[qf];W[];B[dp];W[];B[cn];W[];B[jj])');
+    },
+    get9H_sansanSGF: function() {
+        return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[cq];W[];B[qq];W[];B[cc];W[];B[qc];W[];B[jj];W[];B[dj];W[];B[jd];W[];B[pj];W[];B[jp])');
+    },
+    get9H_BADSGF: function() {
+        return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[aa];W[];B[bb];W[];B[ab];W[];B[ba];W[];B[jj];W[];B[dj];W[];B[jd];W[];B[pj];W[];B[jp])');
     },
     get154MoveSGF: function() {
         return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[pp];W[cd];B[dp];W[qd];B[jj];W[cn];B[cl];W[en];B[dm];W[dn];B[cp];W[fp];B[fq];W[gq];B[eq];W[gp];B[jq];W[di];B[fl];W[jp];B[kq];W[iq];B[kp];W[ip];B[kn];W[ec];B[gn];W[ep];B[fn];W[eo];B[in];W[bl];B[bk];W[bm];B[cj];W[dk];B[ck];W[bo];B[bp];W[gr];B[fr];W[dr];B[dq];W[br];B[cr];W[cs];B[cq];W[bs];B[ar];W[ap];B[aq];W[ao];B[bq];W[em];B[el];W[dl];B[dj];W[ek];B[ej];W[fk];B[cm];W[gl];B[fm];W[gj];B[hk];W[gk];B[fi];W[hi];B[gh];W[hh];B[cf];W[df];B[dg];W[gs];B[fs];W[co];B[ce];W[dd];B[gf];W[ji];B[ki];W[if];B[jh];W[hf];B[hg];W[ig];B[gg];W[ih];B[gd];W[ic];B[id];W[jd];B[hc];W[jc];B[fb];W[eb];B[oc];W[mc];B[pe];W[ge];B[fe];W[he];B[fd];W[qe];B[pf];W[qg];B[qf];W[rf];B[pg];W[rh];B[qh];W[rg];B[qi];W[qq];B[pq];W[qp];B[qo];W[pr];B[or];W[ro];B[qn];W[qr];B[rn];W[oq];B[nr];W[rp];B[qb];W[lo];B[ko];W[nq];B[mq];W[po];B[op];W[np];B[oo];W[mp];B[lr];W[mm];B[om];W[mk];B[nl];W[ml];B[ln];W[mi];B[nj];W[nk];B[ok];W[mj];B[mg];W[lh];B[kg];W[lg];B[lf];W[kh])');
@@ -1074,7 +1083,7 @@ module.exports = {
     },
 
     // currentMove is a string like "Move 10"
-    getGTPCommand: function(SGFString, currentMove, candidateMoves, isFirstCommand, pAnalyzeColor) {
+    getGTPCommand: function(SGFString, currentMove, candidateMoves, isFirstCommand, pAnalyzeColor, komi) {
         let currentMoveNumber = 10000;
         if(currentMove) {
             try{
@@ -1085,7 +1094,7 @@ module.exports = {
             }
         }
         const SGFgame = sgf.parse(SGFString);
-        let initCMD = "time_settings 0 5 1\nkomi 7.5\nboardsize 19\nclear_board\n";
+        let initCMD = "time_settings 0 5 1\nkomi "+(komi || 7.5)+"\nboardsize 19\nclear_board\n";
         let nodeIdx= 0;
         let nodeParent = SGFgame.gameTrees[0]
         let nodes = nodeParent.nodes;
@@ -1111,7 +1120,7 @@ module.exports = {
             initCMD = "";
         }
         const fullCmdWithAnalize = initCMD+"kata-analyze "+analyzeColor+" "+KATA_ANALYZE_TIME_MS/10;
-        //console.log("genmove after ",fullCmdWithAnalize)
+        console.log("fullCmdWithAnalize ",fullCmdWithAnalize)
         return fullCmdWithAnalize+this.getAnalyzeAllowClause(analyzeColor, candidateMoves)+"\n";
     },
 
@@ -1264,15 +1273,15 @@ module.exports = {
         //console.log('chooseMoveAmong END '+color, chosenMoveIdx);
         return candidateMoves[chosenMoveIdx];
     },
-    getEvaluations : async function (SGFBeforeMove, candidateMoves, color, engine)  {
+    getEvaluations : async function (SGFBeforeMove, candidateMoves, color, engine, limit, komi)  {
         //console.log('getEvaluations START '+color);
         if (engine && engine.isEngineOn()) {
             //console.log('getEvaluations ENGINE OK ',candidateMoves, engine.isFirstCommand);
-            const engineRest = await this.getRespFromEngine(engine,this.getGTPCommand(SGFBeforeMove, null, candidateMoves, engine.isFirstCommand), engine.isFirstCommand ? 10000 : null)
+            const engineRest = await this.getRespFromEngine(engine,this.getGTPCommand(SGFBeforeMove, null, candidateMoves, engine.isFirstCommand, color, komi), engine.isFirstCommand ? 10000 : null)
             //console.log('getEvaluations engine RESPONDED ', engine.isFirstCommand/*,engine.engineResHolder[0]*/);
             // choose move
-            const evaluations = this.parseSuggestions(engineRest, candidateMoves, color)
-            console.log('getEvaluations engine Evaluated ',evaluations);
+            const evaluations = this.parseSuggestions(engineRest, candidateMoves, color, limit)
+            //console.log('getEvaluations engine Evaluated ',evaluations);
             if(!evaluations || !evaluations.possibleMoves) return null;
             return evaluations;
 
@@ -1318,7 +1327,7 @@ module.exports = {
         return result;
     },
 
-    parseSuggestions : function (pResponse, candidateMoves, color) {
+    parseSuggestions : function (pResponse, candidateMoves, color, limit) {
         const result = {
             bestMoveScore : -1000,
             possibleMoves : [],
@@ -1331,7 +1340,7 @@ module.exports = {
             } else {
                 response = pResponse;
             }
-            console.log("parseSuggestions ",response);
+            //console.log("parseSuggestions ",response);
             //overlay_goban.clearCanvas();
             const lastResponse = response.split('info move ');
             //console.log('a) ignore ', lastResponse && lastResponse[0]);
@@ -1370,6 +1379,13 @@ module.exports = {
                 } else {
                     console.log('B) ignore ', moveSetInfo);
                 }
+            }
+            // sort result.moveScores by score desc
+            result.bestMoves = result.possibleMoves
+                .map(a => ({ move: a, value: result.moveScores[a] }))
+                .sort((a, b) => b.value - a.value)
+            if(limit){
+                result.bestMoves = result.bestMoves.slice(0,limit);
             }
         } else {
             //console.log('not renderable ', response);

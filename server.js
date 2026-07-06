@@ -279,9 +279,25 @@ router.route('/SGFfromDelta').get(async (req, res) => {
 })
 
 router.route('/evaluate_board').get(async (req, res) => {
-    let startAtMove = 4;
+    let amount_of_handicap_stones = 9
+    let startAtMove = amount_of_handicap_stones ? (amount_of_handicap_stones-1)*2:0;
+    var komi_for_handicap= {
+        0:7.5, // B -0.9
+        1:7.5, // B -0.9
+        2:Math.round(7.5+13), //    //4-4 4-4 -> B +0.5
+        3:Math.round(7.5+27), //    // 4-4 4-4 4-4 -> B+0.5
+        4:Math.round(7.5+43), //    // 4 hochi = B +0.2
+        5:Math.round(7.5+56), //    // 4 hochi + shimari = B +0.5
+        6:Math.round(7.5+71), // 79 // 5 hochi + shimari = B +0.2
+        7:Math.round(7.5+84), // 92 // 6 hochi + center  = B -0.1
+        8:Math.round(7.5+99), // 107 // 7 hochi + center  = B +0
+        9:Math.round(7.5+117), // 125 // 8 hochi + center  = B +0.5
+    }
     // from one white to move position, give black score
-    const finalBoardPosition = sgfutils.get9HSGF();
+    //const finalBoardPosition = sgfutils.get9HSGF();
+    //const finalBoardPosition = sgfutils.get9H_4shimarisSGF(); // very close to normal handicap
+    const finalBoardPosition = sgfutils.get9H_sansanSGF();
+    //const finalBoardPosition = sgfutils.get9H_BADSGF();
     const startSGF = sgfutils.getNodeSeparatedSGF(
         {
             node: finalBoardPosition.gameTrees[0],
@@ -289,15 +305,17 @@ router.route('/evaluate_board').get(async (req, res) => {
         }, startAtMove);
 
     //console.log(game.position())
-    console.log("startSGF ",startSGF);
+    console.log("startSGF ",startSGF, "komi", komi_for_handicap[amount_of_handicap_stones]);
 
     const result = await sgfutils.getEvaluations(
         startSGF,
         null,
-        "W",
-        getEngineForLocalAsyncCalls("\n")
+        "B",
+        getEngineForLocalAsyncCalls("\n"),
+        5,
+        komi_for_handicap[amount_of_handicap_stones]
     )
-    console.log('SGF: ',result)
+    console.log('SGF: ',result.bestMoves)
     res.send(JSON.stringify({}));
 })
 
@@ -613,7 +631,6 @@ router.route('/engine').post((req, res) => {
 
 })
 
-
 router.route('/orders/:id').get((request, response) => {
     response.json({
         "mock":"tail"
@@ -631,3 +648,4 @@ router.route('/orders').post((request, response) => {
 var  port = process.env.PORT || 8090;
 app.listen(port);
 console.log('Order API is runnning at ' + port);
+resetEngine();

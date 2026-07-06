@@ -160,8 +160,9 @@ router.route('/SGFfromPos').get(async (req, res) => {
     res.send(JSON.stringify(result));
 })
 router.route('/squareError').get(async (req, res) => {
-    const blackMoves =  [ 'E9', 'E7' ];
-    const whiteMoves =  [ 'D7', 'K10' ];
+    const blackMoves =  [ 'E9', 'E7', 'Q16', 'R14' ];
+    const whiteMoves =  [ 'D7', 'D6', 'D4', 'K10' ];
+
 
     const blackMovesSqareErrors = {
         possibleMoves: [],
@@ -172,25 +173,53 @@ router.route('/squareError').get(async (req, res) => {
         squareErrors: {}
     };
 
+    /*
+    *   move 1 diff =0
+        move 2 diff =-1.777042
+        move 3 diff =0.09264399999999995
+        move 4 diff =-1.7339
+        move 5 diff =0.753788
+        move 6 diff =-2.63734
+        move 7 diff =0.24446999999999997
+        move 8 diff =-1.908865
+
+    * */
     const evaluations = [
         {
-            bestMoveScore: 0.164888,
-            possibleMoves: [ 'E9', 'E7' ],
-            moveScores: { E9: 0.164888, E7: 0.116354 }
+            bestMoveScore: -0.878208,
+            possibleMoves: [ 'Q16', 'R14', 'E9', 'E7' ],
+            moveScores: { Q16: -0.878208, R14: -1.36117, E9: -1.93532, E7: -2.02739 }
         },{
-            bestMoveScore: -11.3662,
+            bestMoveScore: 0.898834,
+            possibleMoves: [ 'D4', 'D6', 'D7', 'K10' ],
+            moveScores: { D4: 0.898834, D6: -0.232613, D7: -0.30766, K10: -1.45671 }
+        },{
+            bestMoveScore: -0.991478,
+            possibleMoves: [ 'R14', 'E7', 'E9' ],
+            moveScores: { R14: -0.991478, E7: -1.92803, E9: -2.1067 }
+        },{
+            bestMoveScore: 0.742422,
+            possibleMoves: [ 'D6', 'D7', 'K10' ],
+            moveScores: { D6: 0.742422, D7: 0.672515, K10: 0.0661577 }
+        },{
+            bestMoveScore: -1.49621,
+            possibleMoves: [ 'E7', 'E9' ],
+            moveScores: { E7: -1.49621, E9: -1.62875 }
+        },{
+            bestMoveScore: 1.14113,
             possibleMoves: [ 'D7', 'K10' ],
-            moveScores: { D7: -11.3662, K10: -11.9449 }
+            moveScores: { D7: 1.14113, K10: 0.481799 }
         },{
-            bestMoveScore: 9.48913,
-            possibleMoves: [ 'E7' ],
-            moveScores: { E7: 9.48913 }
+            bestMoveScore: -1.3856,
+            possibleMoves: [ 'E9' ],
+            moveScores: { E9: -1.3856 }
         },{
-            bestMoveScore: -12.4475,
+            bestMoveScore: 0.523265,
             possibleMoves: [ 'K10' ],
-            moveScores: { K10: -12.4475 }
+            moveScores: { K10: 0.523265 }
         }
     ];
+    let bestMoveScore = evaluations[0].bestMoveScore;
     evaluations.forEach((oneEval, index) => {
         let moveSquareErrors = (index %2) ? whiteMovesSqareErrors: blackMovesSqareErrors;
 		oneEval.possibleMoves.forEach(oneEvaluatedMove => {
@@ -199,11 +228,19 @@ router.route('/squareError').get(async (req, res) => {
 				moveSquareErrors.squareErrors[oneEvaluatedMove] = [];
 			}
 			moveSquareErrors.squareErrors[oneEvaluatedMove].push(
-				(oneEval.bestMoveScore-oneEval.moveScores[oneEvaluatedMove])*(oneEval.bestMoveScore-oneEval.moveScores[oneEvaluatedMove])
+				(bestMoveScore-oneEval.moveScores[oneEvaluatedMove])*(bestMoveScore-oneEval.moveScores[oneEvaluatedMove])
 			);
-		});
+        });
+        console.log("move "+(index+1)+" diff ="+ (oneEval.bestMoveScore-bestMoveScore))
+        console.log("move "+(index+1)+" bestMoveScore ="+ (bestMoveScore))
+        console.log("move "+(index+1)+" oneEval.bestMoveScore ="+ (oneEval.bestMoveScore))
+        bestMoveScore = -oneEval.bestMoveScore;
     });
-	
+
+    // TODO: find move with worst last evaluation (top square err), for this move, force the index with best evaluation (min square err)
+    // then try a run with forcing the move index
+
+    // TODO: force moves until the end in kata analysis, but filter out other color in the end result. we gain compute time, because we already considered next moves
 	
     res.send(JSON.stringify(/*{
 		blackMovesSqareErrors:*/blackMovesSqareErrors/*,

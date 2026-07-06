@@ -241,7 +241,7 @@ router.route('/squareError').get(async (req, res) => {
     // then try a run with forcing the move index
 
     // TODO: force moves until the end in kata analysis, but filter out other color in the end result. we gain compute time, because we already considered next moves
-	
+
     res.send(JSON.stringify(/*{
 		blackMovesSqareErrors:*/blackMovesSqareErrors/*,
 	whiteMovesSqareErrors:whiteMovesSqareErrors}*/
@@ -276,6 +276,29 @@ router.route('/SGFfromDelta').get(async (req, res) => {
     )
     //console.log('SGF: ',JSON.stringify(lastGrid))
     res.send(JSON.stringify(result));
+})
+
+router.route('/evaluate_board').get(async (req, res) => {
+    let startAtMove = 4;
+    // from one white to move position, give black score
+    const finalBoardPosition = sgfutils.get9HSGF();
+    const startSGF = sgfutils.getNodeSeparatedSGF(
+        {
+            node: finalBoardPosition.gameTrees[0],
+            nodeIdx :startAtMove
+        }, startAtMove);
+
+    //console.log(game.position())
+    console.log("startSGF ",startSGF);
+
+    const result = await sgfutils.getEvaluations(
+        startSGF,
+        null,
+        "W",
+        getEngineForLocalAsyncCalls("\n")
+    )
+    console.log('SGF: ',result)
+    res.send(JSON.stringify({}));
 })
 
 router.route('/testEvaluate').get((req, res) => {
@@ -515,7 +538,7 @@ router.route('/suck').get((req, res) => {
 
 })
 
-router.route('/joseki/:id?').get((req, res) => {
+router.route('/joseki{/:id}').get((req, res) => {
   const title = req.query.id;
   const id = req.params.id;
 
@@ -603,8 +626,8 @@ router.route('/orders').post((request, response) => {
     response.status(201).json(data);
   })
 })*/
-  
-  
+
+
 var  port = process.env.PORT || 8090;
 app.listen(port);
 console.log('Order API is runnning at ' + port);

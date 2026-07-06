@@ -17,6 +17,9 @@ module.exports = {
     get8MoveSGF: function() {
         return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[pd];W[dp];B[qf];W[dn];B[em];W[dm];B[ek];W[jj])');
     },
+    get9HSGF: function() {
+        return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[dp];W[];B[pp];W[];B[dd];W[];B[pd];W[];B[jj];W[];B[dj];W[];B[jd];W[];B[pj];W[];B[jp])');
+    },
     get154MoveSGF: function() {
         return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[pp];W[cd];B[dp];W[qd];B[jj];W[cn];B[cl];W[en];B[dm];W[dn];B[cp];W[fp];B[fq];W[gq];B[eq];W[gp];B[jq];W[di];B[fl];W[jp];B[kq];W[iq];B[kp];W[ip];B[kn];W[ec];B[gn];W[ep];B[fn];W[eo];B[in];W[bl];B[bk];W[bm];B[cj];W[dk];B[ck];W[bo];B[bp];W[gr];B[fr];W[dr];B[dq];W[br];B[cr];W[cs];B[cq];W[bs];B[ar];W[ap];B[aq];W[ao];B[bq];W[em];B[el];W[dl];B[dj];W[ek];B[ej];W[fk];B[cm];W[gl];B[fm];W[gj];B[hk];W[gk];B[fi];W[hi];B[gh];W[hh];B[cf];W[df];B[dg];W[gs];B[fs];W[co];B[ce];W[dd];B[gf];W[ji];B[ki];W[if];B[jh];W[hf];B[hg];W[ig];B[gg];W[ih];B[gd];W[ic];B[id];W[jd];B[hc];W[jc];B[fb];W[eb];B[oc];W[mc];B[pe];W[ge];B[fe];W[he];B[fd];W[qe];B[pf];W[qg];B[qf];W[rf];B[pg];W[rh];B[qh];W[rg];B[qi];W[qq];B[pq];W[qp];B[qo];W[pr];B[or];W[ro];B[qn];W[qr];B[rn];W[oq];B[nr];W[rp];B[qb];W[lo];B[ko];W[nq];B[mq];W[po];B[op];W[np];B[oo];W[mp];B[lr];W[mm];B[om];W[mk];B[nl];W[ml];B[ln];W[mi];B[nj];W[nk];B[ok];W[mj];B[mg];W[lh];B[kg];W[lg];B[lf];W[kh])');
     },
@@ -1260,6 +1263,24 @@ module.exports = {
         }
         //console.log('chooseMoveAmong END '+color, chosenMoveIdx);
         return candidateMoves[chosenMoveIdx];
+    },
+    getEvaluations : async function (SGFBeforeMove, candidateMoves, color, engine)  {
+        //console.log('getEvaluations START '+color);
+        if (engine && engine.isEngineOn()) {
+            //console.log('getEvaluations ENGINE OK ',candidateMoves, engine.isFirstCommand);
+            const engineRest = await this.getRespFromEngine(engine,this.getGTPCommand(SGFBeforeMove, null, candidateMoves, engine.isFirstCommand), engine.isFirstCommand ? 10000 : null)
+            //console.log('getEvaluations engine RESPONDED ', engine.isFirstCommand/*,engine.engineResHolder[0]*/);
+            // choose move
+            const evaluations = this.parseSuggestions(engineRest, candidateMoves, color)
+            console.log('getEvaluations engine Evaluated ',evaluations);
+            if(!evaluations || !evaluations.possibleMoves) return null;
+            return evaluations;
+
+        } else {
+            console.log('getEvaluations NO ENGINE !!!!!!!!! ',engine);
+        }
+        //console.log('getEvaluations END '+color, chosenMoveIdx);
+        return null;
     },
 
     getRespFromEngineAfter2Seconds : function (engine, delay, cmd) {

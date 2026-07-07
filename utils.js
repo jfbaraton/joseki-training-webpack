@@ -29,8 +29,11 @@ function permutations(arr) {
 }
 
 // Build the ordered list of stone quadruples ([TRmove, c2, c3, c4]) matching the constraints.
+// Order of the moves does not matter, so combos that are the same set of 4 stones are
+// considered equivalent; only the first (canonical) one is kept.
 function build4HandicapMoveCombos() {
     const combos = [];
+    const seen = new Set();
     const trChoices = HANDICAP_CORNER_POINTS.TR.filter(p => p !== HANDICAP_TR_EXCLUDE);
     const otherCornerOrders = permutations(['TL', 'BL', 'BR']);
     for (const tr of trChoices) {
@@ -39,7 +42,11 @@ function build4HandicapMoveCombos() {
             for (const s1 of a) {
                 for (const s2 of b) {
                     for (const s3 of c) {
-                        combos.push([tr, s1, s2, s3]);
+                        const combo = [tr, s1, s2, s3];
+                        const key = combo.slice().sort().join('');
+                        if (seen.has(key)) continue;
+                        seen.add(key);
+                        combos.push(combo);
                     }
                 }
             }
@@ -54,8 +61,8 @@ function movesTo4HandicapSGFString(moves) {
     return `(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19]${body})`;
 }
 const start = Date.now();
-console.log("building 1152 combos")
-const _all4HandicapMoveCombos = build4HandicapMoveCombos(); // 3 * 6 * 64 = 1152
+console.log("building 192 combos")
+const _all4HandicapMoveCombos = build4HandicapMoveCombos(); // 3 * 4 * 4 * 4 = 192 unique
 const builtMs = Date.now() - start;
 console.log(`built ${_all4HandicapMoveCombos.length} combos in ${Math.floor(builtMs / 1000)} seconds`)
 const all4HandicapSGFs = _all4HandicapMoveCombos.map(m => sgf.parse(movesTo4HandicapSGFString(m)));

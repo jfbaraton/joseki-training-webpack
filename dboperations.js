@@ -111,7 +111,7 @@ setJoseki = (SGF,  result) => {
 getHandicap_SGF = (sGF, limit, result) => {
     var filterClause = sGF ? "SGF like '"+sGF+"'" : "move_amount > 0";
     let limitClause = limit ? " LIMIT "+limit : "";
-    let query = "SELECT * FROM `handicap_sgfs` where "+filterClause+" ORDER BY record_time DESC"+limitClause;
+    let query = "SELECT * FROM `handicap_sgfs` where "+filterClause+" ORDER BY recordtime DESC"+limitClause;
 
     sql.query(query, (err, res) => {
         if (err) {
@@ -130,19 +130,20 @@ addHandicap_SGF = (SGF, amountOfMoves, black_score,  result) => {
     try{
         if(!SGF || typeof SGF !== "string") throw 'no SGF';
         var collection = sgf.parse(SGF);
-        if(!collection || !collection.gameTrees || !collection.gameTrees.length || (collection.gameTrees[0].nodes.length + collection.gameTrees[0].sequences.length) < 2) throw 'wrong SGF';
+        //console.log("sGF: ", collection);
+        if(!collection || !collection.gameTrees || !collection.gameTrees.length) throw 'wrong SGF';
 
         let query = "INSERT INTO `handicap_sgfs` (`recordtime`, `tags`, `milestone`, `SGF`, `move_amount`, `black_score`) VALUES "+
-            "(20210207232426, 'joseki', NULL, ?, ?, ?)";
+            "(20210207232426, 'joseki', NULL, ?, "+amountOfMoves+", "+black_score+")";
 
-        sql.query(query, SGF, amountOfMoves, black_score, (err, res) => {
+        sql.query(query, SGF, (err, res) => {
             if (err) {
                 console.log("error: ", err);
                 result(null, err);
                 return;
             }
 
-            console.log("joseki: ", res);
+            //console.log("handicap eval: ", res);
             result(null, res);
         });
     } catch (error) {

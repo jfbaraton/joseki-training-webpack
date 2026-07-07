@@ -324,6 +324,79 @@ router.route('/evaluate_board{/:id}').get(async (req, res) => {
     res.send(JSON.stringify({}));
 })
 
+router.route('/evaluate_4H_boards{/:id}').get(async (req, res) => {
+    const id = parseInt(req.params.id || "0");
+    let amount_of_handicap_stones = 4;
+    let startAtMove = amount_of_handicap_stones ? (amount_of_handicap_stones-1)*2:0;
+    var komi_for_handicap= {
+        0:{komi:7.5, bestBlackScore:-0.9}, // B -0.9
+        1:{komi:7.5, bestBlackScore:-0.9}, // B -0.9
+        2:{komi:Math.round(7.5+13), bestBlackScore:0.5}, //    //4-4 4-4 -> B +0.5
+        3:{komi:Math.round(7.5+27), bestBlackScore:0.5}, //    // 4-4 4-4 4-4 -> B+0.5
+        4:{komi:Math.round(7.5+43), bestBlackScore:0.2}, //    // 4 hochi = B +0.2
+        5:{komi:Math.round(7.5+56), bestBlackScore:0.5}, //    // 4 hochi + shimari = B +0.5
+        6:{komi:Math.round(7.5+71), bestBlackScore:0.2}, // 79 // 5 hochi + shimari = B +0.2
+        7:{komi:Math.round(7.5+84), bestBlackScore:-0.1}, // 92 // 6 hochi + center  = B -0.1
+        8:{komi:Math.round(7.5+99), bestBlackScore:0}, // 107 // 7 hochi + center  = B +0
+        9:{komi:Math.round(7.5+117), bestBlackScore:0.5}, // 125 // 8 hochi + center  = B +0.5
+    }
+    // from one white to move position, give black score
+    //const finalBoardPosition = sgfutils.get9HSGF();
+    //const finalBoardPosition = sgfutils.get9H_4shimarisSGF(); // very close to normal handicap
+    //const finalBoardPosition = sgfutils.get9H_sansanSGF(); // very close to normal handicap
+    const finalBoardPosition = sgf.parse(sgfutils.get4HandicapSGF(id));// very close to normal handicap
+    //const finalBoardPosition = sgfutils.get9H_BADSGF();
+    const finalSGF = sgfutils.getNodeSeparatedSGF(
+        {
+            node: finalBoardPosition.gameTrees[0],
+            nodeIdx :startAtMove+1
+        }, startAtMove+1);
+    const startSGF = sgfutils.getNodeSeparatedSGF(
+        {
+            node: finalBoardPosition.gameTrees[0],
+            nodeIdx :startAtMove
+        }, startAtMove);
+
+    Db.getHandicap_SGF(finalSGF, null,async (err, data) => {
+        //console.log("getHandicap_SGF ", data);
+        if (data && data.length > 0) {
+            //console.log("already explored ", data[0].SGF)
+            res.send(JSON.stringify({
+                id:data.id,
+                recordtime:data[0].recordtime,
+                move_amount:data[0].move_amount,
+                black_score:data[0].black_score
+                ,SGF:data[0].SGF.toString('utf8')
+            }));
+        } else {
+            //console.log(game.position())
+            console.log("finalSGF ", finalSGF, "komi", komi_for_handicap[amount_of_handicap_stones].komi);
+            console.log(sgf.parse(finalSGF).gameTrees[0].nodes[startAtMove+1]);
+            console.log(sgf.parse(finalSGF).gameTrees[0].nodes[startAtMove+1].B);
+            const candidateMoves = [sgfutils.SGFCoordToHuman(sgf.parse(finalSGF).gameTrees[0].nodes[startAtMove+1].B)];
+            console.log("candidateMoves ", candidateMoves);
+            const result = await sgfutils.getEvaluations(
+                startSGF,
+                candidateMoves,
+                "B",
+                getEngineForLocalAsyncCalls("\n"),
+                5,
+                komi_for_handicap[amount_of_handicap_stones].komi
+            )
+            console.log('SGF: ', result.bestMoves)
+            if (result.bestMoveScore && result.bestMoveScore > komi_for_handicap[amount_of_handicap_stones].bestBlackScore) {
+                console.log("OMG, THIS IS BETTER than the default handicap: ", amount_of_handicap_stones, " score", result.bestMoveScore, finalSGF)
+            }
+            Db.addHandicap_SGF(finalSGF, amount_of_handicap_stones, result.bestMoves[0].value, (err, data) => {
+                console.log("saving SGF evaluation: ",err/*, data*/);
+                res.send(JSON.stringify(result.bestMoves[0]));
+            })
+        }
+    })
+
+
+})
+
 router.route('/testEvaluate').get((req, res) => {
     const candidateMoves=[ 'D7', 'D6', 'D4', 'K10' ];
     const evaluated = {

@@ -108,8 +108,9 @@ console.log("building 4-handicap combos (deduped by set + board symmetry)")
 const _all4HandicapMoveCombos = build4HandicapMoveCombos(); // 3 * 4 * 4 * 4 = 192 unique
 const builtMs = Date.now() - start;
 console.log(`built ${_all4HandicapMoveCombos.length} combos in ${Math.floor(builtMs / 1000)} seconds`)
-const all4HandicapSGFs = _all4HandicapMoveCombos.map(m => sgf.parse(movesTo4HandicapSGFString(m)));
 console.log(_all4HandicapMoveCombos[0])
+
+const all4HandicapSGFs = _all4HandicapMoveCombos.map(m => movesTo4HandicapSGFString(m));
 const mapMs = Date.now() - start;
 console.log(`mapped ${all4HandicapSGFs.length} combos in ${Math.floor(mapMs / 1000)} seconds`)
 console.log(all4HandicapSGFs[0])
@@ -235,6 +236,17 @@ module.exports = {
 
         result += this.pointToHuman(movePoint);
         return result;
+    },
+
+    // B."pd" -> "Q16"
+    SGFCoordToHuman: function (SGFmove) {
+        let SGFmoveString = SGFmove;
+        if(typeof SGFmove !== typeof "" && !(SGFmove instanceof String)){
+            SGFmoveString = typeof sgfNode.B === "undefined" ? sgfNode.W : sgfNode.B;
+        }
+        const movePoint = this.sgfCoordToPoint(SGFmoveString);
+
+        return this.pointToHuman(movePoint);
     },
 
     pointToHuman:function(pt){

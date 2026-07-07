@@ -23,8 +23,11 @@ module.exports = {
     get9H_4shimarisSGF: function() {
         return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[dd];W[];B[pp];W[];B[cf];W[];B[qn];W[];B[pd];W[];B[qf];W[];B[dp];W[];B[cn];W[];B[jj])');
     },
+    get9H_komoku_shimarisSGF: function() {
+        return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[dc];W[];B[pq];W[];B[qd];W[];B[dq];W[];B[df];W[];B[qo];W[];B[nd];W[];B[co];W[];B[jj])');
+    },
     get9H_sansanSGF: function() {
-        return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[cq];W[];B[qq];W[];B[cc];W[];B[qc];W[];B[jj];W[];B[dj];W[];B[jd];W[];B[pj];W[];B[jp])');
+        return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[cq];W[];B[qq];W[];B[cc];W[];B[qc];W[];B[jp];W[];B[dj];W[];B[jd];W[];B[pj];W[];B[jj])');
     },
     get9H_BADSGF: function() {
         return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[aa];W[];B[bb];W[];B[ab];W[];B[ba];W[];B[jj];W[];B[dj];W[];B[jd];W[];B[pj];W[];B[jp])');

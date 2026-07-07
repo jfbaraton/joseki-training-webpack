@@ -278,8 +278,9 @@ router.route('/SGFfromDelta').get(async (req, res) => {
     res.send(JSON.stringify(result));
 })
 
-router.route('/evaluate_board').get(async (req, res) => {
-    let amount_of_handicap_stones = 9
+router.route('/evaluate_board{/:id}').get(async (req, res) => {
+    const id = req.params.id;
+    let amount_of_handicap_stones = id || 2;
     let startAtMove = amount_of_handicap_stones ? (amount_of_handicap_stones-1)*2:0;
     var komi_for_handicap= {
         0:7.5, // B -0.9
@@ -296,7 +297,8 @@ router.route('/evaluate_board').get(async (req, res) => {
     // from one white to move position, give black score
     //const finalBoardPosition = sgfutils.get9HSGF();
     //const finalBoardPosition = sgfutils.get9H_4shimarisSGF(); // very close to normal handicap
-    const finalBoardPosition = sgfutils.get9H_sansanSGF();
+    //const finalBoardPosition = sgfutils.get9H_sansanSGF(); // very close to normal handicap
+    const finalBoardPosition = sgfutils.get9H_komoku_shimarisSGF();// very close to normal handicap
     //const finalBoardPosition = sgfutils.get9H_BADSGF();
     const startSGF = sgfutils.getNodeSeparatedSGF(
         {

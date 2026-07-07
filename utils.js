@@ -7,6 +7,63 @@ var WGo = require('wgo');
 const JOSEKI_MARGIN = 4;
 const KATA_ANALYZE_TIME_MS = 1500; // multiple of 10 please
 
+// SGF coordinates of the 4 candidate points (3-3, 3-4, 4-3, 4-4) in each corner.
+// SGF board is 19x19 with letters a..s mapping to 1..19 (no skip).
+const HANDICAP_CORNER_POINTS = {
+    TR: ['qc', 'qd', 'pc', 'pd'], // 3-3, 3-4, 4-3(Q17), 4-4
+    TL: ['cc', 'cd', 'dc', 'dd'],
+    BL: ['cq', 'cp', 'dq', 'dp'],
+    BR: ['qq', 'qp', 'pq', 'pp'],
+};
+// Q17 = SGF "pc" (column Q = 16th, row 17 from bottom = 3rd from top = SGF 'c')
+const HANDICAP_TR_EXCLUDE = 'pc';
+
+function permutations(arr) {
+    if (arr.length <= 1) return [arr.slice()];
+    const result = [];
+    for (let i = 0; i < arr.length; i++) {
+        const rest = arr.slice(0, i).concat(arr.slice(i + 1));
+        for (const p of permutations(rest)) result.push([arr[i], ...p]);
+    }
+    return result;
+}
+
+// Build the ordered list of stone quadruples ([TRmove, c2, c3, c4]) matching the constraints.
+function build4HandicapMoveCombos() {
+    const combos = [];
+    const trChoices = HANDICAP_CORNER_POINTS.TR.filter(p => p !== HANDICAP_TR_EXCLUDE);
+    const otherCornerOrders = permutations(['TL', 'BL', 'BR']);
+    for (const tr of trChoices) {
+        for (const order of otherCornerOrders) {
+            const [a, b, c] = order.map(k => HANDICAP_CORNER_POINTS[k]);
+            for (const s1 of a) {
+                for (const s2 of b) {
+                    for (const s3 of c) {
+                        combos.push([tr, s1, s2, s3]);
+                    }
+                }
+            }
+        }
+    }
+    return combos;
+}
+
+function movesTo4HandicapSGFString(moves) {
+    // 4 black moves separated by white "pass" moves: B[..];W[];B[..];W[];B[..];W[];B[..]
+    const body = moves.map((m, i) => (i === 0 ? `;B[${m}]` : `;W[];B[${m}]`)).join('');
+    return `(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19]${body})`;
+}
+const start = Date.now();
+console.log("building 1152 combos")
+const _all4HandicapMoveCombos = build4HandicapMoveCombos(); // 3 * 6 * 64 = 1152
+const builtMs = Date.now() - start;
+console.log(`built ${_all4HandicapMoveCombos.length} combos in ${Math.floor(builtMs / 1000)} seconds`)
+const all4HandicapSGFs = _all4HandicapMoveCombos.map(m => sgf.parse(movesTo4HandicapSGFString(m)));
+console.log(_all4HandicapMoveCombos[0])
+const mapMs = Date.now() - start;
+console.log(`mapped ${all4HandicapSGFs.length} combos in ${Math.floor(mapMs / 1000)} seconds`)
+console.log(all4HandicapSGFs[0])
+
 module.exports = {
     getEmptySGF: function() {
         return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[7.5]SZ[19])');
@@ -35,6 +92,26 @@ module.exports = {
     get154MoveSGF: function() {
         return sgf.parse('(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19];B[pp];W[cd];B[dp];W[qd];B[jj];W[cn];B[cl];W[en];B[dm];W[dn];B[cp];W[fp];B[fq];W[gq];B[eq];W[gp];B[jq];W[di];B[fl];W[jp];B[kq];W[iq];B[kp];W[ip];B[kn];W[ec];B[gn];W[ep];B[fn];W[eo];B[in];W[bl];B[bk];W[bm];B[cj];W[dk];B[ck];W[bo];B[bp];W[gr];B[fr];W[dr];B[dq];W[br];B[cr];W[cs];B[cq];W[bs];B[ar];W[ap];B[aq];W[ao];B[bq];W[em];B[el];W[dl];B[dj];W[ek];B[ej];W[fk];B[cm];W[gl];B[fm];W[gj];B[hk];W[gk];B[fi];W[hi];B[gh];W[hh];B[cf];W[df];B[dg];W[gs];B[fs];W[co];B[ce];W[dd];B[gf];W[ji];B[ki];W[if];B[jh];W[hf];B[hg];W[ig];B[gg];W[ih];B[gd];W[ic];B[id];W[jd];B[hc];W[jc];B[fb];W[eb];B[oc];W[mc];B[pe];W[ge];B[fe];W[he];B[fd];W[qe];B[pf];W[qg];B[qf];W[rf];B[pg];W[rh];B[qh];W[rg];B[qi];W[qq];B[pq];W[qp];B[qo];W[pr];B[or];W[ro];B[qn];W[qr];B[rn];W[oq];B[nr];W[rp];B[qb];W[lo];B[ko];W[nq];B[mq];W[po];B[op];W[np];B[oo];W[mp];B[lr];W[mm];B[om];W[mk];B[nl];W[ml];B[ln];W[mi];B[nj];W[nk];B[ok];W[mj];B[mg];W[lh];B[kg];W[lg];B[lf];W[kh])');
     },
+    /**
+     * returns the SGF number "number" out of all the considered 4 Handicap SGFs
+     * @param number
+     */
+    get4HandicapSGF: function(number) {
+        // 4 black moves, separated by white "pass" moves
+        // the first 4 black moves will be in each different corners
+        // the first move is always in the top right corner, but it cannot be Q17
+        // for each corner, we consider 4 moves: 3-3, 3-4, 4-3, 4-4
+        if (typeof number !== 'number' || number < 0 || number >= all4HandicapSGFs.length) {
+            return null;
+        }
+        return all4HandicapSGFs[number];
+    },
+
+    all4HandicapSGFs: all4HandicapSGFs,
+    all4HandicapMoveCombos: _all4HandicapMoveCombos,
+    count4HandicapSGFs: all4HandicapSGFs.length,
+
+
 
     makeNodeFromOGS: function(ogsMove, BorW) {
         let result = {

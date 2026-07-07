@@ -108,11 +108,55 @@ setJoseki = (SGF,  result) => {
     }
 };
 
+getHandicap_SGF = (sGF, limit, result) => {
+    var filterClause = sGF ? "SGF like '"+sGF+"'" : "move_amount > 0";
+    let limitClause = limit ? " LIMIT "+limit : "";
+    let query = "SELECT * FROM `handicap_sgfs` where "+filterClause+" ORDER BY record_time DESC"+limitClause;
+
+    sql.query(query, (err, res) => {
+        if (err) {
+            console.log("error: ", err);
+            result(err, err);
+            return;
+        }
+
+        console.log("Handicap SGF: ", res.length);
+        result(null, res);
+    });
+}
+
+
+addHandicap_SGF = (SGF, amountOfMoves, black_score,  result) => {
+    try{
+        if(!SGF || typeof SGF !== "string") throw 'no SGF';
+        var collection = sgf.parse(SGF);
+        if(!collection || !collection.gameTrees || !collection.gameTrees.length || (collection.gameTrees[0].nodes.length + collection.gameTrees[0].sequences.length) < 2) throw 'wrong SGF';
+
+        let query = "INSERT INTO `handicap_sgfs` (`recordtime`, `tags`, `milestone`, `SGF`, `move_amount`, `black_score`) VALUES "+
+            "(20210207232426, 'joseki', NULL, ?, ?, ?)";
+
+        sql.query(query, SGF, amountOfMoves, black_score, (err, res) => {
+            if (err) {
+                console.log("error: ", err);
+                result(null, err);
+                return;
+            }
+
+            console.log("joseki: ", res);
+            result(null, res);
+        });
+    } catch (error) {
+        result(null, {error:error});
+    }
+};
+
 module.exports = {
   //getOrders:  getOrders,
   getAll:  getAll,
   getJoseki:  getJoseki,
   setJoseki:  setJoseki,
+  getHandicap_SGF:  getHandicap_SGF,
+  addHandicap_SGF:  addHandicap_SGF,
   getOGSJoseki:  getOGSJoseki,
   setOGSJoseki:  setOGSJoseki
 }

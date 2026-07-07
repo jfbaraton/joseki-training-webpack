@@ -68,4 +68,19 @@ CREATE TABLE IF NOT EXISTS `OGS` (
     KEY `OGS_endpoint` (`endpoint`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+
+DROP TABLE IF EXISTS `handicap_sgfs`;
+CREATE TABLE IF NOT EXISTS `handicap_sgfs` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `recordtime` bigint NOT NULL,
+    `tags` varchar(100) NOT NULL,
+    `milestone` varchar(100),
+    `SGF` LONGBLOB NOT NULL,
+    `move_amount` int(8) NOT NULL,
+    `black_score` decimal(4,2) NOT NULL,
+    PRIMARY KEY (`id`),
+    INDEX `handi_tags_idx` (`tags`),
+    INDEX `handi_milestone_idx` (`milestone`)
+) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 COMMIT;

@@ -28,12 +28,52 @@ function permutations(arr) {
     return result;
 }
 
+// The 8 symmetries of the square board (dihedral group D4), acting on SGF points.
+// SGF letters a..s -> 0..18; n = 18 is the max index used for mirroring.
+const HANDICAP_BOARD_MAX = 18;
+const HANDICAP_SYMMETRIES = [
+    (x, y) => [x, y],                                             // identity
+    (x, y) => [HANDICAP_BOARD_MAX - x, y],                        // mirror vertical
+    (x, y) => [x, HANDICAP_BOARD_MAX - y],                        // mirror horizontal
+    (x, y) => [HANDICAP_BOARD_MAX - x, HANDICAP_BOARD_MAX - y],   // rotate 180
+    (x, y) => [y, x],                                             // transpose (main diagonal)
+    (x, y) => [HANDICAP_BOARD_MAX - y, HANDICAP_BOARD_MAX - x],   // anti-diagonal
+    (x, y) => [y, HANDICAP_BOARD_MAX - x],                        // rotate 90
+    (x, y) => [HANDICAP_BOARD_MAX - y, x],                        // rotate 270
+];
+
+function sgfPointToXY(p) {
+    return [p.charCodeAt(0) - 97, p.charCodeAt(1) - 97];
+}
+
+function xyToSgfPoint(x, y) {
+    return String.fromCharCode(97 + x) + String.fromCharCode(97 + y);
+}
+
+// Canonical key for a combo's orbit under board symmetries: the lexicographically
+// smallest sorted stone-set over all 8 transformations. Two combos that are equivalent
+// through any rotation/reflection share the same key.
+function symmetryOrbitKey(combo) {
+    let best = null;
+    for (const t of HANDICAP_SYMMETRIES) {
+        const transformed = combo
+            .map(p => { const [x, y] = sgfPointToXY(p); const [tx, ty] = t(x, y); return xyToSgfPoint(tx, ty); })
+            .sort()
+            .join('');
+        if (best === null || transformed < best) best = transformed;
+    }
+    return best;
+}
+
 // Build the ordered list of stone quadruples ([TRmove, c2, c3, c4]) matching the constraints.
 // Order of the moves does not matter, so combos that are the same set of 4 stones are
 // considered equivalent; only the first (canonical) one is kept.
+// Additionally, combos equivalent through a board symmetry (rotation/reflection) are
+// considered equivalent too, so only one representative per symmetry orbit is kept.
 function build4HandicapMoveCombos() {
     const combos = [];
     const seen = new Set();
+    const seenOrbits = new Set();
     const trChoices = HANDICAP_CORNER_POINTS.TR.filter(p => p !== HANDICAP_TR_EXCLUDE);
     const otherCornerOrders = permutations(['TL', 'BL', 'BR']);
     for (const tr of trChoices) {
@@ -46,6 +86,9 @@ function build4HandicapMoveCombos() {
                         const key = combo.slice().sort().join('');
                         if (seen.has(key)) continue;
                         seen.add(key);
+                        const orbit = symmetryOrbitKey(combo);
+                        if (seenOrbits.has(orbit)) continue;
+                        seenOrbits.add(orbit);
                         combos.push(combo);
                     }
                 }
@@ -61,7 +104,7 @@ function movesTo4HandicapSGFString(moves) {
     return `(;GM[1]FF[4]CA[UTF-8]KM[6.5]SZ[19]${body})`;
 }
 const start = Date.now();
-console.log("building 192 combos")
+console.log("building 4-handicap combos (deduped by set + board symmetry)")
 const _all4HandicapMoveCombos = build4HandicapMoveCombos(); // 3 * 4 * 4 * 4 = 192 unique
 const builtMs = Date.now() - start;
 console.log(`built ${_all4HandicapMoveCombos.length} combos in ${Math.floor(builtMs / 1000)} seconds`)

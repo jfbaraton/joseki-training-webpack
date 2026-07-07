@@ -283,16 +283,16 @@ router.route('/evaluate_board{/:id}').get(async (req, res) => {
     let amount_of_handicap_stones = id || 2;
     let startAtMove = amount_of_handicap_stones ? (amount_of_handicap_stones-1)*2:0;
     var komi_for_handicap= {
-        0:7.5, // B -0.9
-        1:7.5, // B -0.9
-        2:Math.round(7.5+13), //    //4-4 4-4 -> B +0.5
-        3:Math.round(7.5+27), //    // 4-4 4-4 4-4 -> B+0.5
-        4:Math.round(7.5+43), //    // 4 hochi = B +0.2
-        5:Math.round(7.5+56), //    // 4 hochi + shimari = B +0.5
-        6:Math.round(7.5+71), // 79 // 5 hochi + shimari = B +0.2
-        7:Math.round(7.5+84), // 92 // 6 hochi + center  = B -0.1
-        8:Math.round(7.5+99), // 107 // 7 hochi + center  = B +0
-        9:Math.round(7.5+117), // 125 // 8 hochi + center  = B +0.5
+        0:{komi:7.5, bestBlackScore:-0.9}, // B -0.9
+        1:{komi:7.5, bestBlackScore:-0.9}, // B -0.9
+        2:{komi:Math.round(7.5+13), bestBlackScore:0.5}, //    //4-4 4-4 -> B +0.5
+        3:{komi:Math.round(7.5+27), bestBlackScore:0.5}, //    // 4-4 4-4 4-4 -> B+0.5
+        4:{komi:Math.round(7.5+43), bestBlackScore:0.2}, //    // 4 hochi = B +0.2
+        5:{komi:Math.round(7.5+56), bestBlackScore:0.5}, //    // 4 hochi + shimari = B +0.5
+        6:{komi:Math.round(7.5+71), bestBlackScore:0.2}, // 79 // 5 hochi + shimari = B +0.2
+        7:{komi:Math.round(7.5+84), bestBlackScore:-0.1}, // 92 // 6 hochi + center  = B -0.1
+        8:{komi:Math.round(7.5+99), bestBlackScore:0}, // 107 // 7 hochi + center  = B +0
+        9:{komi:Math.round(7.5+117), bestBlackScore:0.5}, // 125 // 8 hochi + center  = B +0.5
     }
     // from one white to move position, give black score
     //const finalBoardPosition = sgfutils.get9HSGF();
@@ -307,7 +307,7 @@ router.route('/evaluate_board{/:id}').get(async (req, res) => {
         }, startAtMove);
 
     //console.log(game.position())
-    console.log("startSGF ",startSGF, "komi", komi_for_handicap[amount_of_handicap_stones]);
+    console.log("startSGF ",startSGF, "komi", komi_for_handicap[amount_of_handicap_stones].komi);
 
     const result = await sgfutils.getEvaluations(
         startSGF,
@@ -315,9 +315,12 @@ router.route('/evaluate_board{/:id}').get(async (req, res) => {
         "B",
         getEngineForLocalAsyncCalls("\n"),
         5,
-        komi_for_handicap[amount_of_handicap_stones]
+        komi_for_handicap[amount_of_handicap_stones].komi
     )
     console.log('SGF: ',result.bestMoves)
+    if(result.bestMoveScore && result.bestMoveScore > komi_for_handicap[amount_of_handicap_stones].bestBlackScore) {
+        console.log("OMG, THIS IS BETTER than the default handicap: ",amount_of_handicap_stones," score",result.bestMoveScore, startSGF)
+    }
     res.send(JSON.stringify({}));
 })
 

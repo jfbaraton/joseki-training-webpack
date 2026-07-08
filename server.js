@@ -397,6 +397,20 @@ router.route('/evaluate_4H_boards{/:id}').get(async (req, res) => {
 
 })
 
+router.route('/evaluate_6H_boards_all').get(async (req, res) => {
+    let all_hochis = sgfutils.all4HandicapMoveCombos[41];
+    console.log("all_hochis ", all_hochis);
+
+    let all_6H_from_hochis = sgfutils.build6HandicapMoveCombos(all_hochis)
+
+
+    const all_6H_from_hochisSGFs = all_6H_from_hochis.map(m => sgfutils.movesTo4HandicapSGFString(m));
+
+    console.log("6H SGF: ",all_6H_from_hochisSGFs[1])
+
+    res.send(JSON.stringify(all_6H_from_hochis.length));
+})
+
 router.route('/evaluate_4H_boards_all').get(async (req, res) => {
     let engineuse = 0;
     let amount_of_handicap_stones = 4;

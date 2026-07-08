@@ -98,6 +98,95 @@ function build4HandicapMoveCombos() {
     return combos;
 }
 
+// Given a corner key ('TR'|'TL'|'BR'|'BL') and one of its handicap stones (SGF point),
+// returns the approach candidates grouped by which of the corner's 2 sides they land on:
+//   - sideCol: the corner-side running along the vertical edge (left/right)
+//   - sideRow: the corner-side running along the horizontal edge (top/bottom)
+// Approach rules (X-Y notation = X from the corner's vertical edge, Y from horizontal edge):
+//   - 3-3 corner: [4-6] on sideCol, [6-4] on sideRow
+//   - 4-4 corner: [3-6] on sideCol, [6-3] on sideRow
+//   - 3-4 corner: [6-4, 5-4, 6-3, 5-3] on sideRow, nothing on sideCol
+//   - 4-3 corner: [4-6, 4-5, 3-6, 3-5] on sideCol, nothing on sideRow (mirror of 3-4)
+const HANDICAP_CORNER_ORIENTATION = {
+    TR: { colEdgeIsRight: true,  rowEdgeIsTop: true  },
+    TL: { colEdgeIsRight: false, rowEdgeIsTop: true  },
+    BR: { colEdgeIsRight: true,  rowEdgeIsTop: false },
+    BL: { colEdgeIsRight: false, rowEdgeIsTop: false },
+};
+
+function getApproachesForCornerStone(cornerKey, stoneSGF) {
+    const orient = HANDICAP_CORNER_ORIENTATION[cornerKey];
+    const [x, y] = sgfPointToXY(stoneSGF);
+    const c = (orient.colEdgeIsRight ? HANDICAP_BOARD_MAX - x : x) + 1;
+    const r = (orient.rowEdgeIsTop ? y : HANDICAP_BOARD_MAX - y) + 1;
+
+    const toSGF = (cc, rr) => {
+        const nx = orient.colEdgeIsRight ? HANDICAP_BOARD_MAX - (cc - 1) : (cc - 1);
+        const ny = orient.rowEdgeIsTop ? (rr - 1) : HANDICAP_BOARD_MAX - (rr - 1);
+        return xyToSgfPoint(nx, ny);
+    };
+
+    let sideCol = [];
+    let sideRow = [];
+    if (c === 3 && r === 3) {
+        sideCol = [toSGF(4, 6)];
+        sideRow = [toSGF(6, 4)];
+    } else if (c === 4 && r === 4) {
+        sideCol = [toSGF(3, 6)];
+        sideRow = [toSGF(6, 3)];
+    } else if (c === 3 && r === 4) {
+        sideRow = [toSGF(6, 4), toSGF(5, 4), toSGF(6, 3), toSGF(5, 3)];
+    } else if (c === 4 && r === 3) {
+        sideCol = [toSGF(4, 6), toSGF(4, 5), toSGF(3, 6), toSGF(3, 5)];
+    }
+    return { sideCol, sideRow };
+}
+
+function getCornerOfStone(stoneSGF) {
+    for (const cornerKey of Object.keys(HANDICAP_CORNER_POINTS)) {
+        if (HANDICAP_CORNER_POINTS[cornerKey].includes(stoneSGF)) return cornerKey;
+    }
+    return null;
+}
+
+// Given one 4-handicap combo (4 SGF points, one per corner), builds all 6-handicap combos
+// by adding 2 approach moves. Constraints:
+//   - Each corner has 2 sides; there are 8 corner-sides total.
+//   - The 2 added approaches must land on 2 different corner-sides
+//     (i.e. no corner-side is used twice).
+// The result is deduped by the unordered set of 6 stones.
+function build6HandicapMoveCombos(combo4) {
+    if (!Array.isArray(combo4) || combo4.length !== 4) {
+        throw new Error('build6HandicapMoveCombos: expected a 4-handicap combo (array of 4 SGF points)');
+    }
+
+    const options = [];
+    combo4.forEach((stone, idx) => {
+        const cornerKey = getCornerOfStone(stone);
+        if (!cornerKey) throw new Error(`build6HandicapMoveCombos: stone ${stone} is not in any handicap corner`);
+        const { sideCol, sideRow } = getApproachesForCornerStone(cornerKey, stone);
+        for (const mv of sideCol) options.push({ cornerIdx: idx, side: 'col', move: mv });
+        for (const mv of sideRow) options.push({ cornerIdx: idx, side: 'row', move: mv });
+    });
+
+    const combos = [];
+    const seen = new Set();
+    for (let i = 0; i < options.length; i++) {
+        for (let j = i + 1; j < options.length; j++) {
+            const o1 = options[i];
+            const o2 = options[j];
+            if (o1.cornerIdx === o2.cornerIdx && o1.side === o2.side) continue;
+            if (o1.move === o2.move) continue;
+            const combo6 = combo4.concat([o1.move, o2.move]);
+            const key = combo6.slice().sort().join('');
+            if (seen.has(key)) continue;
+            seen.add(key);
+            combos.push(combo6);
+        }
+    }
+    return combos;
+}
+
 function movesTo4HandicapSGFString(moves) {
     // 4 black moves separated by white "pass" moves: B[..];W[];B[..];W[];B[..];W[];B[..]
     const body = moves.map((m, i) => (i === 0 ? `;B[${m}]` : `;W[];B[${m}]`)).join('');
@@ -160,7 +249,9 @@ module.exports = {
 
     all4HandicapSGFs: all4HandicapSGFs,
     all4HandicapMoveCombos: _all4HandicapMoveCombos,
+    movesTo4HandicapSGFString: movesTo4HandicapSGFString,
     count4HandicapSGFs: all4HandicapSGFs.length,
+    build6HandicapMoveCombos: build6HandicapMoveCombos,
 
 
 

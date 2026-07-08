@@ -171,6 +171,7 @@ function build6HandicapMoveCombos(combo4) {
 
     const combos = [];
     const seen = new Set();
+    const seenOrbits = new Set();
     for (let i = 0; i < options.length; i++) {
         for (let j = i + 1; j < options.length; j++) {
             const o1 = options[i];
@@ -181,6 +182,9 @@ function build6HandicapMoveCombos(combo4) {
             const key = combo6.slice().sort().join('');
             if (seen.has(key)) continue;
             seen.add(key);
+            const orbit = symmetryOrbitKey(combo6);
+            if (seenOrbits.has(orbit)) continue;
+            seenOrbits.add(orbit);
             combos.push(combo6);
         }
     }

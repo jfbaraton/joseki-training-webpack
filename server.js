@@ -397,18 +397,119 @@ router.route('/evaluate_4H_boards{/:id}').get(async (req, res) => {
 
 })
 
+router.route('/evaluate_6H_boards_count_all').get(async (req, res) => {
+    let min =40;
+    let max = 0;
+    let sum = 0;
+    for(let idx_4H = 0;idx_4H<43;idx_4H++) {
+        let all_hochis = sgfutils.all4HandicapMoveCombos[idx_4H];
+        //console.log("all_hochis ", all_hochis);
+
+        let all_6H_from_hochis = sgfutils.build6HandicapMoveCombos(all_hochis)
+
+
+        //let all_6H_from_hochisSGFs = all_6H_from_hochis.map(m => sgfutils.movesTo4HandicapSGFString(m));
+
+        if(min>all_6H_from_hochis.length) min = all_6H_from_hochis.length;
+        if(max<all_6H_from_hochis.length) max = all_6H_from_hochis.length;
+        sum+=all_6H_from_hochis.length;
+        //console.log("6H SGF: ",all_6H_from_hochisSGFs[1])
+    }
+
+    res.send(JSON.stringify({mini:min, max:max, sum:sum}));
+})
+
 router.route('/evaluate_6H_boards_all').get(async (req, res) => {
-    let all_hochis = sgfutils.all4HandicapMoveCombos[41];
-    console.log("all_hochis ", all_hochis);
+    let engineuse = 0;
+    let amount_of_handicap_stones = 6;
+    let startAtMove = amount_of_handicap_stones ? (amount_of_handicap_stones-1)*2:0;
+    var komi_for_handicap= {
+        0:{komi:7.5, bestBlackScore:-0.9}, // B -0.9
+        1:{komi:7.5, bestBlackScore:-0.9}, // B -0.9
+        2:{komi:Math.round(7.5+13), bestBlackScore:0.5}, //    //4-4 4-4 -> B +0.5
+        3:{komi:Math.round(7.5+27), bestBlackScore:0.5}, //    // 4-4 4-4 4-4 -> B+0.5
+        4:{komi:Math.round(7.5+43), bestBlackScore:0.2}, //    // 4 hochi = B +0.2
+        5:{komi:Math.round(7.5+56), bestBlackScore:0.5}, //    // 4 hochi + shimari = B +0.5
+        6:{komi:Math.round(7.5+71), bestBlackScore:0.2}, // 79 // 5 hochi + shimari = B +0.2
+        7:{komi:Math.round(7.5+84), bestBlackScore:-0.1}, // 92 // 6 hochi + center  = B -0.1
+        8:{komi:Math.round(7.5+99), bestBlackScore:0}, // 107 // 7 hochi + center  = B +0
+        9:{komi:Math.round(7.5+117), bestBlackScore:0.5}, // 125 // 8 hochi + center  = B +0.5
+    }
+    //for(let idx_4H = 0;idx_4H<43;idx_4H++) {
+    for(let idx_4H = 0;idx_4H<2;idx_4H++) {
+        let all_hochis = sgfutils.all4HandicapMoveCombos[idx_4H];
+        //console.log("all_hochis ", all_hochis);
 
-    let all_6H_from_hochis = sgfutils.build6HandicapMoveCombos(all_hochis)
+        let all_6H_from_hochis = sgfutils.build6HandicapMoveCombos(all_hochis)
 
+        console.log("idx_4H ", idx_4H, "(length: "+all_6H_from_hochis.length+")");
+        for(let idx_6H = 0 ;idx_6H<all_6H_from_hochis.length;idx_6H++) {
+        //for(let idx_6H = 0 ;idx_6H<2;idx_6H++) {
+            //let all_6H_from_hochisSGFs = all_6H_from_hochis.map(m => sgfutils.movesTo4HandicapSGFString(m));
 
-    const all_6H_from_hochisSGFs = all_6H_from_hochis.map(m => sgfutils.movesTo4HandicapSGFString(m));
+            //console.log("6H SGF: ",all_6H_from_hochisSGFs[1])
 
-    console.log("6H SGF: ",all_6H_from_hochisSGFs[1])
+            const finalBoardPosition = sgf.parse(sgfutils.movesTo4HandicapSGFString(all_6H_from_hochis[idx_6H]));// very close to normal handicap
+            //const finalBoardPosition = sgfutils.get9H_BADSGF();
+            const finalSGF = sgfutils.getNodeSeparatedSGF(
+                {
+                    node: finalBoardPosition.gameTrees[0],
+                    nodeIdx :startAtMove+1
+                }, startAtMove+1);
+            const startSGF = sgfutils.getNodeSeparatedSGF(
+                {
+                    node: finalBoardPosition.gameTrees[0],
+                    nodeIdx :startAtMove
+                }, startAtMove);
 
-    res.send(JSON.stringify(all_6H_from_hochis.length));
+            Db.getHandicap_SGF(finalSGF, null,async (err, data) => {
+                //console.log("getHandicap_SGF ", data);
+                if (data && data.length > 0) {
+                    console.log("already explored ", data[0].SGF.toString('utf8'))
+                    /*res.send(JSON.stringify({
+                        id:data.id,
+                        recordtime:data[0].recordtime,
+                        move_amount:data[0].move_amount,
+                        black_score:data[0].black_score
+                        ,SGF:data[0].SGF.toString('utf8')
+                    }));*/
+                } else {
+                    //console.log(game.position())
+                    setTimeout(async ()=> {
+                        console.log("finalSGF ", finalSGF, "komi", komi_for_handicap[amount_of_handicap_stones].komi);
+                        console.log(sgf.parse(finalSGF).gameTrees[0].nodes[startAtMove+1]);
+                        console.log(sgf.parse(finalSGF).gameTrees[0].nodes[startAtMove+1].B);
+                        const candidateMoves = [sgfutils.SGFCoordToHuman(sgf.parse(finalSGF).gameTrees[0].nodes[startAtMove+1].B)];
+                        console.log("candidateMoves ", candidateMoves);
+                        const engineStart = Date.now();
+                        const result = await sgfutils.getEvaluations(
+                            startSGF,
+                            candidateMoves,
+                            "B",
+                            getEngineForLocalAsyncCalls("\n"),
+                            5,
+                            komi_for_handicap[amount_of_handicap_stones].komi
+                        )
+                        const engineMs = Date.now() - engineStart;
+                        console.log(`engine took ${Math.floor(engineMs / 1000)} seconds`)
+                        console.log('SGF: ', result.bestMoves)
+                        if (result.bestMoveScore && result.bestMoveScore > komi_for_handicap[amount_of_handicap_stones].bestBlackScore) {
+                            console.log("OMG, THIS IS BETTER than the default handicap: ", amount_of_handicap_stones, " score", result.bestMoveScore, finalSGF)
+                        }
+                        if(result.bestMoves && result.bestMoves.length) {
+                            Db.addHandicap_SGF(finalSGF, amount_of_handicap_stones, result.bestMoves[0].value, (err, data) => {
+                                console.log("saving SGF evaluation: ", err/*, data*/);
+                            })
+                        }else{
+                            console.log("ERROR for SGF: ",finalSGF,  result)
+                        }
+                    }, 12000*engineuse++)
+                }
+            })
+        }
+    }
+
+    res.send(JSON.stringify({}));
 })
 
 router.route('/evaluate_4H_boards_all').get(async (req, res) => {

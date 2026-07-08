@@ -419,10 +419,14 @@ router.route('/evaluate_6H_boards_count_all').get(async (req, res) => {
     res.send(JSON.stringify({mini:min, max:max, sum:sum}));
 })
 
-router.route('/evaluate_6H_boards_all').get(async (req, res) => {
+router.route('/evaluate_6H_boards_all{/:id}').get(async (req, res) => {
+    const id = parseInt(req.params.id || "11");
+    const id_increment = 3;
     let engineuse = 0;
     let amount_of_handicap_stones = 6;
     let startAtMove = amount_of_handicap_stones ? (amount_of_handicap_stones-1)*2:0;
+    let total_calculated =0;
+    let total =0;
     var komi_for_handicap= {
         0:{komi:7.5, bestBlackScore:-0.9}, // B -0.9
         1:{komi:7.5, bestBlackScore:-0.9}, // B -0.9
@@ -436,7 +440,7 @@ router.route('/evaluate_6H_boards_all').get(async (req, res) => {
         9:{komi:Math.round(7.5+117), bestBlackScore:0.5}, // 125 // 8 hochi + center  = B +0.5
     }
     //for(let idx_4H = 0;idx_4H<43;idx_4H++) {
-    for(let idx_4H = 0;idx_4H<2;idx_4H++) {
+    for(let idx_4H = id;idx_4H<(id+id_increment);idx_4H++) { //10 min for 2 idexes
         let all_hochis = sgfutils.all4HandicapMoveCombos[idx_4H];
         //console.log("all_hochis ", all_hochis);
 
@@ -444,7 +448,8 @@ router.route('/evaluate_6H_boards_all').get(async (req, res) => {
 
         console.log("idx_4H ", idx_4H, "(length: "+all_6H_from_hochis.length+")");
         for(let idx_6H = 0 ;idx_6H<all_6H_from_hochis.length;idx_6H++) {
-        //for(let idx_6H = 0 ;idx_6H<2;idx_6H++) {
+            total++;
+            //for(let idx_6H = 0 ;idx_6H<2;idx_6H++) {
             //let all_6H_from_hochisSGFs = all_6H_from_hochis.map(m => sgfutils.movesTo4HandicapSGFString(m));
 
             //console.log("6H SGF: ",all_6H_from_hochisSGFs[1])
@@ -475,6 +480,7 @@ router.route('/evaluate_6H_boards_all').get(async (req, res) => {
                     }));*/
                 } else {
                     //console.log(game.position())
+                    total_calculated++;
                     setTimeout(async ()=> {
                         console.log("finalSGF ", finalSGF, "komi", komi_for_handicap[amount_of_handicap_stones].komi);
                         console.log(sgf.parse(finalSGF).gameTrees[0].nodes[startAtMove+1]);
@@ -508,8 +514,14 @@ router.route('/evaluate_6H_boards_all').get(async (req, res) => {
             })
         }
     }
-
-    res.send(JSON.stringify({}));
+    setTimeout(async ()=> {
+        res.send(JSON.stringify({
+            idx4H_start: id,
+            call_next_id:(id+id_increment),
+            total: total,
+            total_calculating: total_calculated
+        }));
+    },2000);
 })
 
 router.route('/evaluate_4H_boards_all').get(async (req, res) => {

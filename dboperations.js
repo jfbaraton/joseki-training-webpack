@@ -91,7 +91,7 @@ setJoseki = (SGF,  result) => {
         if(!collection || !collection.gameTrees || !collection.gameTrees.length || (collection.gameTrees[0].nodes.length + collection.gameTrees[0].sequences.length) < 2) throw 'wrong SGF';
 
         let query = "INSERT INTO `sgfs` (`recordtime`, `tags`, `milestone`, `SGF`) VALUES "+
-                    "(20210207232426, 'joseki', NULL, ?)";
+                    "(CURRENT_TIMESTAMP(), 'joseki', NULL, ?)";
 
         sql.query(query, SGF,(err, res) => {
             if (err) {
@@ -120,7 +120,7 @@ getHandicap_SGF = (sGF, limit, result) => {
             return;
         }
 
-        console.log("Handicap SGF: ", res.length);
+        //console.log("Handicap SGF: ", res.length);
         result(null, res);
     });
 }
@@ -134,7 +134,7 @@ addHandicap_SGF = (SGF, amountOfMoves, black_score,  result) => {
         if(!collection || !collection.gameTrees || !collection.gameTrees.length) throw 'wrong SGF';
 
         let query = "INSERT INTO `handicap_sgfs` (`recordtime`, `tags`, `milestone`, `SGF`, `move_amount`, `black_score`) VALUES "+
-            "(20210207232426, 'joseki', NULL, ?, "+amountOfMoves+", "+black_score+")";
+            "(CURRENT_TIMESTAMP(), 'joseki', NULL, ?, "+amountOfMoves+", "+black_score+")";
 
         sql.query(query, SGF, (err, res) => {
             if (err) {

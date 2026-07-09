@@ -440,7 +440,8 @@ router.route('/evaluate_6H_boards_all{/:id}').get(async (req, res) => {
         9:{komi:Math.round(7.5+117), bestBlackScore:0.5}, // 125 // 8 hochi + center  = B +0.5
     }
     //for(let idx_4H = 0;idx_4H<43;idx_4H++) {
-    for(let idx_4H = id;idx_4H<(id+id_increment);idx_4H++) { //10 min for 2 idexes
+    //for(let idx_4H = id;idx_4H<(id+id_increment);idx_4H++) { //10 min for 2 idexes
+    for(let idx_4H = id;idx_4H<(sgfutils.all4HandicapMoveCombos.length);idx_4H++) { //10 min for 2 idexes
         let all_hochis = sgfutils.all4HandicapMoveCombos[idx_4H];
         //console.log("all_hochis ", all_hochis);
 
@@ -517,7 +518,8 @@ router.route('/evaluate_6H_boards_all{/:id}').get(async (req, res) => {
     setTimeout(async ()=> {
         res.send(JSON.stringify({
             idx4H_start: id,
-            call_next_id:(id+id_increment),
+            //call_next_id:(id+id_increment),
+            call_next_id:"OVER",
             total: total,
             total_calculating: total_calculated
         }));

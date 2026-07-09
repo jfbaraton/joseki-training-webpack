@@ -135,9 +135,9 @@ function getApproachesForCornerStone(cornerKey, stoneSGF) {
         sideCol = [toSGF(3, 6)];
         sideRow = [toSGF(6, 3)];
     } else if (c === 3 && r === 4) {
-        sideRow = [toSGF(6, 4), toSGF(5, 4), toSGF(6, 3), toSGF(5, 3)];
+        sideRow = [toSGF(6, 4), toSGF(5, 4), toSGF(6, 3), toSGF(5, 3), toSGF(4, 5), toSGF(4, 6)];
     } else if (c === 4 && r === 3) {
-        sideCol = [toSGF(4, 6), toSGF(4, 5), toSGF(3, 6), toSGF(3, 5)];
+        sideCol = [toSGF(4, 6), toSGF(4, 5), toSGF(3, 6), toSGF(3, 5), toSGF(5, 4), toSGF(6, 4)];
     }
     return { sideCol, sideRow };
 }

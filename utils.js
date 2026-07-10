@@ -177,6 +177,7 @@ function build6HandicapMoveCombos(combo4) {
         { cornerIdx: 'edge-bottom', side: 'mid', move: 'jp' }, // bottom edge: row 16, col 10
         { cornerIdx: 'edge-left',   side: 'mid', move: 'dj' }, // left edge:   col 4, row 10
         { cornerIdx: 'edge-right',  side: 'mid', move: 'pj' }, // right edge:  col 16, row 10
+        { cornerIdx: 'center',      side: 'mid', move: 'jj' }, // tengen: 10-10
     ];
     for (const opt of FOUR_TEN_POINTS) options.push(opt);
 

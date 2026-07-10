@@ -169,6 +169,17 @@ function build6HandicapMoveCombos(combo4) {
         for (const mv of sideRow) options.push({ cornerIdx: idx, side: 'row', move: mv });
     });
 
+    // Also consider the 4 side-midpoint stones at coordinate 4-10 (one per board edge).
+    // These are not in any corner, so they get their own unique (cornerIdx, side) tags
+    // and don't conflict with corner-side dedup.
+    const FOUR_TEN_POINTS = [
+        { cornerIdx: 'edge-top',    side: 'mid', move: 'jd' }, // top edge:    row 4, col 10
+        { cornerIdx: 'edge-bottom', side: 'mid', move: 'jp' }, // bottom edge: row 16, col 10
+        { cornerIdx: 'edge-left',   side: 'mid', move: 'dj' }, // left edge:   col 4, row 10
+        { cornerIdx: 'edge-right',  side: 'mid', move: 'pj' }, // right edge:  col 16, row 10
+    ];
+    for (const opt of FOUR_TEN_POINTS) options.push(opt);
+
     const combos = [];
     const seen = new Set();
     const seenOrbits = new Set();

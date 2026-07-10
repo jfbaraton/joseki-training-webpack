@@ -401,7 +401,7 @@ router.route('/evaluate_6H_boards_count_all').get(async (req, res) => {
     let min =40;
     let max = 0;
     let sum = 0;
-    for(let idx_4H = 0;idx_4H<43;idx_4H++) {
+    for(let idx_4H = 0;idx_4H<sgfutils.all4HandicapMoveCombos.length;idx_4H++) {
         let all_hochis = sgfutils.all4HandicapMoveCombos[idx_4H];
         //console.log("all_hochis ", all_hochis);
 
@@ -419,9 +419,9 @@ router.route('/evaluate_6H_boards_count_all').get(async (req, res) => {
     res.send(JSON.stringify({mini:min, max:max, sum:sum}));
 })
 
-router.route('/evaluate_6H_boards_all{/:id}').get(async (req, res) => {
-    const id = parseInt(req.params.id || "11");
-    const id_increment = 3;
+router.route('/evaluate_6H_boards_all{/:id}{/increment/:increment}').get(async (req, res) => {
+    const id = parseInt(req.params.id || "0");
+    const id_increment = parseInt(req.params.id || "0");
     let engineuse = 0;
     let amount_of_handicap_stones = 6;
     let startAtMove = amount_of_handicap_stones ? (amount_of_handicap_stones-1)*2:0;
@@ -441,7 +441,7 @@ router.route('/evaluate_6H_boards_all{/:id}').get(async (req, res) => {
     }
     //for(let idx_4H = 0;idx_4H<43;idx_4H++) {
     //for(let idx_4H = id;idx_4H<(id+id_increment);idx_4H++) { //10 min for 2 idexes
-    for(let idx_4H = id;idx_4H<(sgfutils.all4HandicapMoveCombos.length);idx_4H++) { //10 min for 2 idexes
+    for(let idx_4H = id;idx_4H<(id_increment ? (id+id_increment) : sgfutils.all4HandicapMoveCombos.length);idx_4H++) { //10 min for 2 idexes
         let all_hochis = sgfutils.all4HandicapMoveCombos[idx_4H];
         //console.log("all_hochis ", all_hochis);
 
@@ -519,7 +519,7 @@ router.route('/evaluate_6H_boards_all{/:id}').get(async (req, res) => {
         res.send(JSON.stringify({
             idx4H_start: id,
             //call_next_id:(id+id_increment),
-            call_next_id:"OVER",
+            call_next_id:(id_increment ? (id+id_increment) : "OVER"),
             total: total,
             total_calculating: total_calculated
         }));
